@@ -145,3 +145,62 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 </laravel-boost-guidelines>
+
+# Security Guidelines
+
+These rules apply to all code in this project. Follow them when writing or reviewing any Filament resource, Livewire component, controller, route, model, view, or config.
+
+## CSRF
+
+- Keep the `VerifyCsrfToken` middleware active on all stateful web routes. Avoid adding routes to `$except` unless truly necessary (e.g., verified external webhooks, which must use signature checks instead).
+- For SPAs/APIs, configure Sanctum properly (stateful domains config) rather than disabling CSRF wholesale.
+
+## XSS
+
+- Default to `{{ }}` always. Only use `{!! !!}` for content that has been explicitly sanitized (e.g., with HTMLPurifier).
+- Never render `request()->input()` raw in Blade or JS templates.
+
+## SQL Injection
+
+- Stick to Eloquent/Query Builder with parameter binding.
+- If `whereRaw()`/`DB::raw()` is unavoidable, always use bindings: `whereRaw('name = ?', [$name])`. Never string-concatenate input.
+
+## Mass Assignment
+
+- Always define an explicit `$fillable` on models (avoid `$guarded = []`).
+- Validate with Form Requests, then pass only validated fields to `create()`/`update()` (`$request->validated()`). Never pass `$request->all()` directly.
+
+## Authentication & Authorization
+
+- Use Policies/Gates consistently. Call `$this->authorize()` or `Gate::authorize()` in every controller action that touches user-owned data.
+- Use Sanctum/Passport with correctly scoped tokens; set token abilities and expiration.
+- Enable rate limiting on login and API routes (`throttle` middleware).
+
+## Environment & Config
+
+- `APP_DEBUG=false` in production, always.
+- Keep `.env` out of version control. Rotate `APP_KEY` if it is ever leaked.
+- Run `php artisan config:cache` in production so `.env` isn't read at runtime.
+
+## File Uploads
+
+- Validate with `mimes:`/`mimetypes:` rules, not just the file extension.
+- Store uploads outside the public web root or on a disk that doesn't allow direct execution. Rename files on upload.
+
+## General Hardening
+
+- Run `composer audit` and keep dependencies updated.
+- Force HTTPS (`URL::forceScheme('https')` or middleware) and set secure/HttpOnly cookies.
+- Use security headers (CSP, X-Frame-Options) via middleware or a package like `spatie/laravel-csp`.
+
+## Applying These Rules in Filament and Livewire
+
+Most screens in this app are Filament resources and Livewire components, not controllers, so some of the rules above take a different form here:
+
+- **Panel access:** `User` implements `FilamentUser`, and `canAccessPanel()` checks `is_active` and the role. Outside the `local` environment, Filament refuses every user when this is missing.
+- **Authorization:** every resource has a Policy, which Filament checks for list, view, create, edit, and delete. Custom actions and pages must authorize on their own, with `->authorize()` or `Gate::authorize()` inside the action. Hiding a button is not authorization.
+- **Livewire state:** the browser can change public properties and call public methods directly. Mark IDs and other server-owned values `#[Locked]`, and authorize inside every action method.
+- **Validation:** Filament forms validate through field rules (`->required()`, `->rules()`, `->unique()`) and save only the fields in the form schema. That takes the place of Form Requests in resources; plain controller routes still use Form Requests. Models still define `$fillable`; never call `Model::unguard()`.
+- **Raw HTML:** wrapping a value in `HtmlString`, or printing it with `{!! !!}` in a custom view, skips escaping. Use either only for markup the code builds itself, never for user-entered text such as names, remarks, or the user names read from the biometric device.
+- **HTTPS:** force it only outside development. Laragon serves plain `http`, and a `Secure` session cookie is never sent back over `http`, which looks exactly like a broken login.
+- **CSP:** Livewire and Alpine evaluate expressions at runtime, so a `script-src` policy needs `unsafe-eval` unless Livewire's `csp_safe` option is on. Filament has not been tested with `csp_safe` in this project. Until it has, send the other security headers without `script-src`, as hris does, rather than a policy that claims a protection it does not give.

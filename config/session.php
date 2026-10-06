@@ -169,7 +169,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Follows APP_FORCE_HTTPS unless set on its own, so turning HTTPS on for
+    // the server cannot leave the session cookie travelling in the clear.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_FORCE_HTTPS', false)),
 
     /*
     |--------------------------------------------------------------------------

@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Force HTTPS
+    |--------------------------------------------------------------------------
+    |
+    | On the server, every URL the application generates is https and the
+    | session cookie is marked Secure. Leave it off in development: Laragon
+    | serves plain http, and a Secure cookie is never sent back over http,
+    | which looks exactly like a login that does not work.
+    |
+    */
+
+    'force_https' => (bool) env('APP_FORCE_HTTPS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
