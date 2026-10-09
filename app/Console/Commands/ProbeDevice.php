@@ -36,6 +36,8 @@ class ProbeDevice extends Command
 
         try {
             $clock = $source->deviceTime($device);
+            // Taken now, before the slow reads, so their time is not counted as drift.
+            $serverTime = CarbonImmutable::now();
             $users = collect($source->deviceUsers($device));
             $punches = collect($source->fetchPunches($device));
         } catch (DeviceUnreachable $exception) {
@@ -45,7 +47,7 @@ class ProbeDevice extends Command
         }
 
         $namesById = $users->mapWithKeys(fn (DeviceUser $user): array => [$user->biometricId => $user->name]);
-        $drift = (int) round(CarbonImmutable::now()->diffInSeconds($clock));
+        $drift = (int) round($serverTime->diffInSeconds($clock));
 
         $this->line("Device: {$device->ip}:{$device->port}");
         $this->line("Device clock: {$clock->format('Y-m-d H:i:s')} ({$this->describeDrift($drift)})");

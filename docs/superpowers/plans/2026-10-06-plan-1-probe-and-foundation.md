@@ -803,6 +803,7 @@ Expected:
 - `Device clock:` within a few minutes of the server. Write the drift down; Plan 2 adds **Set device time**.
 - `Users on device:` close to the number of enrolled staff (130+).
 - The newest row of the table is the test punch, at the minute noted, with the name typed on the device. This proves the IDs, the names and the time zone end to end.
+- A name with "Ñ" (find one on the device, or enroll a test user such as "PEÑA TEST") prints correctly, not as "PE?A" or garbage. This checks the device's codepage against `DeviceText`.
 
 If it fails, record the exact message and stop this step. Do not switch libraries in this plan:
 - `Cannot reach …: …` with a timeout: check the IP and port from the device's own menu (Comm. → Ethernet), that the server can `ping` it, and that no firewall blocks TCP 4370.

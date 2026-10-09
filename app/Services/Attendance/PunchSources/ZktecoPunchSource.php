@@ -51,7 +51,7 @@ class ZktecoPunchSource implements PunchSource
         return $this->connected($device, fn (ZkDevice $zk): array => array_map(
             fn (ZkUser $user): DeviceUser => new DeviceUser(
                 biometricId: $user->userId,
-                name: trim($user->name),
+                name: DeviceText::read($user->name),
             ),
             $zk->users()->all(),
         ));

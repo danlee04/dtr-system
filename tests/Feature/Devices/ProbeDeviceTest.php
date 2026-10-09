@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Devices;
 
+use App\Models\Device;
 use App\Services\Attendance\PunchSources\DeviceUser;
 use App\Services\Attendance\PunchSources\PunchSource;
 use App\Services\Attendance\PunchSources\RawPunch;
@@ -43,6 +44,28 @@ class ProbeDeviceTest extends TestCase
             ->expectsOutputToContain('Users on device: 2')
             ->expectsOutputToContain('Logs on device: 12')
             ->expectsTable(['Biometric ID', 'Name on device', 'Time', 'State'], $latestTen)
+            ->assertSuccessful();
+    }
+
+    public function test_the_time_spent_reading_the_logs_is_not_counted_as_drift(): void
+    {
+        // Reading a device's whole log can take a minute. If that minute were
+        // reported as drift, someone "correcting" the clock by it would shift
+        // every punch, and every late.
+        $this->travelTo(CarbonImmutable::parse('2026-10-06 08:00:00'));
+
+        $this->app->instance(PunchSource::class, new class(clock: CarbonImmutable::parse('2026-10-06 08:00:00')) extends FakePunchSource
+        {
+            public function fetchPunches(Device $device): iterable
+            {
+                CarbonImmutable::setTestNow(CarbonImmutable::now()->addSeconds(80));
+
+                return parent::fetchPunches($device);
+            }
+        });
+
+        $this->artisan('device:probe', ['ip' => '192.168.1.201'])
+            ->expectsOutputToContain('Device clock: 2026-10-06 08:00:00 (same as this server)')
             ->assertSuccessful();
     }
 
