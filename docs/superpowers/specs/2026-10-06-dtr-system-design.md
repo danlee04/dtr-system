@@ -203,9 +203,8 @@ device_sync_logs      id, device_id, trigger (schedule|user), user_id (nullable)
 device_users          id, device_id, biometric_id, name, refreshed_at
                       unique (device_id, biometric_id)
 
-schedules             id, code (unique), name, work_days (json), is_active, timestamps
-schedule_blocks       id, schedule_id, sequence (1|2), time_in, time_out
-                      unique (schedule_id, sequence)
+schedules             id, code (unique), name, work_days (json), block1_in, block1_out,
+                      block2_in (nullable), block2_out (nullable), is_active, timestamps
 schedule_assignments  id, employee_id, schedule_id, effective_from,
                       effective_to (nullable), timestamps
 roster_entries        id, employee_id, date, schedule_id (nullable = day off), timestamps
@@ -249,10 +248,16 @@ Plus the `activity_log` table from `spatie/laravel-activitylog`.
 - A schedule has one or two blocks, because that is what CS Form 48 holds.
   Each time in a schedule is later than the one before it. A time that is not
   later falls on the next day, so `22:00 → 02:00` ends the next morning and HR
-  never ticks a "next day" box. A schedule spans less than 24 hours.
+  never ticks a "next day" box. A schedule spans less than 24 hours. The two
+  blocks are four time columns on `schedules`, not a table of their own: there
+  are never more than two, and one row puts a change to a schedule's hours in
+  one activity-log entry.
 - The roster uses the same templates as assignments: AM, PM and Night are
-  templates with codes. There is no separate notion of a shift.
-- An employee's assignments may not overlap.
+  templates with codes. There is no separate notion of a shift. `OFF` marks a
+  rostered day off, so no schedule may use it as its code.
+- An employee's assignments may not overlap. A new assignment ends the
+  open-ended one that began before it, on the day before, so moving X to the
+  4-Day Week from 1 November is one step. Any other overlap is refused.
 - Device punches are never edited. A correction is an added `manual` punch
   with a `note`. A wrong log is marked `is_ignored`, with a `note`, and stays
   where it is.
@@ -773,14 +778,16 @@ working software:
 | Plan | Delivers |
 |---|---|
 | **1. Probe and foundation** | `device:probe` against the real device, and the library chosen. Filament, users and roles, offices, employees with CSV import, the activity log, the security baseline. HR can load the employee list. |
-| **2. Schedules and sync** | Schedules, assignments, the roster grid, holidays. Devices, `DeviceSync`, the scheduler, Unmatched logs, the dashboard. HR can map biometric IDs and watch logs arrive. |
+| **2a. Schedules** | Schedules, assignments with the bulk assign, the roster grid, holidays and suspensions. Nothing in it reads the device. |
+| **2b. Sync** | Devices, `DeviceSync`, the scheduler, Unmatched logs, the dashboard. HR can map biometric IDs and watch logs arrive. |
 | **3. Computation** | Resolver, matcher, calculator, recomputer, exceptions, corrections, the Attendance screen. HR sees late and undertime for every day. |
 | **4. Closing and reports** | Finalize and reopen, Form 48, the monthly summary and its Excel file, CSC conversion, habitual tardiness. Form 48's layout waits on the sample. |
 | **5. Backup, deployment, parallel run** | `dtr:backup`, HTTPS and Task Scheduler on the server, then the parallel run. |
 
-The order follows the risk. If the device cannot be read, everything after
-Plan 1 changes, so the probe comes first. Mapping 130+ biometric IDs takes HR
-the longest, so sync and Unmatched logs come before the computation.
+The order follows the risk. If the device cannot be read, the sync changes,
+so the probe comes before Plan 2b. Schedules do not touch the device, so Plan
+2a goes ahead while the device details are awaited. Mapping 130+ biometric IDs
+takes HR the longest, so sync and Unmatched logs come before the computation.
 
 ## Decisions to review
 
@@ -828,7 +835,7 @@ Inputs from HR, each needed before the plan that uses it:
 - **The employee list** as CSV: employee number, surname, first name, middle
   name, suffix, office, employment status, biometric ID if known, date hired
   (Plan 1).
-- **The schedule templates in use, and who is on the roster.** If the nursing
-  roster is already kept in Excel, importing it may beat typing a grid; decide
-  when Plan 2 starts.
-- **This year's holidays** (Plan 2).
+- **The schedule templates in use, and who is on the roster.** Plan 2a builds
+  the grid. If the nursing roster turns out to be kept in Excel, an import can
+  be added beside it.
+- **This year's holidays**, entered by HR once Plan 2a is in.
