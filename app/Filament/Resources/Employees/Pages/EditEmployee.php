@@ -11,6 +11,17 @@ class EditEmployee extends EditRecord
 {
     protected static string $resource = EmployeeResource::class;
 
+    /** The form and the Schedules tab side by side, as Employee | Schedules. */
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return 'Employee';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

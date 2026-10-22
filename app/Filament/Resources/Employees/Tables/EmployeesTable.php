@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Employees\Tables;
 
 use App\Enums\EmploymentStatus;
+use App\Filament\Resources\Employees\Actions\AssignScheduleBulkAction;
 use App\Models\Employee;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
@@ -60,6 +61,9 @@ class EmployeesTable
             ])
             ->recordActions([
                 EditAction::make(),
+            ])
+            ->toolbarActions([
+                AssignScheduleBulkAction::make(),
             ]);
     }
 }

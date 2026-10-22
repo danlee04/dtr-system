@@ -1,0 +1,175 @@
+<?php
+
+namespace Tests\Feature\Schedules;
+
+use App\Filament\Resources\Schedules\Pages\CreateSchedule;
+use App\Filament\Resources\Schedules\Pages\EditSchedule;
+use App\Models\RosterEntry;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use App\Models\User;
+use Filament\Actions\DeleteAction;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Spatie\Activitylog\Models\Activity;
+use Tests\TestCase;
+
+class ScheduleResourceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAs(User::factory()->create());
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function regular(array $overrides = []): array
+    {
+        return array_merge([
+            'code' => 'REG',
+            'name' => 'Regular',
+            'work_days' => [1, 2, 3, 4, 5],
+            'block1_in' => '08:00',
+            'block1_out' => '12:00',
+            'block2_in' => '13:00',
+            'block2_out' => '17:00',
+        ], $overrides);
+    }
+
+    public function test_hr_adds_a_two_block_schedule(): void
+    {
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular(['code' => 'reg']))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $schedule = Schedule::sole();
+
+        // Codes are typed into the duty roster, so they are kept in capitals.
+        $this->assertSame('REG', $schedule->code);
+        $this->assertSame([1, 2, 3, 4, 5], $schedule->work_days);
+        $this->assertSame(['08:00', '12:00', '13:00', '17:00'], $schedule->times());
+    }
+
+    public function test_a_night_shift_runs_past_midnight(): void
+    {
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular([
+                'code' => 'N',
+                'name' => 'Night',
+                'work_days' => [],
+                'block1_in' => '22:00',
+                'block1_out' => '02:00',
+                'block2_in' => '03:00',
+                'block2_out' => '07:00',
+            ]))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('22:00–02:00, 03:00–07:00', Schedule::sole()->hours);
+    }
+
+    public function test_times_that_run_past_24_hours_are_refused(): void
+    {
+        // 07:00 typed for 13:00: read as the next morning, the day would end at
+        // 17:00 the day after it began.
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular(['block2_in' => '07:00']))
+            ->call('create')
+            ->assertHasFormErrors(['block1_in']);
+    }
+
+    public function test_a_one_block_schedule_needs_no_second_block(): void
+    {
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular([
+                'code' => 'AM',
+                'block1_in' => '06:00',
+                'block1_out' => '14:00',
+                'block2_in' => null,
+                'block2_out' => null,
+            ]))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(['06:00', '14:00'], Schedule::sole()->times());
+    }
+
+    public function test_a_second_block_needs_both_times(): void
+    {
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular(['block2_out' => null]))
+            ->call('create')
+            ->assertHasFormErrors(['block2_out' => 'required_with']);
+    }
+
+    public function test_off_is_kept_for_the_roster(): void
+    {
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular(['code' => 'off']))
+            ->call('create')
+            ->assertHasFormErrors(['code' => 'not_in']);
+    }
+
+    public function test_two_schedules_cannot_share_a_code(): void
+    {
+        Schedule::factory()->create(['code' => 'REG']);
+
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular(['code' => 'reg']))
+            ->call('create')
+            ->assertHasFormErrors(['code' => 'unique']);
+    }
+
+    public function test_an_unused_schedule_can_be_deleted(): void
+    {
+        $schedule = Schedule::factory()->create();
+
+        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
+            ->callAction(DeleteAction::class);
+
+        $this->assertModelMissing($schedule);
+    }
+
+    public function test_a_schedule_in_use_cannot_be_deleted(): void
+    {
+        $schedule = Schedule::factory()->create();
+        ScheduleAssignment::factory()->for($schedule)->create();
+
+        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
+            ->assertActionHidden(DeleteAction::class);
+    }
+
+    public function test_a_schedule_on_the_roster_cannot_be_deleted(): void
+    {
+        $schedule = Schedule::factory()->rosterOnly()->create();
+        RosterEntry::factory()->for($schedule)->create();
+
+        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
+            ->assertActionHidden(DeleteAction::class);
+    }
+
+    public function test_changing_a_schedules_hours_is_recorded(): void
+    {
+        $schedule = Schedule::factory()->create();
+
+        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
+            ->fillForm(['block1_in' => '07:00'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $activity = Activity::query()
+            ->where('subject_type', $schedule->getMorphClass())
+            ->where('event', 'updated')
+            ->sole();
+
+        // Only the changed time: the others came back exactly as they were saved.
+        $this->assertSame(['block1_in' => '07:00:00'], $activity->attribute_changes['attributes']);
+    }
+}

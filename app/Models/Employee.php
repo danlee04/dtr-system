@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -40,6 +41,18 @@ class Employee extends Model
     public function office(): BelongsTo
     {
         return $this->belongsTo(Office::class);
+    }
+
+    /** @return HasMany<ScheduleAssignment, $this> */
+    public function scheduleAssignments(): HasMany
+    {
+        return $this->hasMany(ScheduleAssignment::class);
+    }
+
+    /** @return HasMany<RosterEntry, $this> */
+    public function rosterEntries(): HasMany
+    {
+        return $this->hasMany(RosterEntry::class);
     }
 
     /**
