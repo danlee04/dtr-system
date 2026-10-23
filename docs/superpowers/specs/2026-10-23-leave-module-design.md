@@ -146,7 +146,9 @@ on a holiday is expected at work, so leave that day counts.
 - **Half a day** (first half or second half, allowed on a one-date application
   only): half the value. Half a day of VL on the 4-Day Week is 0.625.
 
-An application whose dates all count 0 is refused. SPL and Wellness are
+An application covers at most 366 days. Every date of the range is kept in
+its `breakdown`, rest days and holidays at 0, so the deduction explains
+itself. An application whose dates all count 0 is refused. SPL and Wellness are
 filed for dates in the current year only, since they draw on that year's
 allotment; next year's can be filed from 1 January. Days are kept to three
 decimals, as on a CSC leave card.
@@ -169,7 +171,8 @@ submits: "3.000 days: 2.000 with pay from VL, 1.000 without pay". The employee
 can still change the type or the dates.
 
 The days with pay come first in date order, so the days without pay are the
-last dates of the application. `breakdown` records which dates they are,
+last dates of the application. One date can be split: with 1.250 VL on hand
+for two days of 1.000, the second day is 0.250 with pay and 0.750 without. `breakdown` records which dates they are,
 because leave without pay reduces the credit of the month it falls in (see
 **Monthly credits**).
 
@@ -246,7 +249,9 @@ so an application without pay can land in a month posted last week, and a
 cancellation can remove one. Whenever an application with days without pay is
 filed or cancelled, the system recomputes the credit of each month those days
 fall in that has already been posted, and adds the difference as a
-`credit_correction` row, dated that day, for VL and SL. The employee's history
+`credit_correction` row, dated that day, for VL and SL. Only a month the
+employee was credited is corrected; one they were not credited for stays
+that way, as with any period already posted. The employee's history
 shows "Dec 3, +0.042 VL, correction for November".
 
 ### Year end
@@ -523,7 +528,8 @@ Two plans, each leaving working software, then the go-live steps:
 | Plan | Delivers |
 |---|---|
 | **L1. Balances** | Leave types, the ledger, opening balances, `leave:post`, adjustments, the Leave tab on an employee. HR has correct balances and can answer "meron pa ba akong SL?" from the system. |
-| **L2. Applications and accounts** | `ScheduleResolver`, `leave_days` on schedules, `position` on employees, counting and charging, days without pay in the monthly credit and its corrections, applications, approval and cancellation, the form, employee accounts and their panel, the policy changes. Employees file their own leave. |
+| **L2a. Applications** | `ScheduleResolver`, `leave_days` on schedules, counting and charging, days without pay in the monthly credit and its corrections, applications filed, approved and cancelled by HR, the Leave applications screen, the dashboard count. HR files leave for anyone. |
+| **L2b. Employees and the form** | Employee accounts and their panel, sign-in by employee number, the policy changes, `position` on employees, the leave type descriptions, the printed form. Employees file their own leave. Waits on the scan of HR's leave form. |
 | **Go-live** | From DTR Plan 5, brought forward: the server on the LAN, the Task Scheduler entry (it now runs `leave:post`), `dtr:backup` off the machine, HTTPS. |
 
 The DTR plans keep their order after this. Plan 3 reuses `ScheduleResolver`,
