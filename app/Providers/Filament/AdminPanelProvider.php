@@ -11,6 +11,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Contracts\View\View;
@@ -32,6 +33,8 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('DTR System')
             ->navigationGroups(NavigationGroup::class)
             ->sidebarWidth('16rem')
+            // Every page uses the screen's full width instead of a centred 80rem column.
+            ->maxContentWidth(Width::Full)
             ->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): View => view('filament.sidebar'))
             ->login()
             ->colors([
