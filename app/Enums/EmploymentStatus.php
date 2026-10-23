@@ -30,6 +30,12 @@ enum EmploymentStatus: string implements HasLabel
         };
     }
 
+    /** Job order and contract of service personnel earn no leave credits. */
+    public function earnsLeaveCredits(): bool
+    {
+        return in_array($this, [self::Permanent, self::Coterminous], true);
+    }
+
     /**
      * Match however HR wrote it. A spreadsheet says "Contract of Service" or
      * "Co-terminous", not "contract_of_service", and refusing that is a defect

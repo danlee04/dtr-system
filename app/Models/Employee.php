@@ -55,6 +55,12 @@ class Employee extends Model
         return $this->hasMany(RosterEntry::class);
     }
 
+    /** @return HasMany<LeaveLedgerEntry, $this> */
+    public function leaveLedgerEntries(): HasMany
+    {
+        return $this->hasMany(LeaveLedgerEntry::class);
+    }
+
     /**
      * "Dela Cruz, Juan S. Jr." — surname first, the way HR sorts and reads a
      * list.

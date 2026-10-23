@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Employees;
 use App\Filament\Resources\Employees\Pages\CreateEmployee;
 use App\Filament\Resources\Employees\Pages\EditEmployee;
 use App\Filament\Resources\Employees\Pages\ListEmployees;
+use App\Filament\Resources\Employees\RelationManagers\LeaveLedgerEntriesRelationManager;
 use App\Filament\Resources\Employees\RelationManagers\ScheduleAssignmentsRelationManager;
 use App\Filament\Resources\Employees\Schemas\EmployeeForm;
 use App\Filament\Resources\Employees\Tables\EmployeesTable;
@@ -49,6 +50,7 @@ class EmployeeResource extends Resource
     {
         return [
             ScheduleAssignmentsRelationManager::class,
+            LeaveLedgerEntriesRelationManager::class,
         ];
     }
 
