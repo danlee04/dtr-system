@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Models\LeaveLedgerEntry;
 use App\Models\Office;
 use App\Services\Leave\LeavePosting;
@@ -11,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Gate;
+use UnitEnum;
 
 /**
  * One office's opening leave balances as a grid: employees down the side,
@@ -21,9 +23,11 @@ class LeaveOpeningBalances extends Page
 {
     protected string $view = 'filament.pages.leave-opening-balances';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
 
-    protected static ?int $navigationSort = 6;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Leave;
+
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $title = 'Opening balances';
 

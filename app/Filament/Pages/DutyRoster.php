@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Models\Office;
 use App\Models\RosterEntry;
 use App\Models\Schedule;
@@ -12,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Gate;
+use UnitEnum;
 
 /**
  * One office's month as a grid: employees down the side, days across, a
@@ -24,7 +26,9 @@ class DutyRoster extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
-    protected static ?int $navigationSort = 4;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $title = 'Duty roster';
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Holidays;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\Holidays\Pages\CreateHoliday;
 use App\Filament\Resources\Holidays\Pages\EditHoliday;
 use App\Filament\Resources\Holidays\Pages\ListHolidays;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class HolidayResource extends Resource
 {
@@ -20,7 +22,9 @@ class HolidayResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;
 
-    protected static ?int $navigationSort = 5;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
+
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationLabel = 'Holidays & suspensions';
 

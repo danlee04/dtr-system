@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LeaveApplications;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\LeaveApplications\Pages\CreateLeaveApplication;
 use App\Filament\Resources\LeaveApplications\Pages\ListLeaveApplications;
 use App\Filament\Resources\LeaveApplications\Pages\ViewLeaveApplication;
@@ -14,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Leave filed, by HR for now and by employees in L2b. There is no edit
@@ -25,7 +27,9 @@ class LeaveApplicationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static ?int $navigationSort = 7;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Leave;
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationLabel = 'Leave applications';
 

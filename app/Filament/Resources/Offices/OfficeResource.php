@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Offices;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\Offices\Pages\CreateOffice;
 use App\Filament\Resources\Offices\Pages\EditOffice;
 use App\Filament\Resources\Offices\Pages\ListOffices;
@@ -13,12 +14,15 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class OfficeResource extends Resource
 {
     protected static ?string $model = Office::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Personnel;
 
     protected static ?int $navigationSort = 2;
 
