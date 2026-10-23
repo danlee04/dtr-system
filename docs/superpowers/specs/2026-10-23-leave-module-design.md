@@ -111,7 +111,8 @@ by HR on paper. These types count calendar days and need no schedule: a
 **Counting the days** still applies to them.
 
 Each type carries a short description in code of when it applies and what it
-needs. The employee sees it when choosing a type and on a **Leave types**
+needs. Claude drafts them from the CSC rules the form names; HR reads them
+before go-live. The employee sees it when choosing a type and on a **Leave types**
 page. That page answers "ano ang pwede kong gamitin para dito?"
 
 Job order and contract of service personnel earn no leave credits (DTR spec,
@@ -337,24 +338,38 @@ except a first half and a second half on the same date.
 
 ## The leave form
 
-CS Form No. 6 (Revised 2020), as a print view of the application: the browser
-prints it, so no PDF package is needed.
+The hospital's own version of CS Form No. 6 (Revised 2020), **HRM-07 Leave
+Application**, as a print view of the application: the browser prints it, so
+no PDF package is needed. A4, portrait, page 1 only: the form's second page is
+not printed. The layout follows HR's Excel copy (`HRM-07 - Leave
+Application.xlsx` in `storage/app/samples/`, git-ignored), received 23 October
+2026.
 
-- Office, name (surname, first name, middle name), date of filing, position;
-  the salary box is left blank until monetization brings the salary in.
-- The type ticked, the details, the number of days, the inclusive dates,
-  commutation.
+- **Header:** the TRC Caraga logo (the picture in HR's copy), "Human Resource
+  Management Section", "Leave Application", and the document box: Doc. Code
+  HRM-07, Effectivity June 3, 2026, Revision No. 1, Page 1 of 1. The box's
+  values come from `config/leave.php`, so a revised form is a config change.
+- **1–5:** office, name (surname, first name, middle name), date of filing,
+  position. Item 5, salary, is left blank: HR does not need it on the form.
+- **6.A** the type ticked. Wellness Leave has no box of its own on the form,
+  so it is printed under "Others". **6.B** the details, **6.C** the number of
+  days and the inclusive dates, **6.D** commutation.
 - **7.A Certification of leave credits** as of the filing date: VL and SL
   total earned (the balance just before this application), less this
-  application, and the balance.
-- **7.C Approved for:** days with pay and days without pay.
-- Signature lines with names: the employee; the HR officer (7.A); the office
-  head from `offices.head_name` (7.B); the head of the agency (7.C and 7.D).
-  The HR officer's and the agency head's names and positions come from
-  `config/leave.php`.
-
-The layout, paper size and signatories are checked against the form HR uses
-today (see **Open items**).
+  application, and the balance. Signed by the Human Resource Development
+  Officer, whose name is printed: Mary Jane Lao Guico.
+- **7.B Recommendation:** signed by the Division Head, whose name is typed on
+  the application when it is filed, in a free-text field, for now; left blank
+  when nobody is typed.
+- **7.C Approved for:** days with pay and days without pay. 7.C and 7.D are
+  signed by the Chief of Hospital III: Edhel S. Miro, MD, DPCAM, MM-PA.
+- The names and titles under 7.A and 7.C come from `config/leave.php`, so a
+  new officer or an OIC is a config change.
+- 7.A prints the figures kept on the application when it was filed
+  (`credits_at_filing`), so a reprint months later shows the same numbers.
+- The form is a plain route, `/leave-applications/{id}/print`, outside both
+  panels so it prints without them; HR may print any application, an
+  employee only their own.
 
 ## Accounts
 
@@ -420,6 +435,9 @@ schedules                 + leave_days decimal(4,3) default 1.000
 leave_applications        id, employee_id, leave_type, date_from, date_to,
                           coverage (whole_day|first_half|second_half),
                           detail (nullable), detail_text (nullable),
+                          division_head (nullable, L2b: typed for 7.B),
+                          credits_at_filing (json, nullable, L2b: VL and SL
+                          just before the charge, for 7.A),
                           commutation_requested, days, days_with_pay,
                           days_without_pay,
                           breakdown (json: date → {days, without_pay}),
@@ -572,7 +590,8 @@ chat:
     temporary passwords printed on slips and replaced at first sign-in.
 15. **Accounts only for permanent and co-terminous staff.**
 16. **The form printed from the browser**, signatory names in config.
-17. **`position` added to employees now**; salary waits for monetization.
+17. **`position` added to employees**; the salary is not on the printed form
+    (HR's answer), and waits for monetization.
 18. **The existing policies tightened** to admin and hr.
 19. **Leave type descriptions in code**, shown as the guide.
 20. **HR staff use one account for both panels**, and may approve their own
@@ -589,9 +608,6 @@ Inputs from HR:
 
 - **HR's printed CSC tables** for leave credits earned with days without pay
   and for days of service, to check the formula's values (L1).
-- **A photo or scan of the leave form HR uses today**, in
-  `storage/app/samples/` (git-ignored, since a filled form carries names), and
-  who signs 7.A, 7.B and 7.C, with names and positions (L2).
 - **The balances copy** HR enters from, before go-live. The start is not
   1 January, so it includes each employee's VL and forced-leave days already
   taken this year.
