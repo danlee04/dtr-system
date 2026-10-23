@@ -16,10 +16,16 @@ enum LedgerKind: string implements HasLabel
     case Lapse = 'lapse';
     case ForcedLeave = 'forced_leave';
     case Adjustment = 'adjustment';
+    case Application = 'application';
+    case Cancellation = 'cancellation';
+    case CreditCorrection = 'credit_correction';
 
     public function getLabel(): string
     {
         return match ($this) {
+            self::Application => 'Leave application',
+            self::Cancellation => 'Cancelled application',
+            self::CreditCorrection => 'Credit correction',
             self::Opening => 'Opening balance',
             self::MonthlyCredit => 'Monthly credit',
             self::YearlyGrant => 'Yearly grant',

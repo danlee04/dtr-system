@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Employees\RelationManagers;
 
 use App\Enums\LeaveType;
+use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
 use App\Models\Employee;
+use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
 use App\Services\Leave\LeaveLedger;
 use App\Services\Leave\LeavePosting;
@@ -63,6 +65,11 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
                     ->options(self::trackedOptions()),
             ])
             ->headerActions([
+                Action::make('fileLeave')
+                    ->label('File leave')
+                    ->icon(Heroicon::OutlinedDocumentPlus)
+                    ->authorize('create', LeaveApplication::class)
+                    ->url(fn (): string => LeaveApplicationResource::getUrl('create', ['employee' => $this->employee()->id])),
                 Action::make('adjust')
                     ->label('Add adjustment')
                     ->icon(Heroicon::OutlinedPlusCircle)

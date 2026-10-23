@@ -25,6 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'kind',
     'period',
     'posting_key',
+    'leave_application_id',
     'remarks',
     'created_by_user_id',
 ])]
@@ -37,6 +38,12 @@ class LeaveLedgerEntry extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /** @return BelongsTo<LeaveApplication, $this> */
+    public function application(): BelongsTo
+    {
+        return $this->belongsTo(LeaveApplication::class, 'leave_application_id');
     }
 
     /** @return BelongsTo<User, $this> */

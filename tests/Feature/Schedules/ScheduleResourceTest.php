@@ -57,6 +57,28 @@ class ScheduleResourceTest extends TestCase
         $this->assertSame(['08:00', '12:00', '13:00', '17:00'], $schedule->times());
     }
 
+    public function test_hr_sets_the_days_charged_for_a_day_of_leave(): void
+    {
+        Livewire::test(CreateSchedule::class)
+            ->fillForm($this->regular(['code' => 'CWW', 'work_days' => [1, 2, 3, 4], 'block2_out' => '19:00', 'leave_days' => '1.25']))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('1.250', Schedule::sole()->leave_days);
+    }
+
+    public function test_days_charged_must_be_a_positive_number(): void
+    {
+        foreach (['0', 'abc', '1.2505'] as $typed) {
+            Livewire::test(CreateSchedule::class)
+                ->fillForm($this->regular(['leave_days' => $typed]))
+                ->call('create')
+                ->assertHasFormErrors(['leave_days']);
+        }
+
+        $this->assertSame(0, Schedule::count());
+    }
+
     public function test_a_night_shift_runs_past_midnight(): void
     {
         Livewire::test(CreateSchedule::class)

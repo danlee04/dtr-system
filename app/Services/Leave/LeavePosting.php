@@ -3,9 +3,11 @@
 namespace App\Services\Leave;
 
 use App\Enums\EmploymentStatus;
+use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Models\Employee;
+use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
@@ -100,6 +102,15 @@ final class LeavePosting
         $start = self::configuredStart();
 
         return $start === null ? 0 : $this->post($start, CarbonImmutable::today());
+    }
+
+    /** A year is closed once its end is posted, which is when the next year's grant is. */
+    public function isYearClosed(int $year): bool
+    {
+        return LeaveLedgerEntry::query()
+            ->where('kind', LedgerKind::YearlyGrant)
+            ->where('period', '>', (string) $year)
+            ->exists();
     }
 
     /** The month after the last credited one, never before the start. */
@@ -210,24 +221,122 @@ final class LeavePosting
     }
 
     /**
-     * The VL days each employee took in the year, toward the five. Until
-     * applications exist, the only source is the opening FL row: the days
-     * taken before the system started.
+     * The VL days each employee took in the year, toward the five: the VL
+     * drawn by VL and forced-leave applications that start in the year and
+     * are not cancelled, plus the opening FL row (the days taken before the
+     * system started).
      *
      * @return array<int, string> employee id → days
      */
     private function vlTakenIn(int $year): array
     {
-        return LeaveLedgerEntry::query()
+        $openings = LeaveLedgerEntry::query()
             ->where('kind', LedgerKind::Opening)
             ->where('leave_type', LeaveType::Forced)
             ->whereYear('posted_on', $year)
             ->selectRaw('employee_id, sum(days) as total')
             ->groupBy('employee_id')
             ->toBase()
-            ->pluck('total', 'employee_id')
-            ->map(fn (mixed $total): string => number_format((float) $total, 3, '.', ''))
-            ->all();
+            ->pluck('total', 'employee_id');
+
+        $drawn = LeaveLedgerEntry::query()
+            ->join('leave_applications', 'leave_applications.id', '=', 'leave_ledger_entries.leave_application_id')
+            ->where('leave_ledger_entries.kind', LedgerKind::Application)
+            ->where('leave_ledger_entries.leave_type', LeaveType::Vacation)
+            ->whereIn('leave_applications.leave_type', [LeaveType::Vacation, LeaveType::Forced])
+            ->where('leave_applications.status', '!=', LeaveApplicationStatus::Cancelled)
+            ->whereYear('leave_applications.date_from', $year)
+            ->selectRaw('leave_ledger_entries.employee_id, sum(leave_ledger_entries.days) as total')
+            ->groupBy('leave_ledger_entries.employee_id')
+            ->toBase()
+            ->pluck('total', 'employee_id');
+
+        $taken = [];
+
+        foreach ($openings as $employeeId => $total) {
+            $taken[$employeeId] = number_format((float) $total, 3, '.', '');
+        }
+
+        // Application rows are negative: the days drawn.
+        foreach ($drawn as $employeeId => $total) {
+            $taken[$employeeId] = bcsub($taken[$employeeId] ?? '0', number_format((float) $total, 3, '.', ''), 3);
+        }
+
+        return $taken;
+    }
+
+    /**
+     * Each employee's days without pay dated in the month, from applications
+     * that are not cancelled, read from their breakdowns.
+     *
+     * @return array<int, string> employee id → days
+     */
+    private function daysWithoutPayIn(CarbonImmutable $month, ?int $employeeId = null): array
+    {
+        $prefix = $month->format('Y-m');
+        $totals = [];
+
+        $applications = LeaveApplication::query()
+            ->where('status', '!=', LeaveApplicationStatus::Cancelled)
+            ->where('days_without_pay', '>', 0)
+            ->whereDate('date_from', '<=', $month->endOfMonth())
+            ->whereDate('date_to', '>=', $month->startOfMonth())
+            ->when($employeeId !== null, fn ($query) => $query->where('employee_id', $employeeId))
+            ->get(['employee_id', 'breakdown']);
+
+        foreach ($applications as $application) {
+            foreach ($application->breakdown as $date => $day) {
+                if (str_starts_with($date, $prefix)) {
+                    $totals[$application->employee_id] = bcadd($totals[$application->employee_id] ?? '0', $day['without_pay'], 3);
+                }
+            }
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Brings the credit of months already posted in line with the leave
+     * without pay filed or cancelled since: the difference becomes a
+     * correction row for VL and SL, dated today. Only a month the employee
+     * was credited is corrected, since who earns is judged when a period is
+     * posted.
+     *
+     * @param  list<string>  $months  Y-m
+     * @return int the number of rows inserted
+     */
+    public function correctCredits(Employee $employee, array $months): int
+    {
+        $rows = [];
+
+        foreach (array_unique($months) as $period) {
+            $credited = LeaveLedgerEntry::query()
+                ->whereBelongsTo($employee)
+                ->where('leave_type', LeaveType::Vacation)
+                ->where('period', $period)
+                ->whereIn('kind', [LedgerKind::MonthlyCredit, LedgerKind::CreditCorrection]);
+
+            if (! (clone $credited)->where('kind', LedgerKind::MonthlyCredit)->exists()) {
+                continue;
+            }
+
+            $month = CarbonImmutable::createFromFormat('!Y-m', $period);
+            $owed = self::creditFor($this->serviceDays($employee, $month), $this->daysWithoutPayIn($month, $employee->id)[$employee->id] ?? '0');
+            $difference = bcsub($owed, number_format((float) $credited->sum('days'), 3, '.', ''), 3);
+
+            if (bccomp($difference, '0', 3) === 0) {
+                continue;
+            }
+
+            foreach ([LeaveType::Vacation, LeaveType::Sick] as $type) {
+                $rows[] = $this->row(
+                    $employee, $type, CarbonImmutable::today(), $difference,
+                    LedgerKind::CreditCorrection, $period, null, "Correction for {$month->format('F Y')}",
+                );
+            }
+        }
+
+        return $this->insert($rows);
     }
 
     private function earnsOn(Employee $employee, CarbonImmutable $date): bool
@@ -240,6 +349,7 @@ final class LeavePosting
     private function postMonthlyCredits(Collection $employees, CarbonImmutable $month): int
     {
         $period = $month->format('Y-m');
+        $withoutPay = $this->daysWithoutPayIn($month);
         $rows = [];
 
         foreach ($employees as $employee) {
@@ -249,9 +359,11 @@ final class LeavePosting
                 continue;
             }
 
+            $credit = self::creditFor($serviceDays, $withoutPay[$employee->id] ?? '0');
+
             foreach ([LeaveType::Vacation, LeaveType::Sick] as $type) {
                 $rows[] = $this->row(
-                    $employee, $type, $month->addMonth(), self::creditFor($serviceDays),
+                    $employee, $type, $month->addMonth(), $credit,
                     LedgerKind::MonthlyCredit, $period, "credit:{$employee->id}:{$type->value}:{$period}",
                 );
             }
@@ -299,7 +411,7 @@ final class LeavePosting
     }
 
     /** @return array<string, mixed> */
-    private function row(Employee $employee, LeaveType $type, CarbonImmutable $postedOn, string $days, LedgerKind $kind, string $period, string $key): array
+    private function row(Employee $employee, LeaveType $type, CarbonImmutable $postedOn, string $days, LedgerKind $kind, string $period, ?string $key, ?string $remarks = null): array
     {
         $now = now();
 
@@ -311,7 +423,7 @@ final class LeavePosting
             'kind' => $kind->value,
             'period' => $period,
             'posting_key' => $key,
-            'remarks' => null,
+            'remarks' => $remarks,
             'created_by_user_id' => null,
             'created_at' => $now,
             'updated_at' => $now,

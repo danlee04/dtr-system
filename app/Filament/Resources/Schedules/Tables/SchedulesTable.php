@@ -25,6 +25,8 @@ class SchedulesTable
                     ->label('Work days')
                     ->formatStateUsing(fn (int $state): string => Schedule::WEEKDAYS[$state])
                     ->placeholder('Roster only'),
+                TextColumn::make('leave_days')
+                    ->label('Leave day'),
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean(),

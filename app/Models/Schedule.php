@@ -23,6 +23,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'block1_out',
     'block2_in',
     'block2_out',
+    'leave_days',
     'is_active',
 ])]
 class Schedule extends Model
@@ -36,6 +37,7 @@ class Schedule extends Model
     /** @var array<string, mixed> */
     protected $attributes = [
         'work_days' => '[]',
+        'leave_days' => '1.000',
         'is_active' => true,
     ];
 
@@ -110,6 +112,7 @@ class Schedule extends Model
     {
         return [
             'work_days' => 'array',
+            'leave_days' => 'decimal:3',
             'is_active' => 'boolean',
         ];
     }

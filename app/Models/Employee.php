@@ -55,6 +55,12 @@ class Employee extends Model
         return $this->hasMany(RosterEntry::class);
     }
 
+    /** @return HasMany<LeaveApplication, $this> */
+    public function leaveApplications(): HasMany
+    {
+        return $this->hasMany(LeaveApplication::class);
+    }
+
     /** @return HasMany<LeaveLedgerEntry, $this> */
     public function leaveLedgerEntries(): HasMany
     {

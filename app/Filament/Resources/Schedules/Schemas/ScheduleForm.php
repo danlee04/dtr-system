@@ -64,6 +64,19 @@ class ScheduleForm
                         self::time('block2_out', 'Second out')
                             ->requiredWith('block2_in'),
                     ]),
+                TextInput::make('leave_days')
+                    ->label('Days charged to VL/SL for a day of leave')
+                    ->required()
+                    ->default('1.000')
+                    ->regex('/^\d(\.\d{1,3})?\z/')
+                    ->rules([
+                        fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                            if (preg_match('/^\d(\.\d{1,3})?\z/', (string) $value) === 1 && bccomp((string) $value, '0', 3) === 0) {
+                                $fail('A day of leave must charge more than zero.');
+                            }
+                        },
+                    ])
+                    ->helperText('1 for most schedules. 1.25 for the 4-Day Week (10-hour days). SPL and Wellness always charge 1.'),
                 Toggle::make('is_active')
                     ->label('Active')
                     ->default(true),
