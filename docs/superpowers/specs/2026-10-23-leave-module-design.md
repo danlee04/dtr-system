@@ -247,9 +247,12 @@ the DTR spec checks the CSC conversion table (see **Open items**).
 **A month already credited can still change.** Sick leave is filed on return,
 so an application without pay can land in a month posted last week, and a
 cancellation can remove one. Whenever an application with days without pay is
-filed or cancelled, the system recomputes the credit of each month those days
-fall in that has already been posted, and adds the difference as a
-`credit_correction` row, dated that day, for VL and SL. Only a month the
+filed or cancelled, the system works out, for each month those days fall in
+that has already been posted, what they change in its credit (the credit
+with them less the credit without them, on the same days of service), and
+adds that change as a `credit_correction` row, dated that day, for VL and SL.
+Only the change from leave without pay is posted, so a hire date filled in
+later does not slip into a correction. Only a month the
 employee was credited is corrected; one they were not credited for stays
 that way, as with any period already posted. The employee's history
 shows "Dec 3, +0.042 VL, correction for November".

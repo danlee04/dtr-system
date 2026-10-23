@@ -33,7 +33,7 @@ class LeaveApplicationsTest extends TestCase
         $this->travelTo('2026-11-02 08:00');
         $this->actingAs(User::factory()->create());
 
-        $this->employee = Employee::factory()->create();
+        $this->employee = Employee::factory()->create(['last_name' => 'Dela Cruz']);
         ScheduleAssignment::factory()->for($this->employee)->for(Schedule::factory()->create(['code' => 'REG']))->create(['effective_from' => '2026-11-01']);
 
         foreach (['VL' => '5.000', 'SL' => '2.000'] as $type => $days) {
@@ -94,6 +94,30 @@ class LeaveApplicationsTest extends TestCase
 
         $this->assertRefused(fn () => app(LeaveApplications::class)->cancel($application->fresh(), 'Withdrawn'), 'status');
         $this->assertRefused(fn () => app(LeaveApplications::class)->approve($application->fresh()), 'status');
+        $this->assertSame('5.000', $this->balances()['VL']);
+    }
+
+    public function test_an_approval_from_a_stale_screen_cannot_undo_a_cancellation(): void
+    {
+        $application = $this->fileLeave();
+        $stale = LeaveApplication::find($application->id);   // the other HR user's screen, still pending
+
+        app(LeaveApplications::class)->cancel($application, 'Disapproved');
+
+        $this->assertRefused(fn () => app(LeaveApplications::class)->approve($stale), 'status');
+        $this->assertSame(LeaveApplicationStatus::Cancelled, $application->fresh()->status);
+        $this->assertSame('5.000', $this->balances()['VL']);
+    }
+
+    public function test_leave_of_a_deleted_employee_can_still_be_cancelled(): void
+    {
+        $application = $this->fileLeave();
+        $this->employee->delete();
+
+        app(LeaveApplications::class)->cancel($application->fresh(), 'Separated before the leave');
+
+        $this->assertSame(LeaveApplicationStatus::Cancelled, $application->fresh()->status);
+        $this->assertSame('Dela Cruz', $application->fresh()->employee->last_name);
         $this->assertSame('5.000', $this->balances()['VL']);
     }
 

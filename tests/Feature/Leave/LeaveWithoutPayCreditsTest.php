@@ -63,6 +63,19 @@ class LeaveWithoutPayCreditsTest extends TestCase
         $this->assertSame(['monthly_credit 1.250', 'credit_correction -0.156', 'credit_correction 0.156'], $this->creditRows('2026-11'));
     }
 
+    public function test_a_correction_carries_only_the_leave_without_pay(): void
+    {
+        $this->travelTo('2026-12-02 08:00');
+        app(LeavePosting::class)->catchUp();   // November: 1.250, no hire date on file
+        $this->employee->update(['date_hired' => '2026-11-15']);   // filled in later: not a re-post
+
+        // VL 1.250 on hand covers Nov 27 and a quarter of Nov 30: 0.750 without pay.
+        $this->fileLeave(['leave_type' => 'VL', 'date_from' => '2026-11-27', 'date_to' => '2026-11-30']);
+
+        // On 16 days of service that costs 0.667 − 0.635 = 0.032; the late hire date costs nothing here.
+        $this->assertSame(['monthly_credit 1.250', 'credit_correction -0.032'], $this->creditRows('2026-11'));
+    }
+
     public function test_a_month_the_employee_was_not_credited_gets_no_correction(): void
     {
         // Someone else is credited, so November counts as posted for the watermark.

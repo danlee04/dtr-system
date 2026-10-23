@@ -100,7 +100,7 @@ final class LeaveApplications
                 ]);
             }
 
-            $this->posting->correctCredits($employee, $this->monthsWithoutPay($application));
+            $this->posting->correctCredits($application);
 
             return $application;
         });
@@ -109,15 +109,21 @@ final class LeaveApplications
     /** @throws ValidationException keyed status */
     public function approve(LeaveApplication $application): void
     {
-        if ($application->status !== LeaveApplicationStatus::Pending) {
-            throw ValidationException::withMessages(['status' => 'Only a pending application can be approved.']);
-        }
+        // Locked and re-read, so an approval from a screen opened before a
+        // cancel cannot turn the cancelled application back to approved.
+        DB::transaction(function () use ($application): void {
+            Employee::withTrashed()->whereKey($application->employee_id)->lockForUpdate()->first();
 
-        $application->update([
-            'status' => LeaveApplicationStatus::Approved,
-            'approved_at' => now(),
-            'approved_by_user_id' => auth()->id(),
-        ]);
+            if ($application->refresh()->status !== LeaveApplicationStatus::Pending) {
+                throw ValidationException::withMessages(['status' => 'Only a pending application can be approved.']);
+            }
+
+            $application->update([
+                'status' => LeaveApplicationStatus::Approved,
+                'approved_at' => now(),
+                'approved_by_user_id' => auth()->id(),
+            ]);
+        });
     }
 
     /**
@@ -140,7 +146,7 @@ final class LeaveApplications
         $this->posting->catchUp();
 
         DB::transaction(function () use ($application, $reason): void {
-            Employee::query()->whereKey($application->employee_id)->lockForUpdate()->first();
+            Employee::withTrashed()->whereKey($application->employee_id)->lockForUpdate()->first();
 
             // A second click that waited on the lock finds it already cancelled.
             if ($application->refresh()->status === LeaveApplicationStatus::Cancelled) {
@@ -172,27 +178,8 @@ final class LeaveApplications
                 'cancel_reason' => trim($reason),
             ]);
 
-            $this->posting->correctCredits($application->employee, $this->monthsWithoutPay($application));
+            $this->posting->correctCredits($application);
         });
-    }
-
-    /**
-     * The months of the application's days without pay, which lower those
-     * months' credits.
-     *
-     * @return list<string> Y-m
-     */
-    private function monthsWithoutPay(LeaveApplication $application): array
-    {
-        $months = [];
-
-        foreach ($application->breakdown as $date => $day) {
-            if (bccomp($day['without_pay'], '0', 3) > 0) {
-                $months[] = substr($date, 0, 7);
-            }
-        }
-
-        return array_values(array_unique($months));
     }
 
     /**

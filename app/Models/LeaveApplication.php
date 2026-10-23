@@ -53,10 +53,15 @@ class LeaveApplication extends Model
         'status' => 'pending',
     ];
 
-    /** @return BelongsTo<Employee, $this> */
+    /**
+     * With deleted employees too: an employee is only ever soft-deleted, and
+     * their leave must still show and still cancel.
+     *
+     * @return BelongsTo<Employee, $this>
+     */
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class)->withTrashed();
     }
 
     /** @return BelongsTo<User, $this> */

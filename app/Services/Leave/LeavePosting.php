@@ -296,33 +296,50 @@ final class LeavePosting
     }
 
     /**
-     * Brings the credit of months already posted in line with the leave
-     * without pay filed or cancelled since: the difference becomes a
-     * correction row for VL and SL, dated today. Only a month the employee
-     * was credited is corrected, since who earns is judged when a period is
-     * posted.
+     * Posts what an application's days without pay change in months already
+     * credited, as a correction row for VL and SL dated today: the month's
+     * credit with them, less the credit without them, on the same days of
+     * service. Only that change is posted, so a hire or separation date
+     * entered since does not re-judge the month, and a cancellation reverses
+     * its filing's correction. Months not credited yet take the days without
+     * pay when they are posted; a month the employee was not credited stays
+     * that way, since who earns is judged when a period is posted.
      *
-     * @param  list<string>  $months  Y-m
+     * Call it after the application is saved (filed) or marked cancelled.
+     *
      * @return int the number of rows inserted
      */
-    public function correctCredits(Employee $employee, array $months): int
+    public function correctCredits(LeaveApplication $application): int
     {
+        $employee = $application->employee;
+        $cancelled = $application->status === LeaveApplicationStatus::Cancelled;
+        $changes = [];
+
+        foreach ($application->breakdown as $date => $day) {
+            if (bccomp($day['without_pay'], '0', 3) > 0) {
+                $period = substr($date, 0, 7);
+                $changes[$period] = bcadd($changes[$period] ?? '0', $cancelled ? bcsub('0', $day['without_pay'], 3) : $day['without_pay'], 3);
+            }
+        }
+
         $rows = [];
 
-        foreach (array_unique($months) as $period) {
+        foreach ($changes as $period => $change) {
             $credited = LeaveLedgerEntry::query()
                 ->whereBelongsTo($employee)
                 ->where('leave_type', LeaveType::Vacation)
                 ->where('period', $period)
-                ->whereIn('kind', [LedgerKind::MonthlyCredit, LedgerKind::CreditCorrection]);
+                ->where('kind', LedgerKind::MonthlyCredit)
+                ->exists();
 
-            if (! (clone $credited)->where('kind', LedgerKind::MonthlyCredit)->exists()) {
+            if (! $credited) {
                 continue;
             }
 
             $month = CarbonImmutable::createFromFormat('!Y-m', $period);
-            $owed = self::creditFor($this->serviceDays($employee, $month), $this->daysWithoutPayIn($month, $employee->id)[$employee->id] ?? '0');
-            $difference = bcsub($owed, number_format((float) $credited->sum('days'), 3, '.', ''), 3);
+            $serviceDays = $this->serviceDays($employee, $month);
+            $withoutPay = $this->daysWithoutPayIn($month, $employee->id)[$employee->id] ?? '0';
+            $difference = bcsub(self::creditFor($serviceDays, $withoutPay), self::creditFor($serviceDays, bcsub($withoutPay, $change, 3)), 3);
 
             if (bccomp($difference, '0', 3) === 0) {
                 continue;
@@ -331,7 +348,7 @@ final class LeavePosting
             foreach ([LeaveType::Vacation, LeaveType::Sick] as $type) {
                 $rows[] = $this->row(
                     $employee, $type, CarbonImmutable::today(), $difference,
-                    LedgerKind::CreditCorrection, $period, null, "Correction for {$month->format('F Y')}",
+                    LedgerKind::CreditCorrection, $period, null, "Correction for {$month->format('F Y')}, leave #{$application->id}",
                 );
             }
         }
