@@ -53,6 +53,38 @@ final class LeaveLedger
     }
 
     /**
+     * One type's rows, newest first, each with the balance it left. The
+     * balance is run oldest first, in the order the rows were posted.
+     *
+     * @return list<array{posted_on: CarbonImmutable, entry: string, days: string, balance: string, remarks: ?string}>
+     */
+    public function history(Employee $employee, LeaveType $type): array
+    {
+        $balance = '0.000';
+        $history = [];
+
+        $entries = $this->rows($employee, null)
+            ->where('leave_type', $type)
+            ->orderBy('posted_on')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($entries as $entry) {
+            $balance = bcadd($balance, $entry->days, 3);
+
+            $history[] = [
+                'posted_on' => $entry->posted_on->toImmutable(),
+                'entry' => $entry->kind->getLabel(),
+                'days' => $entry->days,
+                'balance' => $balance,
+                'remarks' => $entry->remarks,
+            ];
+        }
+
+        return array_reverse($history);
+    }
+
+    /**
      * Adds or deducts days by hand, dated today. The balance is checked with
      * the employee's row locked, so two adjustments at once cannot both take
      * the last day.

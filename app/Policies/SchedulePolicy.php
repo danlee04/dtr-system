@@ -6,29 +6,29 @@ use App\Models\Schedule;
 use App\Models\User;
 
 /**
- * Both roles manage schedules. The policy exists so that is stated rather than
+ * Staff manage schedules. The policy exists so that is stated rather than
  * assumed, and so the delete rule has a home.
  */
 class SchedulePolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isStaff();
     }
 
     public function view(User $user, Schedule $schedule): bool
     {
-        return true;
+        return $user->isStaff();
     }
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->isStaff();
     }
 
     public function update(User $user, Schedule $schedule): bool
     {
-        return true;
+        return $user->isStaff();
     }
 
     /**

@@ -23,6 +23,9 @@ class UsersTable
                     ->searchable(),
                 TextColumn::make('role')
                     ->badge(),
+                TextColumn::make('employee.full_name')
+                    ->label('Linked employee')
+                    ->placeholder('—'),
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean(),
@@ -30,7 +33,10 @@ class UsersTable
             ->defaultSort('name')
             ->filters([
                 SelectFilter::make('role')
-                    ->options(UserRole::class),
+                    ->options([
+                        UserRole::Admin->value => UserRole::Admin->getLabel(),
+                        UserRole::Hr->value => UserRole::Hr->getLabel(),
+                    ]),
                 TernaryFilter::make('is_active')
                     ->label('Active'),
             ])

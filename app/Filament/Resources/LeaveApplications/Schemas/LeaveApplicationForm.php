@@ -9,10 +9,12 @@ use App\Enums\LeaveType;
 use App\Models\Employee;
 use App\Services\Leave\LeaveApplications;
 use Carbon\CarbonImmutable;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -38,46 +40,63 @@ class LeaveApplicationForm
                     ->required()
                     ->default(fn (): ?int => request()->integer('employee') ?: null)
                     ->live(),
-                Select::make('leave_type')
-                    ->label('Leave type')
-                    ->options(LeaveType::class)
-                    ->required()
-                    ->live()
-                    ->afterStateUpdated(fn (Set $set) => $set('detail', null)),
-                DatePicker::make('date_from')
-                    ->label('From')
-                    ->required()
-                    ->live()
-                    ->afterStateUpdated(fn (Get $get, Set $set, ?string $state) => blank($get('date_to')) ? $set('date_to', $state) : null),
-                DatePicker::make('date_to')
-                    ->label('To')
-                    ->required()
-                    ->afterOrEqual('date_from')
-                    ->live(),
-                Select::make('coverage')
-                    ->label('Part of the day')
-                    ->options(LeaveCoverage::class)
-                    ->default(LeaveCoverage::WholeDay->value)
-                    ->selectablePlaceholder(false)
-                    ->visible(fn (Get $get): bool => self::oneDate($get))
-                    ->live(),
-                Text::make(fn (Get $get): string => self::preview($get))
-                    ->columnSpanFull(),
-                Select::make('detail')
-                    ->label('Details')
-                    ->options(fn (Get $get): array => collect(LeaveDetail::forType(self::type($get) ?? LeaveType::Maternity))
-                        ->mapWithKeys(fn (LeaveDetail $detail): array => [$detail->value => $detail->getLabel()])
-                        ->all())
-                    ->visible(fn (Get $get): bool => self::type($get) !== null && LeaveDetail::forType(self::type($get)) !== [])
-                    ->live(),
-                TextInput::make('detail_text')
-                    ->label(fn (Get $get): string => $get('detail') === LeaveDetail::Abroad->value ? 'Country' : 'Illness')
-                    ->maxLength(255)
-                    ->visible(fn (Get $get): bool => self::needsText($get))
-                    ->required(fn (Get $get): bool => self::needsText($get)),
-                Toggle::make('commutation_requested')
-                    ->label('Commutation requested'),
+                ...self::fields(fn (Get $get): ?Employee => filled($get('employee_id')) ? Employee::find($get('employee_id')) : null),
             ]);
+    }
+
+    /**
+     * Everything but the employee, so an employee's own form can use the same
+     * fields with the employee fixed.
+     *
+     * @param  Closure(Get): ?Employee  $employee
+     * @return array<int, Component>
+     */
+    public static function fields(Closure $employee): array
+    {
+        return [
+            Select::make('leave_type')
+                ->label('Leave type')
+                ->options(LeaveType::class)
+                ->required()
+                ->live()
+                ->afterStateUpdated(fn (Set $set) => $set('detail', null)),
+            DatePicker::make('date_from')
+                ->label('From')
+                ->required()
+                ->live()
+                ->afterStateUpdated(fn (Get $get, Set $set, ?string $state) => blank($get('date_to')) ? $set('date_to', $state) : null),
+            DatePicker::make('date_to')
+                ->label('To')
+                ->required()
+                ->afterOrEqual('date_from')
+                ->live(),
+            Select::make('coverage')
+                ->label('Part of the day')
+                ->options(LeaveCoverage::class)
+                ->default(LeaveCoverage::WholeDay->value)
+                ->selectablePlaceholder(false)
+                ->visible(fn (Get $get): bool => self::oneDate($get))
+                ->live(),
+            Text::make(fn (Get $get): string => self::preview($get, $employee($get)))
+                ->columnSpanFull(),
+            Select::make('detail')
+                ->label('Details')
+                ->options(fn (Get $get): array => collect(LeaveDetail::forType(self::type($get) ?? LeaveType::Maternity))
+                    ->mapWithKeys(fn (LeaveDetail $detail): array => [$detail->value => $detail->getLabel()])
+                    ->all())
+                ->visible(fn (Get $get): bool => self::type($get) !== null && LeaveDetail::forType(self::type($get)) !== [])
+                ->live(),
+            TextInput::make('detail_text')
+                ->label(fn (Get $get): string => $get('detail') === LeaveDetail::Abroad->value ? 'Country' : 'Illness')
+                ->maxLength(255)
+                ->visible(fn (Get $get): bool => self::needsText($get))
+                ->required(fn (Get $get): bool => self::needsText($get)),
+            Toggle::make('commutation_requested')
+                ->label('Commutation requested'),
+            TextInput::make('division_head')
+                ->label('Division Head (signs 7.B)')
+                ->maxLength(255),
+        ];
     }
 
     /** @return array<int, string> "Dela Cruz, Juan S. — 2020-0001", for everyone who earns credits */
@@ -95,9 +114,8 @@ class LeaveApplicationForm
             ->all();
     }
 
-    private static function preview(Get $get): string
+    private static function preview(Get $get, ?Employee $employee): string
     {
-        $employee = filled($get('employee_id')) ? Employee::find($get('employee_id')) : null;
         $type = self::type($get);
 
         if ($employee === null || $type === null || blank($get('date_from')) || blank($get('date_to'))) {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Employees\Pages;
 
+use App\Filament\Resources\Employees\Actions\ResetLoginAction;
 use App\Filament\Resources\Employees\EmployeeResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
@@ -25,6 +26,7 @@ class EditEmployee extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            ResetLoginAction::make(),
             DeleteAction::make(),
             RestoreAction::make(),
         ];

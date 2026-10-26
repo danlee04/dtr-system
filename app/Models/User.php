@@ -9,12 +9,13 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'employee_id', 'must_change_password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -30,20 +31,58 @@ class User extends Authenticatable implements FilamentUser
     protected $attributes = [
         'role' => 'hr',
         'is_active' => true,
+        'must_change_password' => false,
     ];
 
     /**
+     * Even when the employee is deleted, so the account can be refused for
+     * it rather than mistaken for one with no employee.
+     *
+     * @return BelongsTo<Employee, $this>
+     */
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class)->withTrashed();
+    }
+
+    /**
      * Filament asks this on every request, not only at sign-in, so
-     * deactivating an account locks it out on its next click.
+     * deactivating an account, or its employee, locks it out on its next
+     * click. The HR panel is for staff; the employee panel for an account
+     * linked to an employee who still works here.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_active;
+        if (! $this->is_active) {
+            return false;
+        }
+
+        return match ($panel->getId()) {
+            'admin' => $this->isStaff(),
+            'employee' => $this->hasCurrentEmployee(),
+            default => false,
+        };
     }
 
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /** Admin or HR: the people who run the HR panel. */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, [UserRole::Admin, UserRole::Hr], true);
+    }
+
+    private function hasCurrentEmployee(): bool
+    {
+        $employee = $this->employee;
+
+        return $employee !== null
+            && $employee->is_active
+            && ! $employee->trashed()
+            && ($employee->date_separated === null || $employee->date_separated->greaterThanOrEqualTo(today()));
     }
 
     /**
@@ -53,7 +92,7 @@ class User extends Authenticatable implements FilamentUser
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'role', 'is_active'])
+            ->logOnly(['name', 'email', 'role', 'is_active', 'employee_id', 'must_change_password'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
@@ -68,6 +107,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 }

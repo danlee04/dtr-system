@@ -5,7 +5,9 @@ namespace Tests\Feature\Users;
 use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
+use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -55,6 +57,47 @@ class UserResourceTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertSame($before, $user->fresh()->password);
+    }
+
+    public function test_the_users_screen_lists_staff_only(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $hr = User::factory()->create();
+        $employeeAccount = User::factory()->employee()->create();
+
+        Livewire::test(ListUsers::class)
+            ->assertCanSeeTableRecords([$hr])
+            ->assertCanNotSeeTableRecords([$employeeAccount]);
+    }
+
+    public function test_a_role_of_employee_is_not_offered(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'Ana Reyes',
+                'email' => 'ana@dtrc.test',
+                'role' => UserRole::Employee->value,
+                'is_active' => true,
+                'password' => 'a-long-password',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['role']);
+    }
+
+    public function test_an_admin_links_an_account_to_an_employee(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $hr = User::factory()->create();
+        $employee = Employee::factory()->create();
+
+        Livewire::test(EditUser::class, ['record' => $hr->getRouteKey()])
+            ->fillForm(['employee_id' => $employee->id])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame($employee->id, $hr->fresh()->employee_id);
     }
 
     public function test_an_admin_cannot_demote_or_deactivate_themselves(): void

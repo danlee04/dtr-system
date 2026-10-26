@@ -6,6 +6,7 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveType;
 use App\Filament\Resources\LeaveApplications\Actions\ApproveLeaveApplicationAction;
 use App\Filament\Resources\LeaveApplications\Actions\CancelLeaveApplicationAction;
+use App\Filament\Resources\LeaveApplications\Actions\PrintLeaveApplicationAction;
 use App\Models\LeaveApplication;
 use App\Models\Office;
 use Filament\Actions\ViewAction;
@@ -61,6 +62,7 @@ class LeaveApplicationsTable
             ])
             ->recordActions([
                 ViewAction::make(),
+                PrintLeaveApplicationAction::make(),
                 ApproveLeaveApplicationAction::make(),
                 CancelLeaveApplicationAction::make(),
             ]);

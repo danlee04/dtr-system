@@ -35,6 +35,15 @@ class LeaveApplicationResource extends Resource
 
     protected static ?string $modelLabel = 'leave application';
 
+    /**
+     * Everyone's leave, so staff only. The policy lets an employee view their
+     * own, which they do from the employee panel.
+     */
+    public static function canAccess(): bool
+    {
+        return (auth()->user()?->isStaff() ?? false) && parent::canAccess();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return LeaveApplicationForm::configure($schema);

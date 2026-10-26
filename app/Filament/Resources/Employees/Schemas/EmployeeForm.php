@@ -40,6 +40,9 @@ class EmployeeForm
                             ->maxLength(100),
                         TextInput::make('suffix')
                             ->maxLength(10),
+                        TextInput::make('position')
+                            ->helperText('As it goes on the leave form, e.g. Nurse II.')
+                            ->maxLength(100),
                         Select::make('employment_status')
                             ->options(EmploymentStatus::class)
                             ->required(),

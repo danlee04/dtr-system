@@ -58,18 +58,20 @@ final class LeaveApplications
         $coverage = self::option(LeaveCoverage::class, $data['coverage'] ?? LeaveCoverage::WholeDay)
             ?? throw ValidationException::withMessages(['coverage' => 'Choose whole day or a half.']);
         [$detail, $detailText] = $this->details($type, $data);
+        $divisionHead = $this->divisionHead($data);
 
         $this->posting->catchUp();
 
-        return DB::transaction(function () use ($employee, $start, $type, $from, $to, $coverage, $detail, $detailText, $data): LeaveApplication {
+        return DB::transaction(function () use ($employee, $start, $type, $from, $to, $coverage, $detail, $detailText, $divisionHead, $data): LeaveApplication {
             Employee::query()->whereKey($employee->getKey())->lockForUpdate()->first();
 
             $this->refuseOverlap($employee, $from, $to, $coverage);
 
+            $balances = $this->ledger->balances($employee);
             $charge = $this->charger->charge(
                 $type,
                 $this->counter->count($employee, $type, $from, $to, $coverage, $start),
-                $this->ledger->balances($employee),
+                $balances,
             );
 
             $application = $employee->leaveApplications()->create([
@@ -80,10 +82,13 @@ final class LeaveApplications
                 'detail' => $detail,
                 'detail_text' => $detailText,
                 'commutation_requested' => (bool) ($data['commutation_requested'] ?? false),
+                'division_head' => $divisionHead,
                 'days' => $charge->days,
                 'days_with_pay' => $charge->withPay,
                 'days_without_pay' => $charge->withoutPay,
                 'breakdown' => $charge->breakdown,
+                // For 7.A of the printed form, which certifies VL and SL only.
+                'credits_at_filing' => ['VL' => $balances['VL'], 'SL' => $balances['SL']],
                 'status' => LeaveApplicationStatus::Pending,
                 'filed_by_user_id' => auth()->id(),
             ]);
@@ -247,6 +252,23 @@ final class LeaveApplications
         }
 
         return [$detail, $text];
+    }
+
+    /**
+     * Typed by hand on each application for now: who heads the employee's
+     * division and signs 7.B.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function divisionHead(array $data): ?string
+    {
+        $name = trim((string) ($data['division_head'] ?? ''));
+
+        if (mb_strlen($name) > 255) {
+            throw ValidationException::withMessages(['division_head' => 'Keep it under 255 characters.']);
+        }
+
+        return $name === '' ? null : $name;
     }
 
     /**

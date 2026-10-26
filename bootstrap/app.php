@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // On every response, including redirects and errors: an error page is
         // still a page a browser will frame.
         $middleware->append(SecurityHeaders::class);
+
+        // Filament names each panel's sign-in route, so Laravel's default
+        // `login` route does not exist. The plain pages send guests to HR's.
+        $middleware->redirectGuestsTo('/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

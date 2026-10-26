@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Employees\Tables;
 
 use App\Enums\EmploymentStatus;
 use App\Filament\Resources\Employees\Actions\AssignScheduleBulkAction;
+use App\Filament\Resources\Employees\Actions\CreateLoginsBulkAction;
 use App\Models\Employee;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
@@ -64,6 +65,7 @@ class EmployeesTable
             ])
             ->toolbarActions([
                 AssignScheduleBulkAction::make(),
+                CreateLoginsBulkAction::make(),
             ]);
     }
 }

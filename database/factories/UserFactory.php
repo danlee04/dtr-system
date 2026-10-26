@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\UserRole;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -57,6 +58,23 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_active' => false,
+        ]);
+    }
+
+    /** An employee's own account: no email, signs in with the employee number. */
+    public function employee(?Employee $employee = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Employee,
+            'email' => null,
+            'employee_id' => $employee ?? Employee::factory(),
+        ]);
+    }
+
+    public function mustChangePassword(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'must_change_password' => true,
         ]);
     }
 }

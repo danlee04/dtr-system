@@ -6,6 +6,7 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveCoverage;
 use App\Enums\LeaveDetail;
 use App\Enums\LeaveType;
+use App\Enums\LedgerKind;
 use Database\Factories\LeaveApplicationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,10 +30,12 @@ use Spatie\Activitylog\Support\LogOptions;
     'detail',
     'detail_text',
     'commutation_requested',
+    'division_head',
     'days',
     'days_with_pay',
     'days_without_pay',
     'breakdown',
+    'credits_at_filing',
     'status',
     'filed_by_user_id',
     'approved_at',
@@ -106,6 +109,37 @@ class LeaveApplication extends Model
         };
     }
 
+    /**
+     * 7.A of the form, for VL and SL: the balance at filing, what this
+     * application drew, and what that left. Null for an application filed
+     * before the balances were kept with it.
+     *
+     * @return array<string, array{earned: string, less: string, balance: string}>|null
+     */
+    public function certification(): ?array
+    {
+        if ($this->credits_at_filing === null) {
+            return null;
+        }
+
+        $certification = [];
+
+        foreach (['VL', 'SL'] as $type) {
+            $less = '0.000';
+
+            foreach ($this->ledgerEntries as $entry) {
+                if ($entry->kind === LedgerKind::Application && $entry->leave_type->value === $type) {
+                    $less = bcsub($less, $entry->days, 3);
+                }
+            }
+
+            $earned = $this->credits_at_filing[$type];
+            $certification[$type] = ['earned' => $earned, 'less' => $less, 'balance' => bcsub($earned, $less, 3)];
+        }
+
+        return $certification;
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -128,6 +162,7 @@ class LeaveApplication extends Model
             'days_with_pay' => 'decimal:3',
             'days_without_pay' => 'decimal:3',
             'breakdown' => 'array',
+            'credits_at_filing' => 'array',
             'status' => LeaveApplicationStatus::class,
             'approved_at' => 'datetime',
             'cancelled_at' => 'datetime',
