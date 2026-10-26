@@ -73,6 +73,20 @@ class MyLeaveApplicationsTest extends TestCase
         $this->get(MyLeaveApplicationResource::getUrl('view', ['record' => $theirs]))->assertNotFound();
     }
 
+    public function test_an_employee_cannot_cancel_someone_elses_leave_through_livewire(): void
+    {
+        $theirs = LeaveApplication::factory()->create();
+
+        try {
+            Livewire::test(ListMyLeaveApplications::class)
+                ->callAction(TestAction::make('cancel')->table($theirs), ['cancel_reason' => 'Not mine']);
+        } catch (\Throwable) {
+            // Refused outright is as good as ignored; only the outcome matters.
+        }
+
+        $this->assertSame(LeaveApplicationStatus::Pending, $theirs->fresh()->status);
+    }
+
     public function test_an_employee_cancels_their_pending_leave(): void
     {
         $application = app(LeaveApplications::class)->file($this->employee, ['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-03', 'coverage' => 'whole_day']);

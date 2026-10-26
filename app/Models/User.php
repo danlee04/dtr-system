@@ -34,6 +34,19 @@ class User extends Authenticatable implements FilamentUser
     ];
 
     /**
+     * A changed password is logged without the password: that it changed,
+     * and who changed it, an admin's reset or the owner's own.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('password')) {
+                activity()->performedOn($user)->event('password_changed')->log('Password changed');
+            }
+        });
+    }
+
+    /**
      * Even when the employee is deleted, so the account can be refused for
      * it rather than mistaken for one with no employee.
      *
@@ -60,7 +73,7 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === UserRole::Admin;
     }
 
-    /** Admin or HR: the people who run the HR panel. */
+    /** Admin or HR: the people who use HR's screens. */
     public function isStaff(): bool
     {
         return in_array($this->role, [UserRole::Admin, UserRole::Hr], true);

@@ -84,6 +84,12 @@ class EmployeeAccessTest extends TestCase
             $this->assertFalse($user->can('viewAny', $model), $model);
             $this->assertFalse($user->can('create', $model), $model);
         }
+
+        // An office or schedule nobody uses is one staff may delete; never an employee.
+        foreach ([Employee::factory()->create(), Office::factory()->create(), Schedule::factory()->create(), Holiday::factory()->create(), RosterEntry::factory()->create(), ScheduleAssignment::factory()->create()] as $record) {
+            $this->assertFalse($user->can('update', $record), $record::class);
+            $this->assertFalse($user->can('delete', $record), $record::class);
+        }
     }
 
     public function test_an_employee_acts_only_on_their_own_applications(): void

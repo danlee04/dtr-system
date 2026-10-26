@@ -37,7 +37,8 @@ class SchedulePolicy
      */
     public function delete(User $user, Schedule $schedule): bool
     {
-        return ! $schedule->assignments()->exists()
+        return $user->isStaff()
+            && ! $schedule->assignments()->exists()
             && ! $schedule->rosterEntries()->exists();
     }
 

@@ -80,6 +80,31 @@ class PrintLeaveApplicationTest extends TestCase
             ->assertOk();
     }
 
+    public function test_a_deactivated_account_cannot_print(): void
+    {
+        // Its session or "remember me" cookie may outlive the deactivation.
+        $this->actingAs(User::factory()->inactive()->create())
+            ->get(route('leave-applications.print', $this->application))
+            ->assertForbidden();
+    }
+
+    public function test_an_employee_who_has_left_cannot_print_their_own_form(): void
+    {
+        $this->actingAs(User::factory()->employee($this->employee)->create());
+        $this->employee->update(['is_active' => false]);
+
+        $this->get(route('leave-applications.print', $this->application))->assertForbidden();
+    }
+
+    public function test_a_password_change_ends_other_sessions_here_too(): void
+    {
+        $this->get(route('leave-applications.print', $this->application))->assertOk();
+
+        auth()->user()->update(['password' => 'a-new-long-password']);
+
+        $this->get(route('leave-applications.print', $this->application))->assertRedirect('/login');
+    }
+
     public function test_an_employee_cannot_print_someone_elses_form(): void
     {
         $this->actingAs(User::factory()->employee()->create())

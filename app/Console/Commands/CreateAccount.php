@@ -32,7 +32,7 @@ class CreateAccount extends Command
     {
         $role = UserRole::tryFrom((string) $this->option('role'));
 
-        // Employee accounts are made from the Employees screen.
+        // Employee accounts are made on the Users screen, linked to their employee.
         if ($role === null || $role === UserRole::Employee) {
             $this->error("[{$this->option('role')}] is not a role for this command. Use admin or hr.");
 

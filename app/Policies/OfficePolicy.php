@@ -37,7 +37,7 @@ class OfficePolicy
      */
     public function delete(User $user, Office $office): bool
     {
-        return ! $office->employees()->withTrashed()->exists();
+        return $user->isStaff() && ! $office->employees()->withTrashed()->exists();
     }
 
     public function deleteAny(User $user): bool

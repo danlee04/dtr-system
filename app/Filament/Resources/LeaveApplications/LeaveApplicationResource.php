@@ -37,7 +37,7 @@ class LeaveApplicationResource extends Resource
 
     /**
      * Everyone's leave, so staff only. The policy lets an employee view their
-     * own, which they do from the employee panel.
+     * own, which they do on their own Applications screen.
      */
     public static function canAccess(): bool
     {

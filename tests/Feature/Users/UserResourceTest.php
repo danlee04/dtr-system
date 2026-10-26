@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class UserResourceTest extends TestCase
@@ -138,6 +139,27 @@ class UserResourceTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertSame($employee->id, $hr->fresh()->employee_id);
+    }
+
+    public function test_a_password_reset_is_logged_without_the_password(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($admin);
+        $user = User::factory()->employee()->create();
+
+        Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])
+            ->fillForm(['password' => 'a-new-long-password'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $entry = Activity::query()
+            ->where('subject_type', $user->getMorphClass())
+            ->where('subject_id', $user->id)
+            ->where('event', 'password_changed')
+            ->sole();
+
+        $this->assertSame($admin->id, $entry->causer_id);
+        $this->assertStringNotContainsString('a-new-long-password', json_encode($entry->toArray()));
     }
 
     public function test_an_admin_cannot_demote_or_deactivate_themselves(): void
