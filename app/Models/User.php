@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'employee_id', 'must_change_password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'employee_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -31,7 +31,6 @@ class User extends Authenticatable implements FilamentUser
     protected $attributes = [
         'role' => 'hr',
         'is_active' => true,
-        'must_change_password' => false,
     ];
 
     /**
@@ -48,20 +47,12 @@ class User extends Authenticatable implements FilamentUser
     /**
      * Filament asks this on every request, not only at sign-in, so
      * deactivating an account, or its employee, locks it out on its next
-     * click. The HR panel is for staff; the employee panel for an account
-     * linked to an employee who still works here.
+     * click. One panel serves everyone: staff, and accounts linked to an
+     * employee who still works here. Each screen then decides by role.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        if (! $this->is_active) {
-            return false;
-        }
-
-        return match ($panel->getId()) {
-            'admin' => $this->isStaff(),
-            'employee' => $this->hasCurrentEmployee(),
-            default => false,
-        };
+        return $this->is_active && ($this->isStaff() || $this->hasCurrentEmployee());
     }
 
     public function isAdmin(): bool
@@ -75,7 +66,11 @@ class User extends Authenticatable implements FilamentUser
         return in_array($this->role, [UserRole::Admin, UserRole::Hr], true);
     }
 
-    private function hasCurrentEmployee(): bool
+    /**
+     * Linked to an employee who is active, not deleted and not separated
+     * before today: what opens the My leave screens.
+     */
+    public function hasCurrentEmployee(): bool
     {
         $employee = $this->employee;
 
@@ -92,7 +87,7 @@ class User extends Authenticatable implements FilamentUser
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'role', 'is_active', 'employee_id', 'must_change_password'])
+            ->logOnly(['name', 'email', 'role', 'is_active', 'employee_id'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
@@ -107,7 +102,6 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
-            'must_change_password' => 'boolean',
         ];
     }
 }

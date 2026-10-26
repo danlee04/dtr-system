@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Users;
 
+use App\Enums\EmploymentStatus;
 use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
@@ -59,31 +60,70 @@ class UserResourceTest extends TestCase
         $this->assertSame($before, $user->fresh()->password);
     }
 
-    public function test_the_users_screen_lists_staff_only(): void
+    public function test_the_users_screen_lists_every_account(): void
     {
         $this->actingAs(User::factory()->admin()->create());
         $hr = User::factory()->create();
         $employeeAccount = User::factory()->employee()->create();
 
         Livewire::test(ListUsers::class)
-            ->assertCanSeeTableRecords([$hr])
-            ->assertCanNotSeeTableRecords([$employeeAccount]);
+            ->assertCanSeeTableRecords([$hr, $employeeAccount]);
     }
 
-    public function test_a_role_of_employee_is_not_offered(): void
+    public function test_an_admin_creates_an_employee_account(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $employee = Employee::factory()->create();
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'Juan Dela Cruz',
+                'email' => 'juan@dtrc.test',
+                'role' => UserRole::Employee->value,
+                'employee_id' => $employee->id,
+                'is_active' => true,
+                'password' => 'a-long-password',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $user = User::firstWhere('email', 'juan@dtrc.test');
+        $this->assertSame(UserRole::Employee, $user->role);
+        $this->assertSame($employee->id, $user->employee_id);
+    }
+
+    public function test_an_employee_account_needs_its_employee(): void
     {
         $this->actingAs(User::factory()->admin()->create());
 
         Livewire::test(CreateUser::class)
             ->fillForm([
-                'name' => 'Ana Reyes',
-                'email' => 'ana@dtrc.test',
+                'name' => 'Juan Dela Cruz',
+                'email' => 'juan@dtrc.test',
                 'role' => UserRole::Employee->value,
                 'is_active' => true,
                 'password' => 'a-long-password',
             ])
             ->call('create')
-            ->assertHasFormErrors(['role']);
+            ->assertHasFormErrors(['employee_id' => 'required']);
+    }
+
+    public function test_only_employees_who_earn_leave_are_linked(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $jobOrder = Employee::factory()->create(['employment_status' => EmploymentStatus::JobOrder]);
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'Pedro Santos',
+                'email' => 'pedro@dtrc.test',
+                'role' => UserRole::Employee->value,
+                'employee_id' => $jobOrder->id,
+                'is_active' => true,
+                'password' => 'a-long-password',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['employee_id']);
     }
 
     public function test_an_admin_links_an_account_to_an_employee(): void

@@ -3,10 +3,12 @@
 namespace App\Filament\Employee\Pages;
 
 use App\Enums\LeaveType;
+use App\Enums\NavigationGroup;
 use App\Services\Leave\LeaveLedger;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 /**
  * Every kind of leave, what it is for, and how much of it the signed-in
@@ -19,9 +21,16 @@ class LeaveTypes extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInformationCircle;
 
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::MyLeave;
+
     protected static ?int $navigationSort = 3;
 
     protected static ?string $title = 'Leave types';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasCurrentEmployee() ?? false;
+    }
 
     /** @return array{types: list<LeaveType>, balances: array<string, string>} */
     protected function getViewData(): array

@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -55,12 +54,6 @@ class Employee extends Model
     public function rosterEntries(): HasMany
     {
         return $this->hasMany(RosterEntry::class);
-    }
-
-    /** @return HasOne<User, $this> */
-    public function user(): HasOne
-    {
-        return $this->hasOne(User::class);
     }
 
     /** @return HasMany<LeaveApplication, $this> */

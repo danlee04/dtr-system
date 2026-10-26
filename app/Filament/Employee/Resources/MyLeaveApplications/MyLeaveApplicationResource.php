@@ -2,6 +2,7 @@
 
 namespace App\Filament\Employee\Resources\MyLeaveApplications;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Employee\Resources\MyLeaveApplications\Pages\CreateMyLeaveApplication;
 use App\Filament\Employee\Resources\MyLeaveApplications\Pages\ListMyLeaveApplications;
 use App\Filament\Employee\Resources\MyLeaveApplications\Pages\ViewMyLeaveApplication;
@@ -16,11 +17,12 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 /**
  * The signed-in employee's own leave: file, view, print and cancel while
- * pending. HR approves, from the HR panel. There is no edit page: a wrong
- * application is cancelled, which gives its days back.
+ * pending. HR approves, on its Leave applications screen. There is no edit
+ * page: a wrong application is cancelled, which gives its days back.
  */
 class MyLeaveApplicationResource extends Resource
 {
@@ -30,11 +32,19 @@ class MyLeaveApplicationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::MyLeave;
+
     protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationLabel = 'Applications';
 
     protected static ?string $modelLabel = 'leave application';
+
+    /** Only for an account linked to an employee who still works here. */
+    public static function canAccess(): bool
+    {
+        return (auth()->user()?->hasCurrentEmployee() ?? false) && parent::canAccess();
+    }
 
     /** Every page and action reads through this, so another employee's leave is never found. */
     public static function getEloquentQuery(): Builder

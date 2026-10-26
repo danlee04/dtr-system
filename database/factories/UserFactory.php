@@ -61,20 +61,12 @@ class UserFactory extends Factory
         ]);
     }
 
-    /** An employee's own account: no email, signs in with the employee number. */
+    /** An employee's own account, linked to their employee record. */
     public function employee(?Employee $employee = null): static
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::Employee,
-            'email' => null,
             'employee_id' => $employee ?? Employee::factory(),
-        ]);
-    }
-
-    public function mustChangePassword(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'must_change_password' => true,
         ]);
     }
 }

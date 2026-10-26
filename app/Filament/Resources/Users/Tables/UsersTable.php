@@ -33,10 +33,7 @@ class UsersTable
             ->defaultSort('name')
             ->filters([
                 SelectFilter::make('role')
-                    ->options([
-                        UserRole::Admin->value => UserRole::Admin->getLabel(),
-                        UserRole::Hr->value => UserRole::Hr->getLabel(),
-                    ]),
+                    ->options(UserRole::class),
                 TernaryFilter::make('is_active')
                     ->label('Active'),
             ])

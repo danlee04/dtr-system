@@ -15,7 +15,6 @@ use App\Models\ScheduleAssignment;
 use App\Models\User;
 use App\Services\Leave\LeaveApplications;
 use Filament\Actions\Testing\TestAction;
-use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -34,7 +33,6 @@ class MyLeaveApplicationsTest extends TestCase
 
         config(['leave.start_date' => '2026-11-01']);
         $this->travelTo('2026-11-02 08:00');
-        Filament::setCurrentPanel(Filament::getPanel('employee'));
 
         $this->employee = Employee::factory()->create(['last_name' => 'Dela Cruz']);
         ScheduleAssignment::factory()->for($this->employee)->for(Schedule::factory()->create(['code' => 'REG']))->create(['effective_from' => '2026-11-01']);
@@ -72,7 +70,7 @@ class MyLeaveApplicationsTest extends TestCase
         $theirs = LeaveApplication::factory()->create();
 
         Livewire::test(ListMyLeaveApplications::class)->assertCanNotSeeTableRecords([$theirs]);
-        $this->get(MyLeaveApplicationResource::getUrl('view', ['record' => $theirs], panel: 'employee'))->assertNotFound();
+        $this->get(MyLeaveApplicationResource::getUrl('view', ['record' => $theirs]))->assertNotFound();
     }
 
     public function test_an_employee_cancels_their_pending_leave(): void

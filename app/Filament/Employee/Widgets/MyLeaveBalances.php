@@ -15,6 +15,13 @@ class MyLeaveBalances extends StatsOverviewWidget
     // A balance changes only when they or HR do something, never on its own.
     protected ?string $pollingInterval = null;
 
+    protected static ?int $sort = 1;
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasCurrentEmployee() ?? false;
+    }
+
     /** @return list<Stat> */
     protected function getStats(): array
     {

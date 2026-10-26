@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Employee;
 use App\Models\User;
 
@@ -41,17 +40,6 @@ class EmployeePolicy
     public function restore(User $user, Employee $employee): bool
     {
         return $user->isStaff();
-    }
-
-    /**
-     * Staff make employees' own logins and reset their passwords. A staff
-     * account linked to an employee is not one of those: an admin keeps it on
-     * the Users screen.
-     */
-    public function manageLogin(User $user, ?Employee $employee = null): bool
-    {
-        return $user->isStaff()
-            && ($employee?->user === null || $employee->user->role === UserRole::Employee);
     }
 
     public function deleteAny(User $user): bool

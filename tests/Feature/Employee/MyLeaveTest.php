@@ -6,6 +6,7 @@ use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Filament\Employee\Pages\History;
 use App\Filament\Employee\Pages\LeaveTypes;
+use App\Filament\Employee\Resources\MyLeaveApplications\MyLeaveApplicationResource;
 use App\Filament\Employee\Widgets\MyLeaveBalances;
 use App\Filament\Employee\Widgets\MyPendingApplications;
 use App\Models\Employee;
@@ -13,7 +14,6 @@ use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
 use App\Models\User;
 use App\Services\Leave\LeaveLedger;
-use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -27,8 +27,6 @@ class MyLeaveTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        Filament::setCurrentPanel(Filament::getPanel('employee'));
 
         $user = User::factory()->employee()->create();
         $this->employee = $user->employee;
@@ -87,9 +85,30 @@ class MyLeaveTest extends TestCase
             $this->assertNotSame('', $type->description());
         }
 
-        $this->get(LeaveTypes::getUrl(panel: 'employee'))
+        $this->get(LeaveTypes::getUrl())
             ->assertOk()
             ->assertSee('Wellness Leave')
             ->assertSee('3.500');
+    }
+
+    public function test_the_dashboard_shows_my_leave_to_employees(): void
+    {
+        // Widgets load after the page, so their gate is what the dashboard asks.
+        $this->get('/')->assertOk();
+        $this->assertTrue(MyLeaveBalances::canView());
+        $this->assertTrue(MyPendingApplications::canView());
+    }
+
+    public function test_staff_without_an_employee_see_no_my_leave(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get('/')->assertOk();
+        $this->assertFalse(MyLeaveBalances::canView());
+        $this->assertFalse(MyPendingApplications::canView());
+
+        foreach ([History::getUrl(), LeaveTypes::getUrl(), MyLeaveApplicationResource::getUrl('index')] as $url) {
+            $this->get($url)->assertForbidden();
+        }
     }
 }

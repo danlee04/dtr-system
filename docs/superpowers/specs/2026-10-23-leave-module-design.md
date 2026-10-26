@@ -42,7 +42,8 @@ HR no longer keeps balances by hand.
   cancelled by HR, cancelled by the employee while pending.
 - The leave form (CS Form No. 6), filled in from the application, printed from
   the browser.
-- Employee accounts and their own panel; HR's screens in the existing panel.
+- Employee accounts in the existing panel, which shows each role its own
+  screens.
 
 **Not in this module**
 
@@ -375,48 +376,48 @@ Application.xlsx` in `storage/app/samples/`, git-ignored), received 23 October
 
 - `users.role` gains `employee`, and `users.employee_id` links an account to
   its employee. An employee has at most one account.
+- **Everyone signs in the same way**, with email and password, on the one
+  panel at `/`. The role decides what they see: admin and hr get HR's
+  screens; an account linked to an employee who still works here gets that
+  employee's own leave screens, under **My leave**. (Changed on 2026-10-26 at
+  the user's direction. It replaces the separate employee panel at
+  `/employee`, sign-in by employee number, and the printed password slips.)
+- **The admin creates employee accounts on the Users screen**: name, email,
+  password, the role Employee, and the employee the account belongs to, which
+  that role requires. Only employees who earn leave credits can be linked.
 - **HR staff are employees too.** An admin or hr account may also be linked to
-  its owner's employee record, which opens the employee panel to it as well.
-  One account, two panels; nobody keeps a second password. The admin links it
-  on the Users screen, and **Create logins** skips employees who already have
-  an account.
+  its owner's employee record, which shows them My leave as well. One account
+  per person; nobody keeps a second password.
+- Everyone can change their own password from the user menu. Nobody is forced
+  to at the first sign-in; the admin resets a forgotten one on the Users
+  screen.
 - HR may approve or cancel its own application. The paper form carries the
   signatures that matter, and the activity log shows who clicked.
-- **Employees have their own panel at `/employee`.** It holds only their own
-  leave, so no HR screen can reach them by mistake. The HR panel stays at `/`.
-- **Employees sign in with their employee number** and a password. Many have
-  no email, so `users.email` becomes nullable; HR and admin still sign in with
-  email. The employee login page extends Filament's, which keeps its rate
-  limit.
-- **HR creates the accounts** with a bulk action on Employees: each selected
-  employee who earns credits and has no account gets one, with a random
-  temporary password. The passwords are shown once, on a printable sheet of
-  slips (name, employee number, temporary password, the address), and are
-  never stored readable. At the first sign-in the employee must set their own
-  password. HR can reset a forgotten one the same way.
 - An account stops working when the employee is deactivated, deleted or
-  separated, as well as when the account itself is deactivated.
+  separated, as well as when the account itself is deactivated. A staff
+  account linked to such an employee loses only My leave.
 
 ## Screens
 
-**Employee panel**
+**My leave** (accounts linked to an employee)
 
 | Screen | Contents |
 |---|---|
-| My leave | Balances of VL, SL, SPL and Wellness; pending applications |
+| Dashboard | Balances of VL, SL, SPL and Wellness; pending applications |
 | History | Every ledger row, newest first, one tab per type with a running balance, the way a leave card reads |
 | Applications | Own applications and their status; **File leave** with the live day count and pay split; cancel while pending; print |
 | Leave types | Each type's description and, where tracked, the balance |
-| Password | Change password |
 
-**HR panel (additions)**
+**Everyone:** Change password, in the user menu.
+
+**HR's screens (additions)**
 
 | Screen | Contents | Roles |
 |---|---|---|
 | Leave applications | All applications, filtered by status, type, office and date; view, approve, cancel, print; file for an employee | admin, hr |
 | Employee → Leave tab | Balances, history, add adjustment, file for this employee | admin, hr |
-| Employees | `position` field; bulk **Create logins**; **Reset password** | admin, hr |
-| Users | Lists admin and hr accounts only (employee accounts are managed from Employees); links an account to its owner's employee record | admin |
+| Employees | `position` field | admin, hr |
+| Users | Every account; the role Admin, HR or Employee; the linked employee, required for Employee | admin |
 | Opening balances | The grid, one office at a time | admin, hr |
 | Schedules | The `leave_days` field ("Days charged to VL/SL for a day of leave") | admin, hr |
 | Dashboard | Count of pending applications | admin, hr |
@@ -475,21 +476,22 @@ leave_ledger_entries      id, employee_id, leave_type, posted_on (date),
 
 The **Security Guidelines** in `CLAUDE.md` apply. In this module:
 
-- **An employee sees only their own leave.** Every query in the employee panel
-  is scoped to the signed-in user's `employee_id`, and the application policy
-  allows an employee only their own rows. Record IDs in Livewire components
-  are `#[Locked]`. Tests try to open, print and cancel another employee's
-  application.
-- **The HR panel refuses employee accounts.** `canAccessPanel()` checks
-  `is_active` and, for the HR panel, the role admin or hr; for the employee
-  panel, a linked employee who is active, not deleted and not separated. The existing policies, which allow
-  every user today because only HR had accounts, are changed to allow only
-  admin and hr. This also settles the open point that `CLAUDE.md` describes a
-  role check the code did not have.
+- **An employee sees only their own leave.** Every query on the My leave
+  screens is scoped to the signed-in user's `employee_id`, and the application
+  policy allows an employee only their own rows. Record IDs in Livewire
+  components are `#[Locked]`. Tests try to open, print and cancel another
+  employee's application.
+- **HR's screens refuse employee accounts.** One panel serves everyone, so
+  `canAccessPanel()` lets in an active account that is admin or hr, or that is
+  linked to an employee who is active, not deleted and not separated. Every HR
+  screen and widget then checks a staff-only policy; the My leave screens
+  check the link. The existing policies, which allow every user today because
+  only HR had accounts, are changed to allow only admin and hr. This also
+  settles the open point that `CLAUDE.md` describes a role check the code did
+  not have.
 - **Passwords cross the LAN once employees sign in from their own PCs**, so
   HTTPS (`APP_FORCE_HTTPS`, DTR spec **Security**) must be on before the
   module goes live, not later.
-- Temporary passwords are random, shown once, and replaced at first sign-in.
 - Balances and leave history are personal information under RA 10173.
 
 ## Testing
@@ -516,9 +518,9 @@ services (`ScheduleResolver`, `LeaveDayCounter`, `LeaveCharger`,
   month hired on the 15th 0.667; filing sick leave without pay into a posted
   month adds a correction, and cancelling it adds the reverse; the forced-leave rule at 9.999 and at 10, with 2 days taken and with
   5, counting the opening FL row; the lapse and the grant across a year.
-- **Access:** an employee cannot reach the HR panel, nor another employee's
-  application through the panel, the print view or a Livewire call; an
-  employee of a deactivated employee cannot sign in; HR can file for anyone.
+- **Access:** an employee cannot open HR's screens, nor another employee's
+  application through the panel, the print view or a Livewire call; the
+  account of a deactivated employee cannot sign in; HR can file for anyone.
 - **The form:** tests assert on the data the view is built from (balances,
   days, signatories), not on the printed page.
 
@@ -533,7 +535,7 @@ system after one posted month match what HR computes by hand on its copy.
    running the posting again adds nothing.
 3. 31 December applies forced leave and the lapse; 1 January grants SPL and
    Wellness.
-4. An employee signs in with their employee number, sees their balances and
+4. An employee signs in with their email and password, sees their balances and
    history, files a leave, sees the day count and pay split, and prints the
    form.
 5. HR approves or cancels; a cancellation restores the balance.
@@ -550,7 +552,7 @@ Two plans, each leaving working software, then the go-live steps:
 |---|---|
 | **L1. Balances** | Leave types, the ledger, opening balances, `leave:post`, adjustments, the Leave tab on an employee. HR has correct balances and can answer "meron pa ba akong SL?" from the system. |
 | **L2a. Applications** | `ScheduleResolver`, `leave_days` on schedules, counting and charging, days without pay in the monthly credit and its corrections, applications filed, approved and cancelled by HR, the Leave applications screen, the dashboard count. HR files leave for anyone. |
-| **L2b. Employees and the form** | Employee accounts and their panel, sign-in by employee number, the policy changes, `position` on employees, the leave type descriptions, the printed form. Employees file their own leave. Waits on the scan of HR's leave form. |
+| **L2b. Employees and the form** | Employee accounts and their My leave screens, made on the Users screen, the policy changes, `position` on employees, the leave type descriptions, the printed form. Employees file their own leave. Waits on the scan of HR's leave form. |
 | **Go-live** | From DTR Plan 5, brought forward: the server on the LAN, the Task Scheduler entry (it now runs `leave:post`), `dtr:backup` off the machine, HTTPS. |
 
 The DTR plans keep their order after this. Plan 3 reuses `ScheduleResolver`,
@@ -586,16 +588,17 @@ chat:
 12. **Forced leave** counts VL and FL drawn in the year, applies at a balance of
     10 or more on 31 December, and is not recomputed by a later cancellation.
 13. **New employees after the start** begin at zero.
-14. **A separate employee panel at `/employee`**, sign-in by employee number,
-    temporary passwords printed on slips and replaced at first sign-in.
+14. **One panel and one sign-in for everyone** (email and password); the role
+    decides the screens. Changed on 2026-10-26 from a separate employee panel
+    with sign-in by employee number and temporary passwords on printed slips.
 15. **Accounts only for permanent and co-terminous staff.**
 16. **The form printed from the browser**, signatory names in config.
 17. **`position` added to employees**; the salary is not on the printed form
     (HR's answer), and waits for monetization.
 18. **The existing policies tightened** to admin and hr.
 19. **Leave type descriptions in code**, shown as the guide.
-20. **HR staff use one account for both panels**, and may approve their own
-    application.
+20. **HR staff use one account**, which shows My leave when linked to their
+    employee record, and may approve their own application.
 21. **SPL and Wellness are filed for the current year only.**
 22. **Opening balances can be re-saved** until the employee has a row of any
     other kind; the first save is accepted at any time.

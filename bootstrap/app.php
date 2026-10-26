@@ -17,8 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // still a page a browser will frame.
         $middleware->append(SecurityHeaders::class);
 
-        // Filament names each panel's sign-in route, so Laravel's default
-        // `login` route does not exist. The plain pages send guests to HR's.
+        // Filament names its sign-in route, so Laravel's default `login`
+        // route does not exist. The plain pages send guests to the panel's.
         $middleware->redirectGuestsTo('/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {

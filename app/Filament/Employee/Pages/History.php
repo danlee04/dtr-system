@@ -3,6 +3,7 @@
 namespace App\Filament\Employee\Pages;
 
 use App\Enums\LeaveType;
+use App\Enums\NavigationGroup;
 use App\Services\Leave\LeaveLedger;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -11,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use UnitEnum;
 
 /**
  * Where the signed-in employee's leave went: one tab per type with a
@@ -24,10 +26,17 @@ class History extends Page implements HasTable
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::MyLeave;
+
     protected static ?int $navigationSort = 2;
 
     /** The tab, as a type's code. Anything but a type with a balance shows VL. */
     public string $type = 'VL';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasCurrentEmployee() ?? false;
+    }
 
     public function currentType(): LeaveType
     {
