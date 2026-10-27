@@ -422,6 +422,11 @@ undertime, so a day can be late twice.
 
 ## Device sync
 
+> **Superseded 2026-10-27.** Plan 2b is dropped: punches come from a file the
+> IT Unit sends, not from the devices. This section, and every rule that waits
+> on a sync (the dashboard indicator, pending days, month closing), is
+> revisited when the file import is designed.
+
 **The interface comes before the library.** The first development task is a
 probe, `php artisan device:probe {ip} {--port=4370} {--key=0}`, which connects
 to the real device and prints its clock, its user count and its last ten logs.
@@ -779,7 +784,7 @@ working software:
 |---|---|
 | **1. Probe and foundation** | `device:probe` against the real device, and the library chosen. Filament, users and roles, offices, employees with CSV import, the activity log, the security baseline. HR can load the employee list. |
 | **2a. Schedules** | Schedules, assignments with the bulk assign, the roster grid, holidays and suspensions. Nothing in it reads the device. |
-| **2b. Sync** | Devices, `DeviceSync`, the scheduler, Unmatched logs, the dashboard. HR can map biometric IDs and watch logs arrive. |
+| ~~**2b. Sync**~~ | **Dropped 2026-10-27.** The app has no access to the devices; the IT Unit sends the punches as a file. A file import takes its place, planned once IT's sample file arrives. |
 | **3. Computation** | Resolver, matcher, calculator, recomputer, exceptions, corrections, the Attendance screen. HR sees late and undertime for every day. |
 | **4. Closing and reports** | Finalize and reopen, Form 48, the monthly summary and its Excel file, CSC conversion, habitual tardiness. Form 48's layout waits on the sample. |
 | **5. Backup, deployment, parallel run** | `dtr:backup`, HTTPS and Task Scheduler on the server, then the parallel run. |
