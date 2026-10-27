@@ -6,6 +6,7 @@ use App\Enums\EmploymentStatus;
 use App\Filament\Resources\Employees\Actions\AssignScheduleBulkAction;
 use App\Models\Employee;
 use Filament\Actions\EditAction;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -60,7 +61,9 @@ class EmployeesTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                // The same width as New employee.
+                EditAction::make()
+                    ->modalWidth(Width::SixExtraLarge),
             ])
             ->toolbarActions([
                 AssignScheduleBulkAction::make(),

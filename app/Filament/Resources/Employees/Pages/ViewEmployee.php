@@ -10,6 +10,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
@@ -74,7 +75,9 @@ class ViewEmployee extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            // The same width as New employee.
+            EditAction::make()
+                ->modalWidth(Width::SixExtraLarge),
             // Outlined, so Edit is the one that stands out.
             DeleteAction::make()->outlined(),
             RestoreAction::make()->outlined(),

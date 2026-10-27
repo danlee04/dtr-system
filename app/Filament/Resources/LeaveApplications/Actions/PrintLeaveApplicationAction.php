@@ -19,7 +19,7 @@ class PrintLeaveApplicationAction extends Action
         parent::setUp();
 
         $this
-            ->label('Print form')
+            ->label('Print')
             ->icon(Heroicon::OutlinedPrinter)
             ->color('gray')
             ->authorize('print')

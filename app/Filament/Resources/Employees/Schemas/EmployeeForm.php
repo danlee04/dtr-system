@@ -63,7 +63,7 @@ class EmployeeForm
                     ->schema([
                         TextInput::make('biometric_id')
                             ->label('Biometric ID')
-                            ->helperText('Its ID on the biometric device. Blank until known.')
+                            ->helperText('Its ID on the device. Blank until known.')
                             ->maxLength(20)
                             ->alphaNum()
                             ->unique(),
