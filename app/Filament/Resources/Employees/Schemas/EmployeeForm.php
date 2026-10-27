@@ -18,7 +18,7 @@ class EmployeeForm
             ->components([
                 // Headings, not cards: a card inside the modal is a box in a box.
                 // Four across, the same as the employee's page, so nothing sits alone.
-                Section::make('Employee')
+                Section::make('Employment')
                     ->contained(false)
                     ->columns(4)
                     ->columnSpanFull()
@@ -39,6 +39,12 @@ class EmployeeForm
                         TextInput::make('position')
                             ->helperText('As on the leave form, e.g. Nurse II.')
                             ->maxLength(100),
+                    ]),
+                Section::make('Name')
+                    ->contained(false)
+                    ->columns(4)
+                    ->columnSpanFull()
+                    ->schema([
                         TextInput::make('last_name')
                             ->required()
                             ->maxLength(100),

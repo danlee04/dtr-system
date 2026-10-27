@@ -144,6 +144,21 @@ class EmployeeResourceTest extends TestCase
             ->assertSee('Leave');
     }
 
+    public function test_the_employee_page_says_who_it_is_at_a_glance(): void
+    {
+        $this->travelTo('2026-10-27');
+        $office = Office::factory()->create(['name' => 'Nursing Service']);
+        $active = Employee::factory()->for($office)->create(['position' => 'Nurse II', 'employee_number' => '2019-0042']);
+        $separated = Employee::factory()->create(['date_separated' => '2026-09-30']);
+
+        $this->get(EmployeeResource::getUrl('view', ['record' => $active]))
+            ->assertOk()
+            ->assertSee(['Permanent', 'Nurse II', 'Nursing Service', '2019-0042', 'data:image/svg+xml;base64,'], escape: false);
+
+        $this->get(EmployeeResource::getUrl('view', ['record' => $separated]))
+            ->assertSee('Separated Sep 30, 2026');
+    }
+
     public function test_editing_from_the_employee_page_opens_a_modal(): void
     {
         $employee = Employee::factory()->create(['last_name' => 'Dela Cruz']);

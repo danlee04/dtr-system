@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Employees\RelationManagers;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Services\Attendance\ScheduleAssigner;
+use BackedEnum;
 use Carbon\CarbonImmutable;
 use Closure;
 use Filament\Actions\CreateAction;
@@ -15,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -27,6 +29,8 @@ class ScheduleAssignmentsRelationManager extends RelationManager
     protected static string $relationship = 'scheduleAssignments';
 
     protected static ?string $title = 'Schedules';
+
+    protected static string|BackedEnum|null $icon = Heroicon::OutlinedClock;
 
     protected static ?string $modelLabel = 'schedule';
 

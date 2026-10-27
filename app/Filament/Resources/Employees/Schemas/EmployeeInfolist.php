@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Employees\Schemas;
 
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -20,7 +19,7 @@ class EmployeeInfolist
                 Section::make()
                     ->columnSpanFull()
                     ->schema([
-                        Section::make('Employee')
+                        Section::make('Employment')
                             ->contained(false)
                             ->columns(4)
                             ->schema([
@@ -30,6 +29,11 @@ class EmployeeInfolist
                                 TextEntry::make('employment_status'),
                                 TextEntry::make('position')
                                     ->placeholder('—'),
+                            ]),
+                        Section::make('Name')
+                            ->contained(false)
+                            ->columns(4)
+                            ->schema([
                                 TextEntry::make('last_name'),
                                 TextEntry::make('first_name'),
                                 TextEntry::make('middle_name')
@@ -41,18 +45,21 @@ class EmployeeInfolist
                             ->contained(false)
                             ->columns(4)
                             ->schema([
+                                // Blank means their punches cannot be matched yet, so it says so.
                                 TextEntry::make('biometric_id')
                                     ->label('Biometric ID')
-                                    ->placeholder('—'),
+                                    ->placeholder('Not set'),
                                 TextEntry::make('date_hired')
                                     ->date('M j, Y')
                                     ->placeholder('—'),
                                 TextEntry::make('date_separated')
                                     ->date('M j, Y')
                                     ->placeholder('—'),
-                                IconEntry::make('is_active')
-                                    ->label('Active')
-                                    ->boolean(),
+                                TextEntry::make('is_active')
+                                    ->label('Status')
+                                    ->badge()
+                                    ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
+                                    ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
                             ]),
                     ]),
             ]);

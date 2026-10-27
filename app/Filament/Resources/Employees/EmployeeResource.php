@@ -10,6 +10,7 @@ use App\Filament\Resources\Employees\RelationManagers\ScheduleAssignmentsRelatio
 use App\Filament\Resources\Employees\Schemas\EmployeeForm;
 use App\Filament\Resources\Employees\Schemas\EmployeeInfolist;
 use App\Filament\Resources\Employees\Tables\EmployeesTable;
+use App\Filament\Resources\Employees\Widgets\EmployeeLeaveBalances;
 use App\Models\Employee;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -60,6 +61,13 @@ class EmployeeResource extends Resource
         return [
             ScheduleAssignmentsRelationManager::class,
             LeaveLedgerEntriesRelationManager::class,
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            EmployeeLeaveBalances::class,
         ];
     }
 

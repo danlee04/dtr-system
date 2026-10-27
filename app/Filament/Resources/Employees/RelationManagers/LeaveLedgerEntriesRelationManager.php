@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\LeaveLedgerEntry;
 use App\Services\Leave\LeaveLedger;
 use App\Services\Leave\LeavePosting;
+use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -24,14 +25,17 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * The employee's leave: balances on top, every credit and deduction below.
- * Rows are never edited; a correction is an adjustment, through LeaveLedger.
+ * The employee's leave: every credit and deduction, newest first. The
+ * balances are the cards above the page's tabs. Rows are never edited; a
+ * correction is an adjustment, through LeaveLedger.
  */
 class LeaveLedgerEntriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'leaveLedgerEntries';
 
     protected static ?string $title = 'Leave';
+
+    protected static string|BackedEnum|null $icon = Heroicon::OutlinedCalendarDays;
 
     /** It sits on the employee's view page, which Filament would make read-only. */
     public function isReadOnly(): bool
@@ -42,7 +46,6 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->description(fn (): string => $this->balancesLine())
             ->columns([
                 TextColumn::make('posted_on')
                     ->label('Date')
@@ -73,9 +76,11 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
             ->headerActions([
                 FileLeaveAction::make()
                     ->employee(fn (): Employee => $this->employee()),
+                // Gray, so File leave is the one that stands out.
                 Action::make('adjust')
                     ->label('Add adjustment')
                     ->icon(Heroicon::OutlinedPlusCircle)
+                    ->color('gray')
                     ->authorize('create', LeaveLedgerEntry::class)
                     ->modalHeading('Add Adjustment')
                     ->modalDescription('Dated today. Use a minus sign to deduct, e.g. -0.500.')
@@ -125,14 +130,6 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
     }
 
     /** "VL 10.000 · SL 0.000 · SPL 0.000 · Wellness 0.000" */
-    private function balancesLine(): string
-    {
-        $balances = app(LeaveLedger::class)->balances($this->employee());
-
-        return collect($balances)
-            ->map(fn (string $days, string $code): string => ($code === LeaveType::Wellness->value ? 'Wellness' : $code)." {$days}")
-            ->implode(' · ');
-    }
 
     /** @return array<string, string> code → label */
     private static function trackedOptions(): array
