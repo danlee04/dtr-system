@@ -18,6 +18,8 @@ class HolidayForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            // Three across, so a short form fills the modal instead of leaving half of it blank.
+            ->columns(3)
             ->components([
                 DatePicker::make('date')
                     ->required()

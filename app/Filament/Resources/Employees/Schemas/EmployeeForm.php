@@ -17,9 +17,10 @@ class EmployeeForm
         return $schema
             ->components([
                 // Headings, not cards: a card inside the modal is a box in a box.
+                // Four across, the same as the employee's page, so nothing sits alone.
                 Section::make('Employee')
                     ->contained(false)
-                    ->columns(2)
+                    ->columns(4)
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('employee_number')
@@ -32,6 +33,12 @@ class EmployeeForm
                             ->searchable()
                             ->preload()
                             ->required(),
+                        Select::make('employment_status')
+                            ->options(EmploymentStatus::class)
+                            ->required(),
+                        TextInput::make('position')
+                            ->helperText('As on the leave form, e.g. Nurse II.')
+                            ->maxLength(100),
                         TextInput::make('last_name')
                             ->required()
                             ->maxLength(100),
@@ -42,32 +49,26 @@ class EmployeeForm
                             ->maxLength(100),
                         TextInput::make('suffix')
                             ->maxLength(10),
-                        TextInput::make('position')
-                            ->helperText('As it goes on the leave form, e.g. Nurse II.')
-                            ->maxLength(100),
-                        Select::make('employment_status')
-                            ->options(EmploymentStatus::class)
-                            ->required(),
                     ]),
                 Section::make('Attendance')
                     ->contained(false)
-                    ->columns(2)
+                    ->columns(4)
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('biometric_id')
                             ->label('Biometric ID')
-                            ->helperText('The ID this person uses on the biometric device. Leave it blank until it is known.')
+                            ->helperText('Its ID on the biometric device. Blank until known.')
                             ->maxLength(20)
                             ->alphaNum()
-                            ->unique()
-                            ->columnSpanFull(),
+                            ->unique(),
                         DatePicker::make('date_hired'),
                         DatePicker::make('date_separated')
                             ->afterOrEqual('date_hired'),
+                        // Label on top, so the switch lines up with the fields beside it.
                         Toggle::make('is_active')
                             ->label('Active')
                             ->default(true)
-                            ->columnSpanFull(),
+                            ->inline(false),
                     ]),
             ]);
     }

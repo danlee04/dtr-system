@@ -12,7 +12,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
@@ -30,12 +29,6 @@ class LeaveApplicationResource extends Resource
     protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'leave application';
-
-    /** "Dela Cruz, Juan S. · Nov 3–5, 2026", as the view modal's heading. */
-    public static function getRecordTitle(?Model $record): ?string
-    {
-        return $record === null ? null : "{$record->employee->full_name} · {$record->dates()}";
-    }
 
     /**
      * Everyone's leave, so staff only. The policy lets an employee view their

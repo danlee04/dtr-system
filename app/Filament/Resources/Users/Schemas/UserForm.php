@@ -19,6 +19,8 @@ class UserForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            // Three across, so a short form fills the modal instead of leaving half of it blank.
+            ->columns(3)
             ->components([
                 TextInput::make('name')
                     ->required()
@@ -53,11 +55,12 @@ class UserForm
                     ->helperText(fn (string $operation): ?string => $operation === 'edit'
                         ? 'Leave blank to keep the current password.'
                         : null),
+                // Label on top, so the switch lines up with the fields beside it.
                 Toggle::make('is_active')
                     ->label('Active')
                     ->default(true)
-                    ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
-                    ->columnSpanFull(),
+                    ->inline(false)
+                    ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false),
             ]);
     }
 

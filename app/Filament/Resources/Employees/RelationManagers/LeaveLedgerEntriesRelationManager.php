@@ -15,6 +15,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -76,8 +77,10 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
                     ->label('Add adjustment')
                     ->icon(Heroicon::OutlinedPlusCircle)
                     ->authorize('create', LeaveLedgerEntry::class)
+                    ->modalHeading('Add Adjustment')
                     ->modalDescription('Dated today. Use a minus sign to deduct, e.g. -0.500.')
-                    ->schema([
+                    // Type and days on one row, the reason under them.
+                    ->schema(fn (): array => [Grid::make(2)->schema([
                         Select::make('leave_type')
                             ->label('Type')
                             ->options(self::trackedOptions())
@@ -110,8 +113,9 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
                         Textarea::make('remarks')
                             ->label('Reason')
                             ->required()
-                            ->maxLength(500),
-                    ])
+                            ->maxLength(500)
+                            ->columnSpanFull(),
+                    ])])
                     ->action(function (array $data, LeaveLedger $ledger): void {
                         $ledger->adjust($this->employee(), LeaveType::from($data['leave_type']), (string) $data['days'], $data['remarks']);
 

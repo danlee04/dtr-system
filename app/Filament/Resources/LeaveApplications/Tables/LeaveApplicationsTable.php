@@ -62,6 +62,7 @@ class LeaveApplicationsTable
             ])
             ->recordActions([
                 ViewAction::make()
+                    ->modalHeading('Leave Application')
                     ->extraModalFooterActions([
                         PrintLeaveApplicationAction::make(),
                         ApproveLeaveApplicationAction::make()->cancelParentActions(),

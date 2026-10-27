@@ -18,6 +18,8 @@ class ScheduleForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            // Three across, so the modal fills its width instead of leaving half of it blank.
+            ->columns(3)
             ->components([
                 TextInput::make('code')
                     ->required()
@@ -32,11 +34,29 @@ class ScheduleForm
                 TextInput::make('name')
                     ->required()
                     ->maxLength(100),
+                TextInput::make('leave_days')
+                    ->label('Days charged to VL/SL')
+                    ->required()
+                    ->default('1.000')
+                    ->regex('/^\d(\.\d{1,3})?\z/')
+                    ->rules([
+                        fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                            if (preg_match('/^\d(\.\d{1,3})?\z/', (string) $value) === 1 && bccomp((string) $value, '0', 3) === 0) {
+                                $fail('A day of leave must charge more than zero.');
+                            }
+                        },
+                    ])
+                    ->helperText('Per day of leave: 1 for most schedules, 1.25 for the 4-Day Week (10-hour days). SPL and Wellness always charge 1.'),
                 CheckboxList::make('work_days')
                     ->options(Schedule::WEEKDAYS)
                     ->columns(7)
-                    ->columnSpanFull()
+                    ->columnSpan(2)
                     ->helperText('For employees assigned this schedule. A schedule used only in the duty roster needs none.'),
+                // Label on top, so the switch lines up with the fields beside it.
+                Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true)
+                    ->inline(false),
                 // A heading, not a card: a card inside the modal is a box in a box.
                 Section::make('Hours')
                     ->description('A time earlier than the one before it is the next day, so a night shift needs nothing extra.')
@@ -66,23 +86,6 @@ class ScheduleForm
                         self::time('block2_out', 'Second out')
                             ->requiredWith('block2_in'),
                     ]),
-                TextInput::make('leave_days')
-                    ->label('Days charged to VL/SL for a day of leave')
-                    ->required()
-                    ->default('1.000')
-                    ->regex('/^\d(\.\d{1,3})?\z/')
-                    ->rules([
-                        fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
-                            if (preg_match('/^\d(\.\d{1,3})?\z/', (string) $value) === 1 && bccomp((string) $value, '0', 3) === 0) {
-                                $fail('A day of leave must charge more than zero.');
-                            }
-                        },
-                    ])
-                    ->helperText('1 for most schedules. 1.25 for the 4-Day Week (10-hour days). SPL and Wellness always charge 1.'),
-                Toggle::make('is_active')
-                    ->label('Active')
-                    ->default(true)
-                    ->columnSpanFull(),
             ]);
     }
 

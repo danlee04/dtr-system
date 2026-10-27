@@ -41,9 +41,9 @@ class FileLeaveAction extends Action
             ->modalSubmitActionLabel('File')
             ->stickyModalHeader()
             ->stickyModalFooter()
-            // Two columns, like every other form modal.
+            // Three across, like the other form modals.
             ->schema(fn (): array => [
-                Grid::make(2)->schema($this->employee === null
+                Grid::make(3)->schema($this->employee === null
                     ? LeaveApplicationForm::components()
                     : LeaveApplicationForm::fields(fn (): ?Employee => $this->evaluate($this->employee))),
             ])

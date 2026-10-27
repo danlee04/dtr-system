@@ -42,7 +42,7 @@ class LeaveApplicationForm
                 ->searchable()
                 ->required()
                 ->live()
-                ->columnSpanFull(),
+                ->columnSpan(2),
             ...self::fields(fn (Get $get): ?Employee => filled($get('employee_id')) ? Employee::find($get('employee_id')) : null),
         ];
     }
@@ -62,8 +62,7 @@ class LeaveApplicationForm
                 ->options(LeaveType::class)
                 ->required()
                 ->live()
-                ->afterStateUpdated(fn (Set $set) => $set('detail', null))
-                ->columnSpanFull(),
+                ->afterStateUpdated(fn (Set $set) => $set('detail', null)),
             DatePicker::make('date_from')
                 ->label('From')
                 ->required()
@@ -94,14 +93,16 @@ class LeaveApplicationForm
                 ->label(fn (Get $get): string => $get('detail') === LeaveDetail::Abroad->value ? 'Country' : 'Illness')
                 ->maxLength(255)
                 ->visible(fn (Get $get): bool => self::needsText($get))
-                ->required(fn (Get $get): bool => self::needsText($get)),
+                ->required(fn (Get $get): bool => self::needsText($get))
+                ->columnSpan(2),
             TextInput::make('division_head')
                 ->label('Division Head (signs 7.B)')
                 ->maxLength(255)
-                ->columnSpanFull(),
+                ->columnSpan(2),
+            // Label on top, so the switch lines up with the Division Head beside it.
             Toggle::make('commutation_requested')
                 ->label('Commutation requested')
-                ->columnSpanFull(),
+                ->inline(false),
         ];
     }
 

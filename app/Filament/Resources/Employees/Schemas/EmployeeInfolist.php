@@ -22,29 +22,28 @@ class EmployeeInfolist
                     ->schema([
                         Section::make('Employee')
                             ->contained(false)
-                            ->columns(2)
+                            ->columns(4)
                             ->schema([
                                 TextEntry::make('employee_number'),
                                 TextEntry::make('office.name')
                                     ->label('Office'),
+                                TextEntry::make('employment_status'),
+                                TextEntry::make('position')
+                                    ->placeholder('—'),
                                 TextEntry::make('last_name'),
                                 TextEntry::make('first_name'),
                                 TextEntry::make('middle_name')
                                     ->placeholder('—'),
                                 TextEntry::make('suffix')
                                     ->placeholder('—'),
-                                TextEntry::make('position')
-                                    ->placeholder('—'),
-                                TextEntry::make('employment_status'),
                             ]),
                         Section::make('Attendance')
                             ->contained(false)
-                            ->columns(2)
+                            ->columns(4)
                             ->schema([
                                 TextEntry::make('biometric_id')
                                     ->label('Biometric ID')
-                                    ->placeholder('—')
-                                    ->columnSpanFull(),
+                                    ->placeholder('—'),
                                 TextEntry::make('date_hired')
                                     ->date('M j, Y')
                                     ->placeholder('—'),
@@ -53,8 +52,7 @@ class EmployeeInfolist
                                     ->placeholder('—'),
                                 IconEntry::make('is_active')
                                     ->label('Active')
-                                    ->boolean()
-                                    ->columnSpanFull(),
+                                    ->boolean(),
                             ]),
                     ]),
             ]);

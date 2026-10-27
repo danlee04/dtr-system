@@ -105,7 +105,7 @@ class LeaveApplicationResourceTest extends TestCase
 
         Livewire::test(ListLeaveApplications::class)
             ->mountAction(TestAction::make('view')->table($application))
-            ->assertMountedActionModalSee(['Tue, Nov 3, 2026: 1.000', 'Dela Cruz, Juan S.']);
+            ->assertMountedActionModalSee(['Tue, Nov 3, 2026', 'Dela Cruz, Juan S.', 'Charged to', 'VL 1.000']);
     }
 
     public function test_hr_approves_from_the_view_modal(): void

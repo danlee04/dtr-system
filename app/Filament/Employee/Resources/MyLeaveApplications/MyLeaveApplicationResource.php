@@ -13,7 +13,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
@@ -37,12 +36,6 @@ class MyLeaveApplicationResource extends Resource
     protected static ?string $modelLabel = 'leave application';
 
     protected static ?string $pluralModelLabel = 'applications';
-
-    /** "Vacation Leave · Nov 3–5, 2026", as the view modal's heading: the name is the reader's own. */
-    public static function getRecordTitle(?Model $record): ?string
-    {
-        return $record === null ? null : "{$record->leave_type->getLabel()} · {$record->dates()}";
-    }
 
     /** Only for an account linked to an employee who still works here. */
     public static function canAccess(): bool

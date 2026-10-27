@@ -39,6 +39,8 @@ class ScheduleAssignmentsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema
+            // Schedule, from and to on one row, like the other form modals.
+            ->columns(3)
             ->components([
                 Select::make('schedule_id')
                     ->label('Schedule')
