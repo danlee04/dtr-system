@@ -3,13 +3,9 @@
 namespace App\Filament\Employee\Resources\MyLeaveApplications;
 
 use App\Enums\NavigationGroup;
-use App\Filament\Employee\Resources\MyLeaveApplications\Pages\CreateMyLeaveApplication;
 use App\Filament\Employee\Resources\MyLeaveApplications\Pages\ListMyLeaveApplications;
-use App\Filament\Employee\Resources\MyLeaveApplications\Pages\ViewMyLeaveApplication;
 use App\Filament\Employee\Resources\MyLeaveApplications\Tables\MyLeaveApplicationsTable;
-use App\Filament\Resources\LeaveApplications\Schemas\LeaveApplicationForm;
 use App\Filament\Resources\LeaveApplications\Schemas\LeaveApplicationInfolist;
-use App\Models\Employee;
 use App\Models\LeaveApplication;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -20,9 +16,10 @@ use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
- * The signed-in employee's own leave: file, view, print and cancel while
- * pending. HR approves, on its Leave applications screen. There is no edit
- * page: a wrong application is cancelled, which gives its days back.
+ * The signed-in employee's own leave, on one list: file and view in modals,
+ * print, and cancel while pending. HR approves, on its Leave applications
+ * screen. There is no editing: a wrong application is cancelled, which gives
+ * its days back.
  */
 class MyLeaveApplicationResource extends Resource
 {
@@ -52,11 +49,6 @@ class MyLeaveApplicationResource extends Resource
         return parent::getEloquentQuery()->where('employee_id', auth()->user()->employee_id);
     }
 
-    public static function form(Schema $schema): Schema
-    {
-        return $schema->components(LeaveApplicationForm::fields(fn (): ?Employee => auth()->user()->employee));
-    }
-
     public static function infolist(Schema $schema): Schema
     {
         return LeaveApplicationInfolist::configure($schema);
@@ -71,8 +63,6 @@ class MyLeaveApplicationResource extends Resource
     {
         return [
             'index' => ListMyLeaveApplications::route('/'),
-            'create' => CreateMyLeaveApplication::route('/create'),
-            'view' => ViewMyLeaveApplication::route('/{record}'),
         ];
     }
 }

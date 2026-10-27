@@ -4,12 +4,11 @@ namespace Tests\Feature\Users;
 
 use App\Enums\EmploymentStatus;
 use App\Enums\UserRole;
-use App\Filament\Resources\Users\Pages\CreateUser;
-use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\Employee;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
@@ -31,7 +30,7 @@ class UserResourceTest extends TestCase
     {
         $this->actingAs(User::factory()->admin()->create());
 
-        Livewire::test(CreateUser::class)
+        Livewire::test(ListUsers::class)->mountAction('create')
             ->fillForm([
                 'name' => 'Ana Reyes',
                 'email' => 'ana@dtrc.test',
@@ -39,7 +38,7 @@ class UserResourceTest extends TestCase
                 'is_active' => true,
                 'password' => 'a-long-password',
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $user = User::firstWhere('email', 'ana@dtrc.test');
@@ -53,9 +52,9 @@ class UserResourceTest extends TestCase
         $user = User::factory()->create();
         $before = $user->password;
 
-        Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])
+        Livewire::test(ListUsers::class)->mountAction(TestAction::make('edit')->table($user))
             ->fillForm(['name' => 'Renamed', 'password' => ''])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame($before, $user->fresh()->password);
@@ -76,7 +75,7 @@ class UserResourceTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
         $employee = Employee::factory()->create();
 
-        Livewire::test(CreateUser::class)
+        Livewire::test(ListUsers::class)->mountAction('create')
             ->fillForm([
                 'name' => 'Juan Dela Cruz',
                 'email' => 'juan@dtrc.test',
@@ -85,7 +84,7 @@ class UserResourceTest extends TestCase
                 'is_active' => true,
                 'password' => 'a-long-password',
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $user = User::firstWhere('email', 'juan@dtrc.test');
@@ -97,7 +96,7 @@ class UserResourceTest extends TestCase
     {
         $this->actingAs(User::factory()->admin()->create());
 
-        Livewire::test(CreateUser::class)
+        Livewire::test(ListUsers::class)->mountAction('create')
             ->fillForm([
                 'name' => 'Juan Dela Cruz',
                 'email' => 'juan@dtrc.test',
@@ -105,7 +104,7 @@ class UserResourceTest extends TestCase
                 'is_active' => true,
                 'password' => 'a-long-password',
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['employee_id' => 'required']);
     }
 
@@ -114,7 +113,7 @@ class UserResourceTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
         $jobOrder = Employee::factory()->create(['employment_status' => EmploymentStatus::JobOrder]);
 
-        Livewire::test(CreateUser::class)
+        Livewire::test(ListUsers::class)->mountAction('create')
             ->fillForm([
                 'name' => 'Pedro Santos',
                 'email' => 'pedro@dtrc.test',
@@ -123,7 +122,7 @@ class UserResourceTest extends TestCase
                 'is_active' => true,
                 'password' => 'a-long-password',
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['employee_id']);
     }
 
@@ -133,9 +132,9 @@ class UserResourceTest extends TestCase
         $hr = User::factory()->create();
         $employee = Employee::factory()->create();
 
-        Livewire::test(EditUser::class, ['record' => $hr->getRouteKey()])
+        Livewire::test(ListUsers::class)->mountAction(TestAction::make('edit')->table($hr))
             ->fillForm(['employee_id' => $employee->id])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame($employee->id, $hr->fresh()->employee_id);
@@ -147,9 +146,9 @@ class UserResourceTest extends TestCase
         $this->actingAs($admin);
         $user = User::factory()->employee()->create();
 
-        Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])
+        Livewire::test(ListUsers::class)->mountAction(TestAction::make('edit')->table($user))
             ->fillForm(['password' => 'a-new-long-password'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $entry = Activity::query()
@@ -168,7 +167,7 @@ class UserResourceTest extends TestCase
         $admin = User::factory()->admin()->create();
         $this->actingAs($admin);
 
-        Livewire::test(EditUser::class, ['record' => $admin->getRouteKey()])
+        Livewire::test(ListUsers::class)->mountAction(TestAction::make('edit')->table($admin))
             ->assertFormFieldDisabled('role')
             ->assertFormFieldDisabled('is_active');
     }

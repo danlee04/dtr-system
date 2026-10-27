@@ -6,9 +6,7 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
-use App\Filament\Resources\LeaveApplications\Pages\CreateLeaveApplication;
 use App\Filament\Resources\LeaveApplications\Pages\ListLeaveApplications;
-use App\Filament\Resources\LeaveApplications\Pages\ViewLeaveApplication;
 use App\Filament\Widgets\PendingLeaveApplications;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
@@ -42,12 +40,13 @@ class LeaveApplicationResourceTest extends TestCase
         LeaveLedgerEntry::factory()->for($this->employee)->create(['leave_type' => 'VL', 'days' => '5.000', 'kind' => LedgerKind::Opening, 'posted_on' => '2026-10-31']);
     }
 
-    public function test_hr_files_leave_for_an_employee(): void
+    public function test_hr_files_leave_for_an_employee_in_a_modal(): void
     {
-        Livewire::test(CreateLeaveApplication::class)
-            ->fillForm(['employee_id' => $this->employee->id, 'leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-05'])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        Livewire::test(ListLeaveApplications::class)
+            ->callAction('fileLeave', ['employee_id' => $this->employee->id, 'leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-05'])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Leave filed')
+            ->assertNoRedirect();
 
         $this->assertSame('3.000', LeaveApplication::sole()->days);
         $this->assertSame('2.000', app(LeaveLedger::class)->balance($this->employee, LeaveType::Vacation));
@@ -55,16 +54,16 @@ class LeaveApplicationResourceTest extends TestCase
 
     public function test_the_form_shows_the_day_count_and_pay_split(): void
     {
-        Livewire::test(CreateLeaveApplication::class)
+        Livewire::test(ListLeaveApplications::class)
+            ->mountAction('fileLeave')
             ->fillForm(['employee_id' => $this->employee->id, 'leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-05'])
-            ->assertSee('3.000 days: 3.000 with pay (VL 3.000), 0.000 without pay');
+            ->assertMountedActionModalSee('3.000 days: 3.000 with pay (VL 3.000), 0.000 without pay');
     }
 
     public function test_a_refused_date_shows_on_its_field(): void
     {
-        Livewire::test(CreateLeaveApplication::class)
-            ->fillForm(['employee_id' => $this->employee->id, 'leave_type' => 'VL', 'date_from' => '2026-10-30', 'date_to' => '2026-10-30'])
-            ->call('create')
+        Livewire::test(ListLeaveApplications::class)
+            ->callAction('fileLeave', ['employee_id' => $this->employee->id, 'leave_type' => 'VL', 'date_from' => '2026-10-30', 'date_to' => '2026-10-30'])
             ->assertHasFormErrors(['date_from']);
 
         $this->assertSame(0, LeaveApplication::count());
@@ -100,29 +99,45 @@ class LeaveApplicationResourceTest extends TestCase
             ->assertActionHidden(TestAction::make('cancel')->table($application));
     }
 
-    public function test_the_view_page_shows_each_date(): void
+    public function test_viewing_shows_each_date_in_a_modal(): void
     {
         $application = $this->fileOneDay();
 
-        Livewire::test(ViewLeaveApplication::class, ['record' => $application->getRouteKey()])
-            ->assertSee('Tue, Nov 3, 2026: 1.000')
-            ->assertSee('Dela Cruz, Juan S.');
+        Livewire::test(ListLeaveApplications::class)
+            ->mountAction(TestAction::make('view')->table($application))
+            ->assertMountedActionModalSee(['Tue, Nov 3, 2026: 1.000', 'Dela Cruz, Juan S.']);
     }
 
-    public function test_applications_are_never_edited_or_deleted(): void
+    public function test_hr_approves_from_the_view_modal(): void
+    {
+        $application = $this->fileOneDay();
+
+        Livewire::test(ListLeaveApplications::class)
+            ->callAction([TestAction::make('view')->table($application), TestAction::make('approve')]);
+
+        $this->assertSame(LeaveApplicationStatus::Approved, $application->fresh()->status);
+    }
+
+    public function test_hr_cancels_from_the_view_modal(): void
+    {
+        $application = $this->fileOneDay();
+
+        Livewire::test(ListLeaveApplications::class)
+            ->callAction([TestAction::make('view')->table($application), TestAction::make('cancelLeave')], ['cancel_reason' => 'Disapproved']);
+
+        $this->assertSame(LeaveApplicationStatus::Cancelled, $application->fresh()->status);
+    }
+
+    public function test_applications_have_no_pages_but_the_list(): void
     {
         $application = LeaveApplication::factory()->create();
 
-        $this->assertFalse(LeaveApplicationResource::hasPage('edit'));
+        foreach (['create', 'edit', 'view'] as $page) {
+            $this->assertFalse(LeaveApplicationResource::hasPage($page), $page);
+        }
+
         $this->assertFalse(auth()->user()->can('update', $application));
         $this->assertFalse(auth()->user()->can('delete', $application));
-    }
-
-    public function test_filing_from_the_leave_tab_picks_the_employee(): void
-    {
-        Livewire::withQueryParams(['employee' => $this->employee->id])
-            ->test(CreateLeaveApplication::class)
-            ->assertSchemaStateSet(['employee_id' => $this->employee->id]);
     }
 
     public function test_the_dashboard_counts_pending_applications(): void

@@ -30,6 +30,12 @@ class ScheduleAssignmentsRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'schedule';
 
+    /** It sits on the employee's view page, which Filament would make read-only. */
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema

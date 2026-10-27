@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\Employees\RelationManagers;
 
 use App\Enums\LeaveType;
-use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
+use App\Filament\Resources\LeaveApplications\Actions\FileLeaveAction;
 use App\Models\Employee;
-use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
 use App\Services\Leave\LeaveLedger;
 use App\Services\Leave\LeavePosting;
@@ -32,6 +31,12 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
     protected static string $relationship = 'leaveLedgerEntries';
 
     protected static ?string $title = 'Leave';
+
+    /** It sits on the employee's view page, which Filament would make read-only. */
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
 
     public function table(Table $table): Table
     {
@@ -65,11 +70,8 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
                     ->options(self::trackedOptions()),
             ])
             ->headerActions([
-                Action::make('fileLeave')
-                    ->label('File leave')
-                    ->icon(Heroicon::OutlinedDocumentPlus)
-                    ->authorize('create', LeaveApplication::class)
-                    ->url(fn (): string => LeaveApplicationResource::getUrl('create', ['employee' => $this->employee()->id])),
+                FileLeaveAction::make()
+                    ->employee(fn (): Employee => $this->employee()),
                 Action::make('adjust')
                     ->label('Add adjustment')
                     ->icon(Heroicon::OutlinedPlusCircle)

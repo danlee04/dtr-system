@@ -3,7 +3,7 @@
 namespace Tests\Feature\Leave;
 
 use App\Enums\LedgerKind;
-use App\Filament\Resources\Employees\Pages\EditEmployee;
+use App\Filament\Resources\Employees\Pages\ListEmployees;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
@@ -11,6 +11,7 @@ use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
 use App\Services\Leave\LeaveApplications;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -61,9 +62,9 @@ class FormFieldsTest extends TestCase
 
     public function test_hr_types_an_employees_position(): void
     {
-        Livewire::test(EditEmployee::class, ['record' => $this->employee->getRouteKey()])
+        Livewire::test(ListEmployees::class)->mountAction(TestAction::make('edit')->table($this->employee))
             ->fillForm(['position' => 'Nurse II'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('Nurse II', $this->employee->fresh()->position);

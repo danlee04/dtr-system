@@ -18,7 +18,6 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Schema;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -29,19 +28,22 @@ use Throwable;
  */
 class LeaveApplicationForm
 {
-    public static function configure(Schema $schema): Schema
+    /**
+     * HR's form: the employee, then everything else.
+     *
+     * @return array<int, Component>
+     */
+    public static function components(): array
     {
-        return $schema
-            ->components([
-                Select::make('employee_id')
-                    ->label('Employee')
-                    ->options(fn (): array => self::employeeOptions())
-                    ->searchable()
-                    ->required()
-                    ->default(fn (): ?int => request()->integer('employee') ?: null)
-                    ->live(),
-                ...self::fields(fn (Get $get): ?Employee => filled($get('employee_id')) ? Employee::find($get('employee_id')) : null),
-            ]);
+        return [
+            Select::make('employee_id')
+                ->label('Employee')
+                ->options(fn (): array => self::employeeOptions())
+                ->searchable()
+                ->required()
+                ->live(),
+            ...self::fields(fn (Get $get): ?Employee => filled($get('employee_id')) ? Employee::find($get('employee_id')) : null),
+        ];
     }
 
     /**

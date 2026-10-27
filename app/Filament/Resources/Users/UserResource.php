@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\Users;
 
 use App\Enums\NavigationGroup;
-use App\Filament\Resources\Users\Pages\CreateUser;
-use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
@@ -28,6 +26,9 @@ class UserResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    // Its records are edited in a modal on the list, so there is no page for a search result to open.
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);
@@ -42,8 +43,6 @@ class UserResource extends Resource
     {
         return [
             'index' => ListUsers::route('/'),
-            'create' => CreateUser::route('/create'),
-            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 }

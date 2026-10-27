@@ -3,10 +3,10 @@
 namespace Tests\Feature\Holidays;
 
 use App\Enums\HolidayType;
-use App\Filament\Resources\Holidays\Pages\CreateHoliday;
-use App\Filament\Resources\Holidays\Pages\EditHoliday;
+use App\Filament\Resources\Holidays\Pages\ListHolidays;
 use App\Models\Holiday;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
@@ -25,13 +25,13 @@ class HolidayResourceTest extends TestCase
 
     public function test_hr_adds_a_regular_holiday(): void
     {
-        Livewire::test(CreateHoliday::class)
+        Livewire::test(ListHolidays::class)->mountAction('create')
             ->fillForm([
                 'date' => '2026-12-25',
                 'name' => 'Christmas Day',
                 'type' => HolidayType::Regular->value,
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $holiday = Holiday::sole();
@@ -43,14 +43,14 @@ class HolidayResourceTest extends TestCase
 
     public function test_a_suspension_keeps_the_time_it_starts(): void
     {
-        Livewire::test(CreateHoliday::class)
+        Livewire::test(ListHolidays::class)->mountAction('create')
             ->fillForm([
                 'date' => '2026-11-03',
                 'name' => 'Typhoon',
                 'type' => HolidayType::Suspension->value,
                 'suspension_starts_at' => '15:00',
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('15:00:00', Holiday::sole()->suspension_starts_at);
@@ -65,9 +65,9 @@ class HolidayResourceTest extends TestCase
             'suspension_starts_at' => '15:00:00',
         ]);
 
-        Livewire::test(EditHoliday::class, ['record' => $holiday->getRouteKey()])
+        Livewire::test(ListHolidays::class)->mountAction(TestAction::make('edit')->table($holiday))
             ->fillForm(['type' => HolidayType::Special->value])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertNull($holiday->fresh()->suspension_starts_at);
@@ -77,13 +77,13 @@ class HolidayResourceTest extends TestCase
     {
         Holiday::factory()->create(['date' => '2026-12-25']);
 
-        Livewire::test(CreateHoliday::class)
+        Livewire::test(ListHolidays::class)->mountAction('create')
             ->fillForm([
                 'date' => '2026-12-25',
                 'name' => 'Christmas Day',
                 'type' => HolidayType::Regular->value,
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['date']);
     }
 
@@ -91,9 +91,9 @@ class HolidayResourceTest extends TestCase
     {
         $holiday = Holiday::factory()->create(['date' => '2026-12-25', 'name' => 'Christmas']);
 
-        Livewire::test(EditHoliday::class, ['record' => $holiday->getRouteKey()])
+        Livewire::test(ListHolidays::class)->mountAction(TestAction::make('edit')->table($holiday))
             ->fillForm(['name' => 'Christmas Day'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('Christmas Day', $holiday->fresh()->name);

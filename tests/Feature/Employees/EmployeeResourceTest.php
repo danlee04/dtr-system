@@ -3,15 +3,16 @@
 namespace Tests\Feature\Employees;
 
 use App\Enums\EmploymentStatus;
-use App\Filament\Resources\Employees\Pages\CreateEmployee;
-use App\Filament\Resources\Employees\Pages\EditEmployee;
+use App\Filament\Resources\Employees\EmployeeResource;
 use App\Filament\Resources\Employees\Pages\ListEmployees;
-use App\Filament\Resources\Offices\Pages\EditOffice;
+use App\Filament\Resources\Employees\Pages\ViewEmployee;
+use App\Filament\Resources\Offices\Pages\ListOffices;
 use App\Models\Employee;
 use App\Models\Office;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
@@ -59,9 +60,9 @@ class EmployeeResourceTest extends TestCase
 
     public function test_hr_adds_an_employee(): void
     {
-        Livewire::test(CreateEmployee::class)
+        Livewire::test(ListEmployees::class)->mountAction('create')
             ->fillForm($this->validForm())
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $employee = Employee::firstWhere('employee_number', '2019-0042');
@@ -76,9 +77,9 @@ class EmployeeResourceTest extends TestCase
     {
         Employee::factory()->withBiometricId('0042')->create();
 
-        Livewire::test(CreateEmployee::class)
+        Livewire::test(ListEmployees::class)->mountAction('create')
             ->fillForm($this->validForm())
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['biometric_id' => 'unique']);
     }
 
@@ -88,9 +89,9 @@ class EmployeeResourceTest extends TestCase
         // purpose before anyone else may use it.
         Employee::factory()->withBiometricId('0042')->create()->delete();
 
-        Livewire::test(CreateEmployee::class)
+        Livewire::test(ListEmployees::class)->mountAction('create')
             ->fillForm($this->validForm())
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['biometric_id' => 'unique']);
     }
 
@@ -98,9 +99,9 @@ class EmployeeResourceTest extends TestCase
     {
         $employee = Employee::factory()->create(['date_hired' => '2020-01-15']);
 
-        Livewire::test(EditEmployee::class, ['record' => $employee->getRouteKey()])
+        Livewire::test(ListEmployees::class)->mountAction(TestAction::make('edit')->table($employee))
             ->fillForm(['date_separated' => '2019-12-31'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasFormErrors(['date_separated']);
     }
 
@@ -108,9 +109,9 @@ class EmployeeResourceTest extends TestCase
     {
         $employee = Employee::factory()->create(['date_hired' => null]);
 
-        Livewire::test(EditEmployee::class, ['record' => $employee->getRouteKey()])
+        Livewire::test(ListEmployees::class)->mountAction(TestAction::make('edit')->table($employee))
             ->fillForm(['date_separated' => '2026-09-30'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('2026-09-30', $employee->fresh()->date_separated->toDateString());
@@ -118,17 +119,43 @@ class EmployeeResourceTest extends TestCase
 
     public function test_deleting_an_employee_is_soft_and_can_be_undone(): void
     {
+        // From the employee's own page, not from a row: deleting one is deliberate.
         $employee = Employee::factory()->create();
 
-        Livewire::test(EditEmployee::class, ['record' => $employee->getRouteKey()])
+        Livewire::test(ViewEmployee::class, ['record' => $employee->getRouteKey()])
             ->callAction(DeleteAction::class);
 
         $this->assertSoftDeleted($employee);
 
-        Livewire::test(EditEmployee::class, ['record' => $employee->getRouteKey()])
+        Livewire::test(ViewEmployee::class, ['record' => $employee->getRouteKey()])
             ->callAction(RestoreAction::class);
 
         $this->assertNotSoftDeleted($employee);
+    }
+
+    public function test_the_employee_page_holds_the_schedules_and_leave_tabs(): void
+    {
+        $employee = Employee::factory()->create();
+
+        $this->get(EmployeeResource::getUrl('view', ['record' => $employee]))
+            ->assertOk()
+            ->assertSee('Details')
+            ->assertSee('Schedules')
+            ->assertSee('Leave');
+    }
+
+    public function test_editing_from_the_employee_page_opens_a_modal(): void
+    {
+        $employee = Employee::factory()->create(['last_name' => 'Dela Cruz']);
+
+        Livewire::test(ViewEmployee::class, ['record' => $employee->getRouteKey()])
+            ->callAction('edit', ['last_name' => 'Dela Cruz-Reyes'])
+            ->assertHasNoFormErrors()
+            ->assertNoRedirect();
+
+        $this->assertSame('Dela Cruz-Reyes', $employee->fresh()->last_name);
+        $this->assertFalse(EmployeeResource::hasPage('create'));
+        $this->assertFalse(EmployeeResource::hasPage('edit'));
     }
 
     public function test_an_office_with_employees_cannot_be_deleted(): void
@@ -137,8 +164,7 @@ class EmployeeResourceTest extends TestCase
         $office = Office::factory()->create();
         Employee::factory()->for($office)->create()->delete();
 
-        Livewire::test(EditOffice::class, ['record' => $office->getRouteKey()])
-            ->assertActionHidden(DeleteAction::class);
+        Livewire::test(ListOffices::class)->assertActionHidden(TestAction::make('delete')->table($office));
     }
 
     public function test_editing_an_employee_records_who_changed_what(): void

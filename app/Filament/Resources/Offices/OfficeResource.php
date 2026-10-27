@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\Offices;
 
 use App\Enums\NavigationGroup;
-use App\Filament\Resources\Offices\Pages\CreateOffice;
-use App\Filament\Resources\Offices\Pages\EditOffice;
 use App\Filament\Resources\Offices\Pages\ListOffices;
 use App\Filament\Resources\Offices\Schemas\OfficeForm;
 use App\Filament\Resources\Offices\Tables\OfficesTable;
@@ -28,6 +26,9 @@ class OfficeResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    // Its records are edited in a modal on the list, so there is no page for a search result to open.
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Schema $schema): Schema
     {
         return OfficeForm::configure($schema);
@@ -42,8 +43,6 @@ class OfficeResource extends Resource
     {
         return [
             'index' => ListOffices::route('/'),
-            'create' => CreateOffice::route('/create'),
-            'edit' => EditOffice::route('/{record}/edit'),
         ];
     }
 }

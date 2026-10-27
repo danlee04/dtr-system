@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\Offices;
 
-use App\Filament\Resources\Offices\Pages\CreateOffice;
-use App\Filament\Resources\Offices\Pages\EditOffice;
 use App\Filament\Resources\Offices\Pages\ListOffices;
 use App\Models\Office;
 use App\Models\User;
-use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
@@ -34,12 +32,12 @@ class OfficeResourceTest extends TestCase
 
     public function test_hr_adds_an_office_with_the_head_who_signs_form_48(): void
     {
-        Livewire::test(CreateOffice::class)
+        Livewire::test(ListOffices::class)->mountAction('create')
             ->fillForm([
                 'name' => 'Nursing Service',
                 'head_name' => 'Maria L. Santos',
             ])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertDatabaseHas('offices', [
@@ -53,9 +51,9 @@ class OfficeResourceTest extends TestCase
     {
         Office::factory()->create(['name' => 'Nursing Service']);
 
-        Livewire::test(CreateOffice::class)
+        Livewire::test(ListOffices::class)->mountAction('create')
             ->fillForm(['name' => 'Nursing Service'])
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['name' => 'unique']);
     }
 
@@ -65,9 +63,9 @@ class OfficeResourceTest extends TestCase
         // existing office would fail.
         $office = Office::factory()->create(['name' => 'Nursing Service']);
 
-        Livewire::test(EditOffice::class, ['record' => $office->getRouteKey()])
+        Livewire::test(ListOffices::class)->mountAction(TestAction::make('edit')->table($office))
             ->fillForm(['head_name' => 'Jose P. Rizal'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('Jose P. Rizal', $office->fresh()->head_name);
@@ -77,8 +75,7 @@ class OfficeResourceTest extends TestCase
     {
         $office = Office::factory()->create();
 
-        Livewire::test(EditOffice::class, ['record' => $office->getRouteKey()])
-            ->callAction(DeleteAction::class);
+        Livewire::test(ListOffices::class)->callAction(TestAction::make('delete')->table($office));
 
         $this->assertModelMissing($office);
     }

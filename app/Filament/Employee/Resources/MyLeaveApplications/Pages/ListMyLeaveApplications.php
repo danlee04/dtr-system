@@ -3,7 +3,8 @@
 namespace App\Filament\Employee\Resources\MyLeaveApplications\Pages;
 
 use App\Filament\Employee\Resources\MyLeaveApplications\MyLeaveApplicationResource;
-use Filament\Actions\CreateAction;
+use App\Filament\Resources\LeaveApplications\Actions\FileLeaveAction;
+use App\Models\Employee;
 use Filament\Resources\Pages\ListRecords;
 
 class ListMyLeaveApplications extends ListRecords
@@ -13,8 +14,9 @@ class ListMyLeaveApplications extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()
-                ->label('File leave'),
+            // For the signed-in employee only: the form has no employee field to change.
+            FileLeaveAction::make()
+                ->employee(fn (): ?Employee => auth()->user()->employee),
         ];
     }
 }

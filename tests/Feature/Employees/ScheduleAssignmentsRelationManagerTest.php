@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Employees;
 
-use App\Filament\Resources\Employees\Pages\EditEmployee;
+use App\Filament\Resources\Employees\Pages\ViewEmployee;
 use App\Filament\Resources\Employees\RelationManagers\ScheduleAssignmentsRelationManager;
 use App\Models\Employee;
 use App\Models\Schedule;
@@ -41,7 +41,7 @@ class ScheduleAssignmentsRelationManagerTest extends TestCase
     {
         return Livewire::test(ScheduleAssignmentsRelationManager::class, [
             'ownerRecord' => $this->employee,
-            'pageClass' => EditEmployee::class,
+            'pageClass' => ViewEmployee::class,
         ]);
     }
 

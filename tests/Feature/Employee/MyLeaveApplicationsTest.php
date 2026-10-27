@@ -5,7 +5,6 @@ namespace Tests\Feature\Employee;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\LedgerKind;
 use App\Filament\Employee\Resources\MyLeaveApplications\MyLeaveApplicationResource;
-use App\Filament\Employee\Resources\MyLeaveApplications\Pages\CreateMyLeaveApplication;
 use App\Filament\Employee\Resources\MyLeaveApplications\Pages\ListMyLeaveApplications;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
@@ -45,12 +44,12 @@ class MyLeaveApplicationsTest extends TestCase
         $this->actingAs($this->user);
     }
 
-    public function test_an_employee_files_their_own_leave(): void
+    public function test_an_employee_files_their_own_leave_in_a_modal(): void
     {
-        Livewire::test(CreateMyLeaveApplication::class)
-            ->fillForm(['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-04', 'division_head' => 'Dr. Ana Reyes'])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        Livewire::test(ListMyLeaveApplications::class)
+            ->callAction('fileLeave', ['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-04', 'division_head' => 'Dr. Ana Reyes'])
+            ->assertHasNoFormErrors()
+            ->assertNoRedirect();
 
         $application = LeaveApplication::sole();
         $this->assertTrue($application->employee->is($this->employee));
@@ -60,17 +59,39 @@ class MyLeaveApplicationsTest extends TestCase
 
     public function test_the_form_previews_the_employees_own_days(): void
     {
-        Livewire::test(CreateMyLeaveApplication::class)
+        Livewire::test(ListMyLeaveApplications::class)
+            ->mountAction('fileLeave')
             ->fillForm(['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-04'])
-            ->assertSee('2.000 days: 2.000 with pay (VL 2.000), 0.000 without pay');
+            ->assertMountedActionModalSee('2.000 days: 2.000 with pay (VL 2.000), 0.000 without pay');
     }
 
     public function test_an_employee_never_sees_someone_elses_application(): void
     {
         $theirs = LeaveApplication::factory()->create();
+        $component = Livewire::test(ListMyLeaveApplications::class)->assertCanNotSeeTableRecords([$theirs]);
 
-        Livewire::test(ListMyLeaveApplications::class)->assertCanNotSeeTableRecords([$theirs]);
-        $this->get(MyLeaveApplicationResource::getUrl('view', ['record' => $theirs]))->assertNotFound();
+        try {
+            $component->mountAction(TestAction::make('view')->table($theirs));
+        } catch (\Throwable) {
+            // Refused outright is as good as ignored; what matters is that no modal opened.
+        }
+
+        $this->assertSame([], $component->instance()->mountedActions);
+        $this->assertFalse(MyLeaveApplicationResource::hasPage('view'));
+    }
+
+    public function test_an_employee_views_and_cancels_from_the_modal(): void
+    {
+        $application = app(LeaveApplications::class)->file($this->employee, ['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-03', 'coverage' => 'whole_day']);
+
+        Livewire::test(ListMyLeaveApplications::class)
+            ->mountAction(TestAction::make('view')->table($application))
+            ->assertMountedActionModalSee('Tue, Nov 3, 2026: 1.000');
+
+        Livewire::test(ListMyLeaveApplications::class)
+            ->callAction([TestAction::make('view')->table($application), TestAction::make('cancelLeave')], ['cancel_reason' => 'Plans changed']);
+
+        $this->assertSame(LeaveApplicationStatus::Cancelled, $application->fresh()->status);
     }
 
     public function test_an_employee_cannot_cancel_someone_elses_leave_through_livewire(): void

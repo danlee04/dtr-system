@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\Holidays;
 
 use App\Enums\NavigationGroup;
-use App\Filament\Resources\Holidays\Pages\CreateHoliday;
-use App\Filament\Resources\Holidays\Pages\EditHoliday;
 use App\Filament\Resources\Holidays\Pages\ListHolidays;
 use App\Filament\Resources\Holidays\Schemas\HolidayForm;
 use App\Filament\Resources\Holidays\Tables\HolidaysTable;
@@ -30,6 +28,9 @@ class HolidayResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    // Its records are edited in a modal on the list, so there is no page for a search result to open.
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Schema $schema): Schema
     {
         return HolidayForm::configure($schema);
@@ -44,8 +45,6 @@ class HolidayResource extends Resource
     {
         return [
             'index' => ListHolidays::route('/'),
-            'create' => CreateHoliday::route('/create'),
-            'edit' => EditHoliday::route('/{record}/edit'),
         ];
     }
 }

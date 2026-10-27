@@ -3,10 +3,7 @@
 namespace App\Filament\Resources\LeaveApplications;
 
 use App\Enums\NavigationGroup;
-use App\Filament\Resources\LeaveApplications\Pages\CreateLeaveApplication;
 use App\Filament\Resources\LeaveApplications\Pages\ListLeaveApplications;
-use App\Filament\Resources\LeaveApplications\Pages\ViewLeaveApplication;
-use App\Filament\Resources\LeaveApplications\Schemas\LeaveApplicationForm;
 use App\Filament\Resources\LeaveApplications\Schemas\LeaveApplicationInfolist;
 use App\Filament\Resources\LeaveApplications\Tables\LeaveApplicationsTable;
 use App\Models\LeaveApplication;
@@ -18,8 +15,8 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Leave filed, by HR for now and by employees in L2b. There is no edit
- * page: a wrong application is cancelled, which gives its days back.
+ * Everyone's leave, on one list: filing and viewing open in modals. There is
+ * no editing: a wrong application is cancelled, which gives its days back.
  */
 class LeaveApplicationResource extends Resource
 {
@@ -44,11 +41,6 @@ class LeaveApplicationResource extends Resource
         return (auth()->user()?->isStaff() ?? false) && parent::canAccess();
     }
 
-    public static function form(Schema $schema): Schema
-    {
-        return LeaveApplicationForm::configure($schema);
-    }
-
     public static function infolist(Schema $schema): Schema
     {
         return LeaveApplicationInfolist::configure($schema);
@@ -63,8 +55,6 @@ class LeaveApplicationResource extends Resource
     {
         return [
             'index' => ListLeaveApplications::route('/'),
-            'create' => CreateLeaveApplication::route('/create'),
-            'view' => ViewLeaveApplication::route('/{record}'),
         ];
     }
 }

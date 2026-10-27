@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\LeaveApplications\Pages;
 
+use App\Filament\Resources\LeaveApplications\Actions\FileLeaveAction;
 use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListLeaveApplications extends ListRecords
@@ -13,7 +13,7 @@ class ListLeaveApplications extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            FileLeaveAction::make(),
         ];
     }
 }

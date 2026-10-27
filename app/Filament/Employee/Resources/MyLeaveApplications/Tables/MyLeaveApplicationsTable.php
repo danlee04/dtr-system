@@ -39,7 +39,12 @@ class MyLeaveApplicationsTable
                     ->options(LeaveApplicationStatus::class),
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions([
+                        PrintLeaveApplicationAction::make(),
+                        // Not "cancel": every modal already has a button by that name, its Close.
+                        CancelLeaveApplicationAction::make('cancelLeave')->cancelParentActions(),
+                    ]),
                 PrintLeaveApplicationAction::make(),
                 CancelLeaveApplicationAction::make(),
             ])

@@ -3,10 +3,13 @@
 namespace Tests\Feature\Employees;
 
 use App\Enums\LedgerKind;
-use App\Filament\Resources\Employees\Pages\EditEmployee;
+use App\Filament\Resources\Employees\Pages\ViewEmployee;
 use App\Filament\Resources\Employees\RelationManagers\LeaveLedgerEntriesRelationManager;
 use App\Models\Employee;
+use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,7 +36,7 @@ class LeaveLedgerEntriesRelationManagerTest extends TestCase
     {
         return Livewire::test(LeaveLedgerEntriesRelationManager::class, [
             'ownerRecord' => $this->employee,
-            'pageClass' => EditEmployee::class,
+            'pageClass' => ViewEmployee::class,
         ]);
     }
 
@@ -44,6 +47,20 @@ class LeaveLedgerEntriesRelationManagerTest extends TestCase
         $this->manager()
             ->assertSee('VL 10.000 · SL 0.000 · SPL 0.000 · Wellness 0.000')
             ->assertCanSeeTableRecords([$row]);
+    }
+
+    public function test_hr_files_leave_from_the_tab_for_this_employee(): void
+    {
+        config(['leave.start_date' => '2026-11-01']);
+        $this->travelTo('2026-11-02 08:00');
+        ScheduleAssignment::factory()->for($this->employee)->for(Schedule::factory()->create(['code' => 'REG']))->create(['effective_from' => '2026-11-01']);
+        LeaveLedgerEntry::factory()->for($this->employee)->create(['leave_type' => 'VL', 'days' => '5.000', 'kind' => LedgerKind::Opening, 'posted_on' => '2026-10-31']);
+
+        $this->manager()
+            ->callAction(TestAction::make('fileLeave')->table(), ['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-03'])
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue(LeaveApplication::sole()->employee->is($this->employee));
     }
 
     public function test_hr_adds_an_adjustment(): void

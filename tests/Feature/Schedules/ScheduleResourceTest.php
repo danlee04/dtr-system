@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Schedules;
 
-use App\Filament\Resources\Schedules\Pages\CreateSchedule;
-use App\Filament\Resources\Schedules\Pages\EditSchedule;
+use App\Filament\Resources\Schedules\Pages\ListSchedules;
 use App\Models\RosterEntry;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
-use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
@@ -44,9 +43,9 @@ class ScheduleResourceTest extends TestCase
 
     public function test_hr_adds_a_two_block_schedule(): void
     {
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular(['code' => 'reg']))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $schedule = Schedule::sole();
@@ -59,9 +58,9 @@ class ScheduleResourceTest extends TestCase
 
     public function test_hr_sets_the_days_charged_for_a_day_of_leave(): void
     {
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular(['code' => 'CWW', 'work_days' => [1, 2, 3, 4], 'block2_out' => '19:00', 'leave_days' => '1.25']))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('1.250', Schedule::sole()->leave_days);
@@ -70,9 +69,9 @@ class ScheduleResourceTest extends TestCase
     public function test_days_charged_must_be_a_positive_number(): void
     {
         foreach (['0', 'abc', '1.2505'] as $typed) {
-            Livewire::test(CreateSchedule::class)
+            Livewire::test(ListSchedules::class)->mountAction('create')
                 ->fillForm($this->regular(['leave_days' => $typed]))
-                ->call('create')
+                ->callMountedAction()
                 ->assertHasFormErrors(['leave_days']);
         }
 
@@ -81,7 +80,7 @@ class ScheduleResourceTest extends TestCase
 
     public function test_a_night_shift_runs_past_midnight(): void
     {
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular([
                 'code' => 'N',
                 'name' => 'Night',
@@ -91,7 +90,7 @@ class ScheduleResourceTest extends TestCase
                 'block2_in' => '03:00',
                 'block2_out' => '07:00',
             ]))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame('22:00–02:00, 03:00–07:00', Schedule::sole()->hours);
@@ -101,15 +100,15 @@ class ScheduleResourceTest extends TestCase
     {
         // 07:00 typed for 13:00: read as the next morning, the day would end at
         // 17:00 the day after it began.
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular(['block2_in' => '07:00']))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['block1_in']);
     }
 
     public function test_a_one_block_schedule_needs_no_second_block(): void
     {
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular([
                 'code' => 'AM',
                 'block1_in' => '06:00',
@@ -117,7 +116,7 @@ class ScheduleResourceTest extends TestCase
                 'block2_in' => null,
                 'block2_out' => null,
             ]))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $this->assertSame(['06:00', '14:00'], Schedule::sole()->times());
@@ -125,17 +124,17 @@ class ScheduleResourceTest extends TestCase
 
     public function test_a_second_block_needs_both_times(): void
     {
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular(['block2_out' => null]))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['block2_out' => 'required_with']);
     }
 
     public function test_off_is_kept_for_the_roster(): void
     {
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular(['code' => 'off']))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['code' => 'not_in']);
     }
 
@@ -143,9 +142,9 @@ class ScheduleResourceTest extends TestCase
     {
         Schedule::factory()->create(['code' => 'REG']);
 
-        Livewire::test(CreateSchedule::class)
+        Livewire::test(ListSchedules::class)->mountAction('create')
             ->fillForm($this->regular(['code' => 'reg']))
-            ->call('create')
+            ->callMountedAction()
             ->assertHasFormErrors(['code' => 'unique']);
     }
 
@@ -153,8 +152,7 @@ class ScheduleResourceTest extends TestCase
     {
         $schedule = Schedule::factory()->create();
 
-        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
-            ->callAction(DeleteAction::class);
+        Livewire::test(ListSchedules::class)->callAction(TestAction::make('delete')->table($schedule));
 
         $this->assertModelMissing($schedule);
     }
@@ -164,8 +162,7 @@ class ScheduleResourceTest extends TestCase
         $schedule = Schedule::factory()->create();
         ScheduleAssignment::factory()->for($schedule)->create();
 
-        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
-            ->assertActionHidden(DeleteAction::class);
+        Livewire::test(ListSchedules::class)->assertActionHidden(TestAction::make('delete')->table($schedule));
     }
 
     public function test_a_schedule_on_the_roster_cannot_be_deleted(): void
@@ -173,17 +170,16 @@ class ScheduleResourceTest extends TestCase
         $schedule = Schedule::factory()->rosterOnly()->create();
         RosterEntry::factory()->for($schedule)->create();
 
-        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
-            ->assertActionHidden(DeleteAction::class);
+        Livewire::test(ListSchedules::class)->assertActionHidden(TestAction::make('delete')->table($schedule));
     }
 
     public function test_changing_a_schedules_hours_is_recorded(): void
     {
         $schedule = Schedule::factory()->create();
 
-        Livewire::test(EditSchedule::class, ['record' => $schedule->getRouteKey()])
+        Livewire::test(ListSchedules::class)->mountAction(TestAction::make('edit')->table($schedule))
             ->fillForm(['block1_in' => '07:00'])
-            ->call('save')
+            ->callMountedAction()
             ->assertHasNoFormErrors();
 
         $activity = Activity::query()

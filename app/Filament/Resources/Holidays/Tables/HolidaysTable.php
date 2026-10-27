@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Holidays\Tables;
 
 use App\Enums\HolidayType;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -33,6 +34,7 @@ class HolidaysTable
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make(),
             ]);
     }
 }

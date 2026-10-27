@@ -61,7 +61,13 @@ class LeaveApplicationsTable
                         : $query),
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions([
+                        PrintLeaveApplicationAction::make(),
+                        ApproveLeaveApplicationAction::make()->cancelParentActions(),
+                        // Not "cancel": every modal already has a button by that name, its Close.
+                        CancelLeaveApplicationAction::make('cancelLeave')->cancelParentActions(),
+                    ]),
                 PrintLeaveApplicationAction::make(),
                 ApproveLeaveApplicationAction::make(),
                 CancelLeaveApplicationAction::make(),

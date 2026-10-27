@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\Schedules;
 
 use App\Enums\NavigationGroup;
-use App\Filament\Resources\Schedules\Pages\CreateSchedule;
-use App\Filament\Resources\Schedules\Pages\EditSchedule;
 use App\Filament\Resources\Schedules\Pages\ListSchedules;
 use App\Filament\Resources\Schedules\Schemas\ScheduleForm;
 use App\Filament\Resources\Schedules\Tables\SchedulesTable;
@@ -28,6 +26,9 @@ class ScheduleResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'code';
 
+    // Its records are edited in a modal on the list, so there is no page for a search result to open.
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Schema $schema): Schema
     {
         return ScheduleForm::configure($schema);
@@ -42,8 +43,6 @@ class ScheduleResource extends Resource
     {
         return [
             'index' => ListSchedules::route('/'),
-            'create' => CreateSchedule::route('/create'),
-            'edit' => EditSchedule::route('/{record}/edit'),
         ];
     }
 }
