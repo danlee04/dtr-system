@@ -14,7 +14,6 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -54,9 +53,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->discoverWidgets(in: app_path('Filament/Employee/Widgets'), for: 'App\Filament\Employee\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

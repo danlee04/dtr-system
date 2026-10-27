@@ -25,10 +25,10 @@ enum NavigationGroup implements Collapsible, HasLabel
     public function getLabel(): string
     {
         return match ($this) {
-            self::MyLeave => 'My leave',
+            self::MyLeave => 'My Leave',
             self::Leave => 'Leave',
             self::Personnel => 'Personnel',
-            self::TimeAndAttendance => 'Time & attendance',
+            self::TimeAndAttendance => 'Time & Attendance',
             self::Administration => 'Administration',
         };
     }

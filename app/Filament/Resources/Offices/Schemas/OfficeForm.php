@@ -22,7 +22,8 @@ class OfficeForm
                     ->maxLength(255),
                 Toggle::make('is_active')
                     ->label('Active')
-                    ->default(true),
+                    ->default(true)
+                    ->columnSpanFull(),
             ]);
     }
 }

@@ -11,7 +11,7 @@ use Filament\Schemas\Schema;
  */
 class ChangePassword extends EditProfile
 {
-    protected static ?string $title = 'Change password';
+    protected static ?string $title = 'Change Password';
 
     public function form(Schema $schema): Schema
     {

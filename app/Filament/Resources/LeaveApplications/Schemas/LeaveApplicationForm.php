@@ -41,7 +41,8 @@ class LeaveApplicationForm
                 ->options(fn (): array => self::employeeOptions())
                 ->searchable()
                 ->required()
-                ->live(),
+                ->live()
+                ->columnSpanFull(),
             ...self::fields(fn (Get $get): ?Employee => filled($get('employee_id')) ? Employee::find($get('employee_id')) : null),
         ];
     }
@@ -61,7 +62,8 @@ class LeaveApplicationForm
                 ->options(LeaveType::class)
                 ->required()
                 ->live()
-                ->afterStateUpdated(fn (Set $set) => $set('detail', null)),
+                ->afterStateUpdated(fn (Set $set) => $set('detail', null))
+                ->columnSpanFull(),
             DatePicker::make('date_from')
                 ->label('From')
                 ->required()
@@ -93,11 +95,13 @@ class LeaveApplicationForm
                 ->maxLength(255)
                 ->visible(fn (Get $get): bool => self::needsText($get))
                 ->required(fn (Get $get): bool => self::needsText($get)),
-            Toggle::make('commutation_requested')
-                ->label('Commutation requested'),
             TextInput::make('division_head')
                 ->label('Division Head (signs 7.B)')
-                ->maxLength(255),
+                ->maxLength(255)
+                ->columnSpanFull(),
+            Toggle::make('commutation_requested')
+                ->label('Commutation requested')
+                ->columnSpanFull(),
         ];
     }
 

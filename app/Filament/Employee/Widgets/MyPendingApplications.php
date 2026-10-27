@@ -25,7 +25,7 @@ class MyPendingApplications extends TableWidget
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Waiting for approval')
+            ->heading('Waiting for Approval')
             ->query(fn (): Builder => LeaveApplication::query()
                 ->where('employee_id', auth()->user()->employee_id)
                 ->where('status', LeaveApplicationStatus::Pending)

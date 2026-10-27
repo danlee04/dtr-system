@@ -11,6 +11,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 /** How many applications are waiting for their signed form. */
 class PendingLeaveApplications extends StatsOverviewWidget
 {
+    protected ?string $heading = 'Leave Applications';
+
     /** Everyone's leave, so only for whoever may open the list it links to. */
     public static function canView(): bool
     {

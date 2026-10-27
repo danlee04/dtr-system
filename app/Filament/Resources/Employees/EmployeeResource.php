@@ -8,6 +8,7 @@ use App\Filament\Resources\Employees\Pages\ViewEmployee;
 use App\Filament\Resources\Employees\RelationManagers\LeaveLedgerEntriesRelationManager;
 use App\Filament\Resources\Employees\RelationManagers\ScheduleAssignmentsRelationManager;
 use App\Filament\Resources\Employees\Schemas\EmployeeForm;
+use App\Filament\Resources\Employees\Schemas\EmployeeInfolist;
 use App\Filament\Resources\Employees\Tables\EmployeesTable;
 use App\Models\Employee;
 use BackedEnum;
@@ -42,6 +43,11 @@ class EmployeeResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return EmployeeForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return EmployeeInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table

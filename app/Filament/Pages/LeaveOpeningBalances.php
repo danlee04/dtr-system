@@ -29,7 +29,7 @@ class LeaveOpeningBalances extends Page
 
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $title = 'Opening balances';
+    protected static ?string $title = 'Opening Balances';
 
     /** From the office dropdown, which sends a string. */
     public int|string|null $officeId = null;

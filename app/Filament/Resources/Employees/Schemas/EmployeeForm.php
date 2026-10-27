@@ -16,7 +16,9 @@ class EmployeeForm
     {
         return $schema
             ->components([
+                // Headings, not cards: a card inside the modal is a box in a box.
                 Section::make('Employee')
+                    ->contained(false)
                     ->columns(2)
                     ->columnSpanFull()
                     ->schema([
@@ -48,6 +50,7 @@ class EmployeeForm
                             ->required(),
                     ]),
                 Section::make('Attendance')
+                    ->contained(false)
                     ->columns(2)
                     ->columnSpanFull()
                     ->schema([
@@ -56,13 +59,15 @@ class EmployeeForm
                             ->helperText('The ID this person uses on the biometric device. Leave it blank until it is known.')
                             ->maxLength(20)
                             ->alphaNum()
-                            ->unique(),
-                        Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
+                            ->unique()
+                            ->columnSpanFull(),
                         DatePicker::make('date_hired'),
                         DatePicker::make('date_separated')
                             ->afterOrEqual('date_hired'),
+                        Toggle::make('is_active')
+                            ->label('Active')
+                            ->default(true)
+                            ->columnSpanFull(),
                     ]),
             ]);
     }

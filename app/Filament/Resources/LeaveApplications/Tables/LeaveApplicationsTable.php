@@ -66,7 +66,7 @@ class LeaveApplicationsTable
                         PrintLeaveApplicationAction::make(),
                         ApproveLeaveApplicationAction::make()->cancelParentActions(),
                         // Not "cancel": every modal already has a button by that name, its Close.
-                        CancelLeaveApplicationAction::make('cancelLeave')->cancelParentActions(),
+                        CancelLeaveApplicationAction::make('cancelLeave')->outlined()->cancelParentActions(),
                     ]),
                 PrintLeaveApplicationAction::make(),
                 ApproveLeaveApplicationAction::make(),

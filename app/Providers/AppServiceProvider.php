@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Services\Attendance\PunchSources\PunchSource;
 use App\Services\Attendance\PunchSources\ZktecoPunchSource;
 use Carbon\CarbonImmutable;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -27,6 +30,19 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureModals();
+    }
+
+    /**
+     * Every record modal behaves alike: its heading and buttons stay in view
+     * while a long form scrolls, and a create closes the modal when it is
+     * done, as filing leave does.
+     */
+    protected function configureModals(): void
+    {
+        CreateAction::configureUsing(fn (CreateAction $action) => $action->stickyModalHeader()->stickyModalFooter()->createAnother(false));
+        EditAction::configureUsing(fn (EditAction $action) => $action->stickyModalHeader()->stickyModalFooter());
+        ViewAction::configureUsing(fn (ViewAction $action) => $action->stickyModalHeader()->stickyModalFooter());
     }
 
     /**

@@ -44,10 +44,6 @@ class UserForm
                     ->searchable()
                     ->required(fn (Get $get): bool => self::role($get) === UserRole::Employee)
                     ->unique(ignoreRecord: true),
-                Toggle::make('is_active')
-                    ->label('Active')
-                    ->default(true)
-                    ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false),
                 TextInput::make('password')
                     ->password()
                     ->revealable()
@@ -57,6 +53,11 @@ class UserForm
                     ->helperText(fn (string $operation): ?string => $operation === 'edit'
                         ? 'Leave blank to keep the current password.'
                         : null),
+                Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true)
+                    ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
+                    ->columnSpanFull(),
             ]);
     }
 

@@ -9,6 +9,7 @@ use App\Services\Leave\LeaveApplications;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -36,11 +37,16 @@ class FileLeaveAction extends Action
             ->icon(Heroicon::OutlinedDocumentPlus)
             // Not authorize('create'): on a relation manager that would ask the ledger's policy.
             ->authorize(fn (): bool => Gate::allows('create', LeaveApplication::class))
-            ->modalHeading('File leave')
+            ->modalHeading('File Leave')
             ->modalSubmitActionLabel('File')
-            ->schema(fn (): array => $this->employee === null
-                ? LeaveApplicationForm::components()
-                : LeaveApplicationForm::fields(fn (): ?Employee => $this->evaluate($this->employee)))
+            ->stickyModalHeader()
+            ->stickyModalFooter()
+            // Two columns, like every other form modal.
+            ->schema(fn (): array => [
+                Grid::make(2)->schema($this->employee === null
+                    ? LeaveApplicationForm::components()
+                    : LeaveApplicationForm::fields(fn (): ?Employee => $this->evaluate($this->employee))),
+            ])
             ->action(function (array $data): void {
                 $employee = $this->employee === null
                     ? Employee::findOrFail($data['employee_id'])

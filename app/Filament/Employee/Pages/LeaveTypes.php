@@ -25,7 +25,7 @@ class LeaveTypes extends Page
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $title = 'Leave types';
+    protected static ?string $title = 'Leave Types';
 
     public static function canAccess(): bool
     {

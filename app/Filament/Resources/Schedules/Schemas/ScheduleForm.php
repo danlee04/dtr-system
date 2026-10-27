@@ -37,8 +37,10 @@ class ScheduleForm
                     ->columns(7)
                     ->columnSpanFull()
                     ->helperText('For employees assigned this schedule. A schedule used only in the duty roster needs none.'),
+                // A heading, not a card: a card inside the modal is a box in a box.
                 Section::make('Hours')
                     ->description('A time earlier than the one before it is the next day, so a night shift needs nothing extra.')
+                    ->contained(false)
                     ->columns(4)
                     ->columnSpanFull()
                     ->schema([
@@ -79,7 +81,8 @@ class ScheduleForm
                     ->helperText('1 for most schedules. 1.25 for the 4-Day Week (10-hour days). SPL and Wellness always charge 1.'),
                 Toggle::make('is_active')
                     ->label('Active')
-                    ->default(true),
+                    ->default(true)
+                    ->columnSpanFull(),
             ]);
     }
 

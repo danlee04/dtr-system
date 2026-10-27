@@ -30,7 +30,7 @@ class DutyRoster extends Page
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $title = 'Duty roster';
+    protected static ?string $title = 'Duty Roster';
 
     /** From the office dropdown, which sends a string. */
     public int|string|null $officeId = null;

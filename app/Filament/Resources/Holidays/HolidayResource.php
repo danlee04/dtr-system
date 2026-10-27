@@ -24,7 +24,7 @@ class HolidayResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $navigationLabel = 'Holidays & suspensions';
+    protected static ?string $pluralModelLabel = 'holidays & suspensions';
 
     protected static ?string $recordTitleAttribute = 'name';
 
