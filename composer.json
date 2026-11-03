@@ -11,6 +11,7 @@
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "msaied/zkteco": "^0.2.2",
+        "smalot/pdfparser": "^2.13",
         "spatie/laravel-activitylog": "^5.1"
     },
     "require-dev": {

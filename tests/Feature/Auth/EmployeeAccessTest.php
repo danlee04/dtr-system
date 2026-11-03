@@ -6,6 +6,7 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Pages\DutyRoster;
 use App\Filament\Pages\LeaveOpeningBalances;
+use App\Filament\Resources\DtrUploads\DtrUploadResource;
 use App\Filament\Resources\Employees\EmployeeResource;
 use App\Filament\Resources\Holidays\HolidayResource;
 use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
@@ -47,6 +48,7 @@ class EmployeeAccessTest extends TestCase
             UserResource::getUrl('index'),
             DutyRoster::getUrl(),
             LeaveOpeningBalances::getUrl(),
+            DtrUploadResource::getUrl('index'),
         ] as $url) {
             $this->get($url)->assertForbidden();
         }

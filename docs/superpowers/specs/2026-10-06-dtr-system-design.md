@@ -425,7 +425,8 @@ undertime, so a day can be late twice.
 > **Superseded 2026-10-27.** Plan 2b is dropped: punches come from a file the
 > IT Unit sends, not from the devices. This section, and every rule that waits
 > on a sync (the dashboard indicator, pending days, month closing), is
-> revisited when the file import is designed.
+> revisited when the file import is designed. The upload itself is in
+> **DTR upload** below.
 
 **The interface comes before the library.** The first development task is a
 probe, `php artisan device:probe {ip} {--port=4370} {--key=0}`, which connects
@@ -490,6 +491,39 @@ detached (back to Unmatched, unless another employee holds that ID), logs with
 the new ID are attached, and the affected days are recomputed. Manual punches
 are not touched. A separated employee's biometric ID has to be cleared before
 another employee can use it.
+
+## DTR upload
+
+Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
+
+- **The file.** The IT Unit's software prints CS Form 48 (HRM-43) to PDF
+  through a PDF printer: A4 landscape, three copies of the same DTR side by
+  side, one employee per page. The text is real, not a scan. Each day's row
+  shows the times already placed under A.M. and P.M. Arrival and Departure,
+  plus O.T. and Remarks, as `hh:mm am`. The form prints no employee number,
+  no biometric ID and no schedule ("Official hours" is blank).
+- **Reading.** `DtrPdfReader` (smalot/pdfparser) reads the leftmost copy by
+  position: the name is the line above "(Employee Name)", the period is the
+  "For the month of" line ("OCTOBER 1 - 31, 2026"), and a time belongs to the
+  column it lines up with, so a blank lunch in is told apart from a blank time
+  out. A file that cannot be read is named in the result with the reason; the
+  other files are still read. An invisible "-" the software prints in some
+  rows is dropped.
+- **Whose DTR.** The name is matched to the employee list ignoring case,
+  accents, punctuation and word order (`Peña, Juan S. Jr.` = `PENA JR., JUAN
+  S.`). Exactly one match links it; none or several leave it for HR to choose
+  on the list. Removed employees are not matched.
+- **Storage.** `dtr_uploads` (whose, the name as printed, the period, the file
+  name, who uploaded) and `dtr_days` (each date with anything printed, in the
+  form's own columns). The PDF is deleted once read. A newer upload replaces an
+  employee's older one whose dates overlap.
+- **Screen.** DTR uploads, first under Time & Attendance, staff only: upload up
+  to 30 PDFs at a time (about 1.5 seconds each), filter the ones that need an
+  employee, view a DTR as a row per date, choose the employee, delete.
+- **Not yet.** Late and undertime from these rows (Plan 3, against the app's
+  schedules); how a missing tap counts (HR assumed complete for now); OB and
+  travel orders, which the sample does not show; night shifts and 16-hour
+  duty, set aside until a nurse's DTR is in hand.
 
 ## Recomputation
 
