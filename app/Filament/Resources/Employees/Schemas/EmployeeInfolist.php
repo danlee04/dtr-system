@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Employees\Schemas;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 
 /**
  * The employee page's Details tab: the edit form's fields and groups, read
@@ -20,6 +21,7 @@ class EmployeeInfolist
                     ->columnSpanFull()
                     ->schema([
                         Section::make('Employment')
+                            ->icon(Heroicon::OutlinedBriefcase)
                             ->contained(false)
                             ->columns(4)
                             ->schema([
@@ -31,6 +33,7 @@ class EmployeeInfolist
                                     ->placeholder('—'),
                             ]),
                         Section::make('Name')
+                            ->icon(Heroicon::OutlinedUser)
                             ->contained(false)
                             ->columns(4)
                             ->schema([
@@ -42,6 +45,7 @@ class EmployeeInfolist
                                     ->placeholder('—'),
                             ]),
                         Section::make('Attendance')
+                            ->icon(Heroicon::OutlinedFingerPrint)
                             ->contained(false)
                             ->columns(4)
                             ->schema([
