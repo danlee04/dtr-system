@@ -2,8 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\LeaveApplicationStatus;
 use App\Enums\NavigationGroup;
 use App\Filament\Pages\Auth\ChangePassword;
+use App\Models\DtrUpload;
+use App\Models\LeaveApplication;
+use Filament\Enums\UserMenuPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -31,6 +35,17 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->brandName('DTR System')
+            ->brandLogo(fn (): View => view('filament.brand'))
+            ->brandLogoHeight('2.25rem')
+            // Search on the topbar's left, the user at the sidebar's foot.
+            ->globalSearchKeyBindings(['ctrl+k', 'command+k'])
+            ->globalSearchFieldKeyBindingSuffix()
+            ->userMenu(position: UserMenuPosition::Sidebar)
+            // The topbar's right side, for staff: what is waiting for HR, and the month's main job.
+            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, fn (): View|string => auth()->user()?->isStaff() ? view('filament.topbar-actions', [
+                'pendingLeave' => LeaveApplication::query()->where('status', LeaveApplicationStatus::Pending)->count(),
+                'unmatchedDtrs' => DtrUpload::query()->whereNull('employee_id')->count(),
+            ]) : '')
             ->navigationGroups(NavigationGroup::class)
             ->sidebarWidth('16rem')
             // Every page uses the screen's full width instead of a centred 80rem column.

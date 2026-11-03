@@ -17,6 +17,7 @@ use App\Filament\Resources\Offices\OfficeResource;
 use App\Filament\Resources\Schedules\ScheduleResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Widgets\PendingLeaveApplications;
+use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
@@ -56,6 +57,25 @@ class EmployeeAccessTest extends TestCase
         ] as $url) {
             $this->get($url)->assertForbidden();
         }
+    }
+
+    public function test_the_topbar_shows_what_is_waiting_to_staff_only(): void
+    {
+        // A pending application and a DTR whose name matched nobody.
+        LeaveApplication::factory()->create();
+        DtrUpload::factory()->unmatched()->create();
+
+        $this->actingAs(User::factory()->create())
+            ->get('/')
+            ->assertOk()
+            ->assertSee('Waiting for you: 2')
+            ->assertSee('Upload DTRs');
+
+        $this->actingAs(User::factory()->employee()->create())
+            ->get('/')
+            ->assertOk()
+            ->assertDontSee('Waiting for you')
+            ->assertDontSee('Upload DTRs');
     }
 
     public function test_the_pending_count_on_the_dashboard_is_for_staff(): void
