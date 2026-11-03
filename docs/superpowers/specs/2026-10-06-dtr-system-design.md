@@ -169,7 +169,7 @@ are written with OpenSpout, which Filament already requires.
 
 | Screen | Contents | Roles |
 |---|---|---|
-| Dashboard | Last successful sync per device (red after 2 hours), **Sync now**, counts of incomplete days, unmatched logs and months ready to finalize | admin, hr |
+| Dashboard | Built 2026-11-03 for the DTR upload design (the sync figures first planned here went with Plan 2b), laid out after HR's reference: last month's late and undertime as days of leave with a bar per weekday; leave to approve, staff out today and last month's absences; quick actions and who is out today; last month's DTRs uploaded; the next step (opening balances before the system takes over, then the missing DTRs); this year's leave by type; the share of days at work begun on time; the offices furthest behind on DTRs; the newest leave applications. The DTR figures are kept 10 minutes. Employees keep their own widgets | admin, hr |
 | Employees | List, add/edit, CSV import, biometric ID, office, status, hire and separation dates; schedule assignments as a tab; a bulk action that assigns a schedule to the selected employees | admin, hr |
 | Offices | Name, and the head who signs Form 48 as "In Charge" | admin, hr |
 | Schedules | Templates: code, name, work days, one or two blocks | admin, hr |

@@ -1,5 +1,6 @@
 {{--
-    The sidebar and topbar after HR's references. The sidebar: on desktop a white card
+    The panel's frame: the sidebar, the topbar and every page's heading.
+    The sidebar and topbar follow HR's references. The sidebar: on desktop a white card
     standing a little in from the screen's edges, with the brand at its top, the menu
     with a light grey fill for the page that is open, small grey headings in sentence
     case, and the signed-in user at its foot. The topbar: on desktop it blends into the
@@ -25,6 +26,20 @@
         --dtr-line: color-mix(in oklab, var(--color-white) 10%, transparent);
         --dtr-hover: color-mix(in oklab, var(--color-white) 5%, transparent);
         --dtr-current: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+
+    /* Every page's heading a step smaller and lighter than Filament's 30px bold, so the page itself leads. */
+    .fi-header-heading {
+        font-size: var(--text-xl);
+        line-height: var(--text-xl--line-height);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    @media (min-width: 40rem) {
+        .fi-header-heading {
+            font-size: var(--text-2xl);
+            line-height: var(--text-2xl--line-height);
+        }
     }
 
     /* The brand (filament.brand): the seal, the app's name and, under it, whose it is. */

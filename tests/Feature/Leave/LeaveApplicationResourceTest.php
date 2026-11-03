@@ -7,7 +7,6 @@ use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
 use App\Filament\Resources\LeaveApplications\Pages\ListLeaveApplications;
-use App\Filament\Widgets\PendingLeaveApplications;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
@@ -138,16 +137,6 @@ class LeaveApplicationResourceTest extends TestCase
 
         $this->assertFalse(auth()->user()->can('update', $application));
         $this->assertFalse(auth()->user()->can('delete', $application));
-    }
-
-    public function test_the_dashboard_counts_pending_applications(): void
-    {
-        LeaveApplication::factory()->count(2)->create();
-        LeaveApplication::factory()->create(['status' => LeaveApplicationStatus::Approved]);
-
-        Livewire::test(PendingLeaveApplications::class)
-            ->assertSee('Pending leave applications')
-            ->assertSee('2');
     }
 
     private function fileOneDay(): LeaveApplication

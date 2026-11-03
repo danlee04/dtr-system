@@ -16,7 +16,6 @@ use App\Filament\Resources\LeaveApplications\Pages\ListLeaveApplications;
 use App\Filament\Resources\Offices\OfficeResource;
 use App\Filament\Resources\Schedules\ScheduleResource;
 use App\Filament\Resources\Users\UserResource;
-use App\Filament\Widgets\PendingLeaveApplications;
 use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\Holiday;
@@ -76,16 +75,6 @@ class EmployeeAccessTest extends TestCase
             ->assertOk()
             ->assertDontSee('Waiting for you')
             ->assertDontSee('Upload DTRs');
-    }
-
-    public function test_the_pending_count_on_the_dashboard_is_for_staff(): void
-    {
-        // Widgets load after the page, so their gate is what the dashboard asks.
-        $this->actingAs(User::factory()->create());
-        $this->assertTrue(PendingLeaveApplications::canView());
-
-        $this->actingAs(User::factory()->employee()->create());
-        $this->assertFalse(PendingLeaveApplications::canView());
     }
 
     public function test_who_may_use_the_panel(): void
