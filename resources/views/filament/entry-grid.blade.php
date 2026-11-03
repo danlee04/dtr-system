@@ -55,6 +55,15 @@
         border-radius: 0.75rem;
     }
 
+    /* A report to read rather than a grid to type in: as wide as the page. */
+    .dtr-grid-wrap.is-full {
+        width: auto;
+    }
+
+    .dtr-grid-wrap.is-full > .dtr-grid-table {
+        width: 100%;
+    }
+
     .dtr-grid-table {
         border-collapse: separate;
         border-spacing: 0;

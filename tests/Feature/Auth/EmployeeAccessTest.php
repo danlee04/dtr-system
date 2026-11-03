@@ -6,6 +6,7 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Pages\DutyRoster;
 use App\Filament\Pages\LeaveOpeningBalances;
+use App\Filament\Pages\MonthlySummary;
 use App\Filament\Resources\DayExceptions\DayExceptionResource;
 use App\Filament\Resources\DtrUploads\DtrUploadResource;
 use App\Filament\Resources\Employees\EmployeeResource;
@@ -49,6 +50,7 @@ class EmployeeAccessTest extends TestCase
             UserResource::getUrl('index'),
             DutyRoster::getUrl(),
             LeaveOpeningBalances::getUrl(),
+            MonthlySummary::getUrl(),
             DtrUploadResource::getUrl('index'),
             DayExceptionResource::getUrl('index'),
         ] as $url) {

@@ -647,18 +647,30 @@ anything again, so the screen, Form 48 and the summary always agree.
 
 ### Monthly summary
 
-One row per employee, on screen and as an Excel file, filtered by month,
-office, employment status and month state:
+Built 2026-11-03 for the DTR upload design, as the **Monthly Summary** page
+under Time & Attendance, staff only. `MonthlyTotals` does the counting.
 
-| Employee No. | Name | Office | Status | Late (times / min) | Undertime (times / min) | Total min | Day-equivalent | Absent (days) | 10+ late | Month |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 2019-0042 | Dela Cruz, Juan | Admin | Permanent | 12 / 47 | 2 / 25 | 72 | 0.150 | 1 | yes | Finalized |
-
-- The header shows how many employees are finalized ("118 of 132").
-- The Excel file is written with OpenSpout and downloaded directly. Filament's
-  built-in export is not used, because it runs through the queue. Text cells
-  are written as text, so a name or remark beginning with `=` is never read as
-  a formula.
+- **One month, every office**, last month by default, with an office filter.
+  One row per active employee who earns leave credits, surname first: the
+  office, late (times / min), undertime (times / min), absent (days), the
+  day-equivalent of late and undertime together, and notes. The table runs
+  the width of the page, 25 rows a page (10, 25, 50 or 100); the counts and
+  the Excel file cover every row the filter shows, every employee or one
+  office's, not only the page.
+- **Every DTR uploaded for the month counts**, so two half-month uploads add
+  up, and only the month's own dates count. The month's total minutes are
+  converted once.
+- **Notes:** "No DTR uploaded" when none covers the month; "10+ lates" at ten
+  or more lates; "N days without a schedule" when dates were skipped for want
+  of one.
+- **Excel:** the same rows as an .xlsx, written with OpenSpout (a direct
+  dependency since 2026-11-03) and downloaded directly. Filament's built-in
+  export is not used, because it runs through the queue. Text cells are
+  written as text, so a name beginning with `=` is never read as a formula.
+- **Not in it, against the first design:** a status column and filter (only
+  permanent and co-terminous staff are computed); a month state, because the
+  upload design has no month closing; and anyone separated during the month,
+  because only today's active staff are listed.
 
 ### CSC conversion
 
