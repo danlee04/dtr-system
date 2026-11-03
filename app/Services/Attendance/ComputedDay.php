@@ -11,8 +11,9 @@ use App\Enums\AttendanceStatus;
 final readonly class ComputedDay
 {
     /**
-     * @param  float  $absent  days: 1, or 0.5 when the other half is on leave
+     * @param  float  $absent  days: 1, or 0.5 when the other half is on leave or an OB
      * @param  list<string>  $missing  the taps the day lacks, e.g. "lunch in"
+     * @param  ?string  $note  what covers part of the day, e.g. "Official business (afternoon)"
      */
     public function __construct(
         public AttendanceStatus $status,
@@ -22,5 +23,6 @@ final readonly class ComputedDay
         public int $undertimeCount = 0,
         public float $absent = 0.0,
         public array $missing = [],
+        public ?string $note = null,
     ) {}
 }

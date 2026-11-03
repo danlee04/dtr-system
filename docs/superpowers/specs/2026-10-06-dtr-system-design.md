@@ -219,10 +219,12 @@ punches               id, device_id (nullable), biometric_id (nullable),
                       unique (device_id, biometric_id, punched_at)
                       index (employee_id, punched_at)
 day_exceptions        id, employee_id, date_from, date_to,
-                      type (leave|official_business|travel_order),
-                      coverage (whole_day|first_half|second_half), leave_type (nullable),
+                      type (official_business|travel_order),
+                      coverage (whole_day|first_half|second_half),
                       reference_no (nullable), remarks (nullable),
                       created_by_user_id, timestamps
+                      (built 2026-11-03; leave comes from leave_applications, so
+                      the leave type and leave_type column were left out)
 
 attendance_days       id, employee_id, date, status, schedule_id (nullable),
                       schedule_source (fixed|roster, nullable), holiday_id (nullable),
@@ -533,12 +535,17 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   The month's late and undertime convert to days with the CSC table, except
   for staff who earn no leave credits. The view shows the month and every
   date; the list shows the total and the days absent.
+- **OB and travel orders** (added the same day). HR enters them on the **OB
+  & travel orders** screen from the signed slips: the employee, the type, the
+  dates, the whole day or one half (one date only), a reference number and
+  remarks. Entries for one employee may not overlap, except a morning and an
+  afternoon on the same date. The computation treats them like leave: a
+  covered day takes their status, a covered half is skipped and noted. A
+  roster OFF still wins, because the roster is read first.
 - **Not yet.** Deducting the total from VL; how a missing tap counts for good
-  (HR assumed complete for now); OB and travel orders, which the sample does
-  not show (HR marks those days OFF on the Duty Roster meanwhile); shifts past
-  midnight and 16-hour duty, set aside until a nurse's DTR is in hand. The CSC
-  table in code is the one above and still has to be checked against HR's
-  printed copy.
+  (HR assumed complete for now); shifts past midnight and 16-hour duty, set
+  aside until a nurse's DTR is in hand. The CSC table in code is the one above
+  and still has to be checked against HR's printed copy.
 
 ## Recomputation
 

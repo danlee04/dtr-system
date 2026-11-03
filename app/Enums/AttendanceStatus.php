@@ -7,13 +7,16 @@ use Filament\Support\Contracts\HasLabel;
 
 /**
  * What a date on an uploaded DTR comes to. The days that are not work days
- * keep DayKind's values, so a resolved day maps across by value.
+ * keep DayKind's values, and an OB or travel order keeps ExceptionType's, so
+ * either maps across by value.
  */
 enum AttendanceStatus: string implements HasColor, HasLabel
 {
     case Present = 'present';
     case Absent = 'absent';
     case Leave = 'leave';
+    case OfficialBusiness = 'official_business';
+    case TravelOrder = 'travel_order';
     case RestDay = 'rest_day';
     case Holiday = 'holiday';
     case Suspended = 'suspended';
@@ -28,6 +31,8 @@ enum AttendanceStatus: string implements HasColor, HasLabel
             self::Present => 'Present',
             self::Absent => 'Absent',
             self::Leave => 'Leave',
+            self::OfficialBusiness => 'Official business',
+            self::TravelOrder => 'Travel order',
             self::RestDay => 'Rest day',
             self::Holiday => 'Holiday',
             self::Suspended => 'Suspended',
@@ -43,7 +48,7 @@ enum AttendanceStatus: string implements HasColor, HasLabel
         return match ($this) {
             self::Present => 'success',
             self::Absent => 'danger',
-            self::Leave => 'info',
+            self::Leave, self::OfficialBusiness, self::TravelOrder => 'info',
             self::NoSchedule, self::NotComputed => 'warning',
             default => 'gray',
         };

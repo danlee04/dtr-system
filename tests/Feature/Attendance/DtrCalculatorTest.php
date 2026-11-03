@@ -4,9 +4,11 @@ namespace Tests\Feature\Attendance;
 
 use App\Enums\AttendanceStatus;
 use App\Enums\EmploymentStatus;
+use App\Enums\ExceptionType;
 use App\Enums\HolidayType;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveCoverage;
+use App\Models\DayException;
 use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\Holiday;
@@ -134,6 +136,43 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([AttendanceStatus::Present, 5, 1, 0, 0], $this->figures($days['2026-10-13']));
         $this->assertSame([], $days['2026-10-13']->missing);
         $this->assertSame([AttendanceStatus::Absent, 0.5], [$days['2026-10-14']->status, $days['2026-10-14']->absent]);
+    }
+
+    public function test_official_business_and_travel_orders_are_not_absent(): void
+    {
+        $employee = $this->regular();
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-26', 'date_to' => '2026-10-27']);
+        DayException::factory()->for($employee)->create(['type' => ExceptionType::TravelOrder, 'date_from' => '2026-10-28', 'date_to' => '2026-10-28']);
+
+        $days = $this->compute($employee)->days;
+
+        $this->assertSame(
+            [AttendanceStatus::OfficialBusiness, AttendanceStatus::OfficialBusiness, AttendanceStatus::TravelOrder],
+            [$days['2026-10-26']->status, $days['2026-10-27']->status, $days['2026-10-28']->status],
+        );
+        $this->assertSame(0.0, $days['2026-10-26']->absent);
+    }
+
+    public function test_an_afternoon_ob_leaves_the_morning_to_the_dtr_and_is_noted(): void
+    {
+        $employee = $this->regular();
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-13', 'date_to' => '2026-10-13', 'coverage' => LeaveCoverage::SecondHalf]);
+
+        $day = $this->compute($employee, ['2026-10-13' => ['am_arrival' => '08:05', 'am_departure' => '12:00']])->days['2026-10-13'];
+
+        $this->assertSame([AttendanceStatus::Present, 5, 1, 0, 0], $this->figures($day));
+        $this->assertSame([[], 'Official business (afternoon)'], [$day->missing, $day->note]);
+    }
+
+    public function test_leave_in_the_morning_and_ob_in_the_afternoon_cover_the_day(): void
+    {
+        $employee = $this->regular();
+        LeaveApplication::factory()->for($employee)->create(['date_from' => '2026-10-14', 'date_to' => '2026-10-14', 'coverage' => LeaveCoverage::FirstHalf]);
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-14', 'date_to' => '2026-10-14', 'coverage' => LeaveCoverage::SecondHalf]);
+
+        $day = $this->compute($employee)->days['2026-10-14'];
+
+        $this->assertSame([AttendanceStatus::Leave, 0.0], [$day->status, $day->absent]);
     }
 
     public function test_a_timed_suspension_ends_the_day_early(): void

@@ -128,6 +128,7 @@ class DtrUploadInfolist
                 'undertime' => $result?->undertime ?: null,
                 'status' => $result?->status,
                 'notes' => implode(' · ', array_filter([
+                    $result?->note,
                     $result?->missing ? 'No '.implode(', ', $result->missing) : null,
                     $day?->remarks,
                 ])) ?: null,

@@ -7,12 +7,13 @@ use App\Enums\DayKind;
 use App\Enums\HolidayType;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveCoverage;
+use App\Models\DayException;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * Late and undertime for each date of an uploaded DTR, against the schedule
@@ -50,12 +51,20 @@ final class DtrCalculator
         $to = $upload->period_end->toImmutable();
         $rows = $upload->days->keyBy(fn (DtrDay $day): string => $day->date->toDateString());
 
-        $leave = LeaveApplication::query()
+        // Leave, OBs and travel orders, each with what it makes of the days it covers.
+        $covers = LeaveApplication::query()
             ->whereBelongsTo($employee)
             ->where('status', '!=', LeaveApplicationStatus::Cancelled)
             ->whereDate('date_from', '<=', $to)
             ->whereDate('date_to', '>=', $from)
-            ->get();
+            ->get()
+            ->map(fn (LeaveApplication $application): array => [$application, AttendanceStatus::Leave])
+            ->concat(DayException::query()
+                ->whereBelongsTo($employee)
+                ->whereDate('date_from', '<=', $to)
+                ->whereDate('date_to', '>=', $from)
+                ->get()
+                ->map(fn (DayException $exception): array => [$exception, AttendanceStatus::from($exception->type->value)]));
 
         $suspensions = Holiday::query()
             ->where('type', HolidayType::Suspension)
@@ -68,14 +77,14 @@ final class DtrCalculator
         $days = [];
 
         foreach ($this->resolver->days($employee, $from, $to) as $date => $resolved) {
-            $days[$date] = $this->day(CarbonImmutable::parse($date), $resolved, $rows->get($date), $leave, $suspensions->get($date));
+            $days[$date] = $this->day(CarbonImmutable::parse($date), $resolved, $rows->get($date), $covers, $suspensions->get($date));
         }
 
         return new ComputedDtr($days, $employee->employment_status->earnsLeaveCredits());
     }
 
-    /** @param  Collection<int, LeaveApplication>  $leave */
-    private function day(CarbonImmutable $date, ResolvedDay $resolved, ?DtrDay $row, Collection $leave, ?int $suspendedAt): ComputedDay
+    /** @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers */
+    private function day(CarbonImmutable $date, ResolvedDay $resolved, ?DtrDay $row, SupportCollection $covers, ?int $suspendedAt): ComputedDay
     {
         if ($resolved->kind !== DayKind::WorkDay) {
             return new ComputedDay(AttendanceStatus::from($resolved->kind->value));
@@ -105,11 +114,18 @@ final class DtrCalculator
             ? [[$row?->am_arrival, $row?->am_departure], [$row?->pm_arrival, $row?->pm_departure]]
             : [[$row?->am_arrival ?? $row?->pm_arrival, $row?->pm_departure ?? $row?->am_departure]];
 
-        $halves = $this->withoutLeave($halves, $date, $leave);
+        $covered = $this->covered(count($halves), $date, $covers);
 
-        if ($halves === []) {
-            return new ComputedDay(AttendanceStatus::Leave);
+        if (count($covered) === count($halves)) {
+            return new ComputedDay($covered[0]);
         }
+
+        $halves = array_diff_key($halves, $covered);
+        $note = implode(', ', array_map(
+            fn (int $half, AttendanceStatus $status): string => $status->getLabel().($half === 0 ? ' (morning)' : ' (afternoon)'),
+            array_keys($covered),
+            $covered,
+        )) ?: null;
 
         $halves = $this->cutBySuspension($halves, $suspendedAt);
 
@@ -125,7 +141,7 @@ final class DtrCalculator
         );
 
         if ($tapped === []) {
-            return new ComputedDay(AttendanceStatus::Absent, absent: count($halves) / $scheduledHalves);
+            return new ComputedDay(AttendanceStatus::Absent, absent: count($halves) / $scheduledHalves, note: $note);
         }
 
         [$late, $lateCount, $undertime, $undertimeCount, $missing] = [0, 0, 0, 0, []];
@@ -149,30 +165,38 @@ final class DtrCalculator
             }
         }
 
-        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing);
+        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note);
     }
 
     /**
-     * The halves of the day that no leave covers. A half-day application
-     * covers its half; on a one-block day it covers the whole block.
+     * What covers each half of the day: leave, an OB or a travel order. A
+     * half-day entry covers its half; on a one-block day it covers the whole
+     * block. The first entry found for a half names it.
      *
-     * shortcut: a one-block day is not split at its midpoint for half-day leave, as the spec says; split it when such schedules are in use.
+     * shortcut: a one-block day is not split at its midpoint for a half day, as the spec says; split it when such schedules are in use.
      *
-     * @param  array<int, array{in: int, out: int}>  $halves
-     * @param  Collection<int, LeaveApplication>  $leave
-     * @return array<int, array{in: int, out: int}>
+     * @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers
+     * @return array<int, AttendanceStatus> half => what covers it
      */
-    private function withoutLeave(array $halves, CarbonImmutable $date, Collection $leave): array
+    private function covered(int $halfCount, CarbonImmutable $date, SupportCollection $covers): array
     {
-        $application = $leave->first(fn (LeaveApplication $application): bool => $application->date_from->lessThanOrEqualTo($date)
-            && $application->date_to->greaterThanOrEqualTo($date));
+        $covered = [];
 
-        return match (true) {
-            $application === null => $halves,
-            count($halves) === 2 && $application->coverage === LeaveCoverage::FirstHalf => array_diff_key($halves, [0 => true]),
-            count($halves) === 2 && $application->coverage === LeaveCoverage::SecondHalf => array_diff_key($halves, [1 => true]),
-            default => [],
-        };
+        foreach ($covers as [$entry, $status]) {
+            if ($entry->date_from->greaterThan($date) || $entry->date_to->lessThan($date)) {
+                continue;
+            }
+
+            $halves = match (true) {
+                $halfCount === 2 && $entry->coverage === LeaveCoverage::FirstHalf => [0],
+                $halfCount === 2 && $entry->coverage === LeaveCoverage::SecondHalf => [1],
+                default => range(0, $halfCount - 1),
+            };
+
+            $covered += array_fill_keys($halves, $status);
+        }
+
+        return $covered;
     }
 
     /**
