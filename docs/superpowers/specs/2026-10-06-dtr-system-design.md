@@ -173,7 +173,7 @@ are written with OpenSpout, which Filament already requires.
 | Employees | List, add/edit, CSV import, biometric ID, office, status, hire and separation dates; schedule assignments as a tab; a bulk action that assigns a schedule to the selected employees | admin, hr |
 | Offices | Name, and the head who signs Form 48 as "In Charge" | admin, hr |
 | Schedules | Templates: code, name, work days, one or two blocks | admin, hr |
-| Duty roster | Monthly grid of an office's employees × dates; each cell holds a schedule code, OFF, or nothing | admin, hr |
+| Duty roster | Monthly grid of every active employee × dates, 25 rows a page, with an office filter; each cell holds a schedule code, OFF, or nothing. The whole month stays loaded, so the filter and the pages lose nothing typed; Save writes every row, unsaved cells are counted on the server, and the month cannot change while any are unsaved | admin, hr |
 | Holidays & suspensions | Dated list | admin, hr |
 | Exceptions | Leave, OB and TO per employee and date range | admin, hr |
 | Attendance | One employee-month: each day's schedule, punches, late, undertime, status and issues; add a manual punch, ignore a punch | admin, hr |

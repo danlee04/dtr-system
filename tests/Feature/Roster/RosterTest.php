@@ -151,6 +151,23 @@ class RosterTest extends TestCase
         $this->assertSame(0, RosterEntry::count());
     }
 
+    public function test_without_an_office_every_active_employee_is_on_the_grid(): void
+    {
+        Employee::factory()->create(['is_active' => false]);
+
+        $grid = $this->roster->read(null, $this->november);
+
+        $this->assertSame([$this->juan->id, $this->reyes->id, $this->maria->id], array_keys($grid));
+    }
+
+    public function test_without_an_office_any_offices_cells_are_saved(): void
+    {
+        $changes = $this->roster->save(null, $this->november, [$this->reyes->id => [1 => 'AM']]);
+
+        $this->assertSame(1, $changes);
+        $this->assertSame($this->reyes->id, RosterEntry::sole()->employee_id);
+    }
+
     public function test_changing_a_cell_is_recorded(): void
     {
         $entry = RosterEntry::factory()->for($this->juan)->create(['date' => '2026-11-01', 'schedule_id' => $this->am->id]);

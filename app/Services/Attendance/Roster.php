@@ -7,15 +7,16 @@ use App\Models\Office;
 use App\Models\RosterEntry;
 use App\Models\Schedule;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * An office's duty roster for one month, as a grid of codes: a schedule's
- * code, OFF for a day off, or blank for no entry (the employee's fixed
- * schedule applies).
+ * The duty roster for one month, of one office or of all, as a grid of
+ * codes: a schedule's code, OFF for a day off, or blank for no entry (the
+ * employee's fixed schedule applies).
  */
 final class Roster
 {
@@ -23,26 +24,29 @@ final class Roster
     public const string OFF = 'OFF';
 
     /**
-     * The rows of the office's grid: its active employees, surname first.
+     * The rows of the grid: the active employees of the office, or of every
+     * office when there is none, surname first.
      *
      * @return EloquentCollection<int, Employee>
      */
-    public function employees(Office $office): EloquentCollection
+    public function employees(?Office $office): EloquentCollection
     {
-        return $office->employees()
+        return Employee::query()
+            ->when($office, fn (Builder $query, Office $office): Builder => $query->whereBelongsTo($office))
             ->where('is_active', true)
+            ->with('office')
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get();
     }
 
     /**
-     * Every employee of the office and every day of the month, '' where
-     * there is no entry.
+     * Every employee on the grid and every day of the month, '' where there
+     * is no entry.
      *
      * @return array<int, array<int, string>> employee id → day of the month → code
      */
-    public function read(Office $office, CarbonImmutable $month): array
+    public function read(?Office $office, CarbonImmutable $month): array
     {
         $employees = $this->employees($office);
         $entries = $this->entries($employees->modelKeys(), $month);
@@ -64,19 +68,19 @@ final class Roster
     }
 
     /**
-     * Saves the cells sent for the office's month, ignoring case and spaces:
-     * a code sets that schedule, OFF a day off, and a blank cell removes the
-     * entry. Every cell is checked first, and nothing is saved while one is
-     * wrong. Only the cells sent change, so a row the page never showed keeps
-     * its month; cells for anyone outside the office, or for days the month
-     * does not have, are ignored.
+     * Saves the cells sent for the month, ignoring case and spaces: a code
+     * sets that schedule, OFF a day off, and a blank cell removes the entry.
+     * Every cell is checked first, and nothing is saved while one is wrong.
+     * Only the cells sent change, so a row the page never showed keeps its
+     * month; cells for anyone not on the grid (outside the office, when there
+     * is one, or inactive), or for days the month does not have, are ignored.
      *
      * @param  array<int|string, mixed>  $cells  employee id → day → typed code
      * @return int the number of entries added, changed or removed
      *
      * @throws ValidationException keyed cells.{employee id}.{day}
      */
-    public function save(Office $office, CarbonImmutable $month, array $cells): int
+    public function save(?Office $office, CarbonImmutable $month, array $cells): int
     {
         $month = $month->startOfMonth();
         // Every schedule's code, active or not, so an older month still saves.

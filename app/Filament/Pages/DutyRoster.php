@@ -12,16 +12,26 @@ use Carbon\CarbonImmutable;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Locked;
+use Livewire\WithPagination;
 use UnitEnum;
 
 /**
- * One office's month as a grid: employees down the side, days across, a
- * schedule code in each cell. Roster does the reading and saving; this page
- * only holds what HR is typing.
+ * A month as a grid: every active employee down the side, a page at a time,
+ * days across, a schedule code in each cell. The office filter only narrows
+ * the rows; the whole month stays loaded, so nothing typed is lost to the
+ * filter or a page turn, and Save writes every row. Roster does the reading
+ * and saving; this page only holds what HR is typing.
  */
 class DutyRoster extends Page
 {
+    use WithPagination;
+
+    /** Rows a page can hold, for the pagination's select. */
+    private const array PAGE_SIZES = [10, 25, 50, 100];
+
     protected string $view = 'filament.pages.duty-roster';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
@@ -32,14 +42,25 @@ class DutyRoster extends Page
 
     protected static ?string $title = 'Duty Roster';
 
-    /** From the office dropdown, which sends a string. */
+    /** From the office filter, which sends a string; blank for all offices. */
     public int|string|null $officeId = null;
 
     /** "Y-m", from the month input. */
     public string $month = '';
 
+    /** From the pagination's select. */
+    public int $perPage = 25;
+
     /** @var array<int, array<int, string>> employee id → day → typed code */
     public array $cells = [];
+
+    /** @var array<int, array<int, string>> the cells as last read, to tell what is unsaved */
+    #[Locked]
+    public array $saved = [];
+
+    /** The month the cells belong to: $month differs only while a change is refused. */
+    #[Locked]
+    public string $loadedMonth = '';
 
     public static function canAccess(): bool
     {
@@ -49,30 +70,45 @@ class DutyRoster extends Page
     public function mount(): void
     {
         $this->month = now()->format('Y-m');
+        $this->loadCells();
     }
 
-    // shortcut: switching office or month drops unsaved cells; add a confirm if HR loses work this way.
     public function updatedOfficeId(): void
     {
-        $this->loadCells();
+        $this->resetPage();
     }
 
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    /** Another month replaces the grid, so it waits until what was typed is saved. */
     public function updatedMonth(): void
     {
+        if ($this->unsavedCells() !== []) {
+            $this->month = $this->loadedMonth;
+
+            Notification::make()
+                ->warning()
+                ->title('Save the roster first')
+                ->body('Changing the month now would drop the codes you have not saved.')
+                ->send();
+
+            return;
+        }
+
         $this->loadCells();
+        $this->resetPage();
     }
 
     public function save(Roster $roster): void
     {
         Gate::authorize('create', RosterEntry::class);
 
-        $this->validateSelection();
+        $this->validateMonth();
 
-        $changes = $roster->save(
-            Office::findOrFail($this->officeId),
-            CarbonImmutable::createFromFormat('!Y-m', $this->month),
-            $this->cells,
-        );
+        $changes = $roster->save(null, CarbonImmutable::createFromFormat('!Y-m', $this->month), $this->cells);
 
         Notification::make()
             ->success()
@@ -83,46 +119,65 @@ class DutyRoster extends Page
     }
 
     /**
-     * Emptied first, so a month that fails validation never shows the
-     * previous month's cells under it.
+     * The month for every active employee, read fresh. Emptied first, so a
+     * month that fails validation never shows the previous month's cells.
      */
     private function loadCells(): void
     {
-        $this->cells = [];
+        $this->cells = $this->saved = [];
+        $this->loadedMonth = '';
         $this->resetErrorBag();
 
-        if (blank($this->officeId)) {
-            return;
-        }
+        $this->validateMonth();
 
-        $this->validateSelection();
-
-        $this->cells = app(Roster::class)->read(
-            Office::findOrFail($this->officeId),
-            CarbonImmutable::createFromFormat('!Y-m', $this->month),
-        );
+        $this->cells = $this->saved = app(Roster::class)->read(null, CarbonImmutable::createFromFormat('!Y-m', $this->month));
+        $this->loadedMonth = $this->month;
     }
 
-    private function validateSelection(): void
+    private function validateMonth(): void
     {
-        $this->validate([
-            'officeId' => ['required', 'integer', 'exists:offices,id'],
-            'month' => ['required', 'date_format:Y-m'],
-        ]);
+        $this->validate(['month' => ['required', 'date_format:Y-m']]);
+    }
+
+    /**
+     * The cells whose code differs from what is saved, as "employee id.day".
+     * Worked out here, because a cell typed on another page or behind the
+     * filter is off the screen, where the browser no longer marks it.
+     *
+     * @return array<string, true>
+     */
+    private function unsavedCells(): array
+    {
+        $unsaved = [];
+
+        foreach ($this->cells as $employeeId => $days) {
+            foreach (is_array($days) ? $days : [] as $day => $typed) {
+                $code = is_scalar($typed) ? mb_strtoupper(trim((string) $typed)) : '';
+
+                if ($code !== ($this->saved[$employeeId][$day] ?? '')) {
+                    $unsaved["{$employeeId}.{$day}"] = true;
+                }
+            }
+        }
+
+        return $unsaved;
     }
 
     /** @return array<string, mixed> */
     protected function getViewData(): array
     {
+        $month = $this->loadedMonth !== '' ? CarbonImmutable::createFromFormat('!Y-m', $this->loadedMonth) : null;
         $office = filled($this->officeId) ? Office::find($this->officeId) : null;
-        $month = CarbonImmutable::hasFormat($this->month, 'Y-m')
-            ? CarbonImmutable::createFromFormat('!Y-m', $this->month)
-            : null;
+        $employees = $month !== null ? app(Roster::class)->employees($office) : collect();
+        $perPage = in_array($this->perPage, self::PAGE_SIZES, true) ? $this->perPage : 25;
+        $page = $this->getPage();
 
         return [
             'offices' => Office::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'),
             'schedules' => Schedule::query()->where('is_active', true)->orderBy('code')->get(),
-            'employees' => $office !== null ? app(Roster::class)->employees($office) : collect(),
+            'employees' => new LengthAwarePaginator($employees->forPage($page, $perPage)->values(), $employees->count(), $perPage, $page),
+            'pageSizes' => self::PAGE_SIZES,
+            'unsaved' => $this->unsavedCells(),
             'days' => $month !== null
                 ? array_map(fn (int $day): CarbonImmutable => $month->setDay($day), range(1, $month->daysInMonth))
                 : [],

@@ -55,7 +55,7 @@
         border-radius: 0.75rem;
     }
 
-    /* A report to read rather than a grid to type in: as wide as the page. */
+    /* As wide as the page, for a grid that gains from the room: a report, a month of days. */
     .dtr-grid-wrap.is-full {
         width: auto;
     }
@@ -76,10 +76,10 @@
         background-color: var(--grid-bg);
     }
 
-    /* Many narrow columns, as a month of days. */
+    /* Many narrow columns, as a month of days, with 8px between neighbouring inputs so a click lands on the right day. */
     .dtr-grid-table.is-dense th,
     .dtr-grid-table.is-dense td {
-        padding: 0.375rem 0.125rem;
+        padding: 0.5rem 0.25rem;
     }
 
     .dtr-grid-table thead th {
@@ -168,8 +168,10 @@
         font-variant-numeric: tabular-nums;
     }
 
+    /* Fills its day's column, so a wide screen gives bigger boxes; never narrower than a code. */
     .dtr-grid-input.is-code {
-        width: 2.75rem;
+        width: 100%;
+        min-width: 2.75rem;
         padding-inline: 0.25rem;
         text-align: center;
         text-transform: uppercase;

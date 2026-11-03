@@ -12,7 +12,7 @@
                     Office
                     <x-filament::input.wrapper>
                         <x-filament::input.select wire:model.live="officeId">
-                            <option value="">Choose an office</option>
+                            <option value="">All offices</option>
                             @foreach ($offices as $id => $name)
                                 <option value="{{ $id }}">{{ $name }}</option>
                             @endforeach
@@ -37,7 +37,21 @@
             </ul>
         @endif
 
-        @if ($employees->isNotEmpty() && $days !== [])
+        @if ($days === [])
+            <x-filament::empty-state
+                :contained="false"
+                :icon="\Filament\Support\Icons\Heroicon::OutlinedCalendar"
+                heading="Choose a month"
+                description="The roster covers one calendar month, a column for each day."
+            />
+        @elseif ($employees->total() === 0)
+            <x-filament::empty-state
+                :contained="false"
+                :icon="\Filament\Support\Icons\Heroicon::OutlinedUserGroup"
+                heading="No one to roster"
+                :description="filled($officeId) ? 'This office has no active employees.' : 'There are no active employees yet.'"
+            />
+        @else
             <p class="dtr-grid-legend">
                 @foreach ($schedules as $schedule)
                     <span><strong>{{ $schedule->code }}</strong>{{ $schedule->hours }}</span>
@@ -46,7 +60,7 @@
                 <span><strong>blank</strong>the employee's fixed schedule</span>
             </p>
 
-            <div class="dtr-grid-wrap">
+            <div class="dtr-grid-wrap is-full">
                 <table class="dtr-grid-table is-dense is-centered">
                     <thead>
                         <tr>
@@ -64,17 +78,17 @@
                             <tr wire:key="roster-{{ $employee->id }}">
                                 <th scope="row" class="dtr-grid-name">
                                     {{ $employee->full_name }}
-                                    <span class="dtr-grid-sub">{{ $employee->employee_number }}</span>
+                                    <span class="dtr-grid-sub">{{ $employee->employee_number }} · {{ $employee->office->name }}</span>
                                 </th>
                                 @foreach ($days as $day)
                                     @php($cell = "cells.{$employee->id}.{$day->day}")
                                     <td @class(['dtr-grid-weekend' => $day->isWeekend()])>
-                                        <div @class(['fi-input-wrp', 'fi-invalid' => $errors->has($cell)]) style="margin-inline: auto; width: fit-content;">
+                                        <div @class(['fi-input-wrp', 'fi-invalid' => $errors->has($cell)])>
                                             <div class="fi-input-wrp-content-ctn">
                                                 <input
                                                     wire:model="{{ $cell }}"
                                                     wire:dirty.class="dtr-grid-changed"
-                                                    class="fi-input dtr-grid-input is-code"
+                                                    @class(['fi-input dtr-grid-input is-code', 'dtr-grid-changed' => isset($unsaved["{$employee->id}.{$day->day}"])])
                                                     autocomplete="off"
                                                     maxlength="10"
                                                     aria-label="{{ $employee->full_name }}, {{ $day->format('M j') }}"
@@ -89,25 +103,23 @@
                 </table>
             </div>
 
+            <x-filament::pagination
+                :paginator="$employees"
+                :page-options="$pageSizes"
+                current-page-option-property="perPage"
+                style="margin-top: 0.75rem;"
+            />
+
             <div class="dtr-grid-bar">
                 <x-filament::button wire:click="save">Save roster</x-filament::button>
-                <x-filament::badge color="warning" wire:dirty>Unsaved changes</x-filament::badge>
-                <span class="dtr-grid-hint">Type a code from the list above, or OFF for a day off.</span>
+                {{-- Counted on the server too: a cell typed on another page is off the screen, where the browser no longer marks it. --}}
+                @if ($unsaved !== [])
+                    <x-filament::badge color="warning">{{ count($unsaved) }} unsaved {{ str('change')->plural(count($unsaved)) }}</x-filament::badge>
+                @else
+                    <x-filament::badge color="warning" wire:dirty>Unsaved changes</x-filament::badge>
+                @endif
+                <span class="dtr-grid-hint">Type a code from the list above, or OFF for a day off. Save keeps every page and office, not only the one on screen.</span>
             </div>
-        @elseif (filled($officeId))
-            <x-filament::empty-state
-                :contained="false"
-                :icon="\Filament\Support\Icons\Heroicon::OutlinedUserGroup"
-                heading="No one to roster"
-                description="This office has no active employees."
-            />
-        @else
-            <x-filament::empty-state
-                :contained="false"
-                :icon="\Filament\Support\Icons\Heroicon::OutlinedBuildingOffice2"
-                heading="Choose an office"
-                description="Its employees appear here, one row each, with a column for every day of the month."
-            />
         @endif
     </x-filament::section>
 </x-filament-panels::page>
