@@ -31,6 +31,21 @@ class LeaveOpeningBalancesPageTest extends TestCase
         $this->juan = Employee::factory()->for($this->office)->create(['last_name' => 'Dela Cruz', 'first_name' => 'Juan', 'middle_name' => 'Santos']);
     }
 
+    public function test_an_employee_whose_opening_balance_can_no_longer_change_is_shown_locked(): void
+    {
+        $pedro = Employee::factory()->for($this->office)->create();
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['kind' => LedgerKind::Opening, 'posting_key' => "opening:{$this->juan->id}:VL", 'days' => '10.000', 'posted_on' => '2026-10-31']);
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-12-01']);
+        // Credits alone do not lock: a first save is accepted at any time.
+        LeaveLedgerEntry::factory()->for($pedro)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-12-01']);
+
+        Livewire::test(LeaveOpeningBalances::class)
+            ->set('officeId', $this->office->id)
+            ->assertSeeText('Locked')
+            ->assertDontSeeHtml("rows.{$this->juan->id}.VL")
+            ->assertSeeHtml("rows.{$pedro->id}.VL");
+    }
+
     public function test_hr_opens_the_page_and_sees_the_as_of_date(): void
     {
         $this->get(LeaveOpeningBalances::getUrl())->assertOk()->assertSee('Balances as of Oct 31, 2026');

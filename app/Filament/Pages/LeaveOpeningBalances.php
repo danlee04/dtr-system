@@ -91,12 +91,17 @@ class LeaveOpeningBalances extends Page
     protected function getViewData(): array
     {
         $office = filled($this->officeId) ? Office::find($this->officeId) : null;
+        $employees = $office !== null ? app(OpeningBalances::class)->employees($office) : collect();
 
         return [
             'asOf' => LeavePosting::configuredStart()?->subDay(),
             'offices' => Office::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'),
-            'employees' => $office !== null ? app(OpeningBalances::class)->employees($office) : collect(),
+            'employees' => $employees,
             'columns' => OpeningBalances::COLUMNS,
+            'limits' => OpeningBalances::LIMITS,
+            'locked' => $office !== null ? app(OpeningBalances::class)->locked($employees->modelKeys()) : [],
+            // Counted from what is typed, saved or not.
+            'entered' => count(array_filter($this->rows, fn (array $row): bool => array_filter($row, filled(...)) !== [])),
         ];
     }
 }

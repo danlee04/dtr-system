@@ -29,7 +29,7 @@ final class OpeningBalances
     public const array COLUMNS = ['VL' => 'VL', 'SL' => 'SL', 'SPL' => 'SPL', 'WL' => 'Wellness', 'FL' => 'VL/FL taken this year'];
 
     /** @var array<string, string> leave type code → the most a year gives */
-    private const array LIMITS = ['SPL' => '3', 'WL' => '5'];
+    public const array LIMITS = ['SPL' => '3', 'WL' => '5'];
 
     /** Up to three digits and three decimals, never negative. */
     private const string DAYS = '/^\d{1,3}(\.\d{1,3})?\z/';
@@ -86,19 +86,13 @@ final class OpeningBalances
         $employees = $this->employees($office)
             ->filter(fn (Employee $employee): bool => is_array($rows[$employee->id] ?? null));
         $openings = $this->openings($employees->modelKeys());
-        $locked = LeaveLedgerEntry::query()
-            ->whereIn('employee_id', $employees->modelKeys())
-            ->where('kind', '!=', LedgerKind::Opening)
-            ->distinct()
-            ->pluck('employee_id');
+        $locked = $this->locked($employees->modelKeys());
 
         /** @var list<array{Employee, string, string|null, LeaveLedgerEntry|null}> $changes */
         $changes = [];
         $errors = [];
 
         foreach ($employees as $employee) {
-            $hasOpening = $openings->contains(fn (LeaveLedgerEntry $row): bool => $row->employee_id === $employee->id);
-
             foreach (self::COLUMNS as $code => $heading) {
                 if (! array_key_exists($code, $rows[$employee->id])) {
                     continue;
@@ -128,7 +122,7 @@ final class OpeningBalances
                     continue;
                 }
 
-                if ($hasOpening && $locked->contains($employee->id)) {
+                if (in_array($employee->id, $locked, true)) {
                     $errors[$cell] = "{$employee->full_name} already has credits or leave after the opening balance; use an adjustment on the Leave tab.";
 
                     continue;
@@ -162,6 +156,26 @@ final class OpeningBalances
 
             return count($changes);
         });
+    }
+
+    /**
+     * The employees whose opening balances can no longer change: they have
+     * an opening row and a row of any other kind after it. Without an opening
+     * row, a first save is still accepted.
+     *
+     * @param  list<int>  $employeeIds
+     * @return list<int>
+     */
+    public function locked(array $employeeIds): array
+    {
+        $withOpening = $this->openings($employeeIds)->pluck('employee_id')->unique();
+
+        return LeaveLedgerEntry::query()
+            ->whereIn('employee_id', $withOpening->all())
+            ->where('kind', '!=', LedgerKind::Opening)
+            ->distinct()
+            ->pluck('employee_id')
+            ->all();
     }
 
     /**
