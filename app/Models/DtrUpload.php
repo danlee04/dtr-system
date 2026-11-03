@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\Attendance\ComputedDtr;
+use App\Services\Attendance\DtrCalculator;
 use Database\Factories\DtrUploadFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +23,14 @@ class DtrUpload extends Model
 {
     /** @use HasFactory<DtrUploadFactory> */
     use HasFactory, LogsActivity;
+
+    private ?ComputedDtr $computed = null;
+
+    /** The DTR judged against the app's schedules, worked out once per request; see DtrCalculator. */
+    public function computed(): ComputedDtr
+    {
+        return $this->computed ??= app(DtrCalculator::class)->compute($this);
+    }
 
     /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo

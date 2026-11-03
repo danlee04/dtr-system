@@ -520,10 +520,25 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
 - **Screen.** DTR uploads, first under Time & Attendance, staff only: upload up
   to 30 PDFs at a time (about 1.5 seconds each), filter the ones that need an
   employee, view a DTR as a row per date, choose the employee, delete.
-- **Not yet.** Late and undertime from these rows (Plan 3, against the app's
-  schedules); how a missing tap counts (HR assumed complete for now); OB and
-  travel orders, which the sample does not show; night shifts and 16-hour
-  duty, set aside until a nurse's DTR is in hand.
+- **Computation** (added the same day). `DtrCalculator` judges each date of
+  an upload against `ScheduleResolver`, every time the DTR is shown; nothing
+  is stored, so fixing a schedule, a holiday or leave fixes the month without
+  a new upload. The A.M. columns are the first half of the day and the P.M.
+  columns the second; late and undertime are counted per half as in
+  **Computing a day**, with no grace and no offset. HR's rule for now: a day
+  with any tap is a day at work, a missing tap costs nothing and is listed,
+  and a work day with no tap and no leave is absent. Leave that is not
+  cancelled (pending or approved) covers its dates or its half day; a timed
+  suspension ends the day at its time; dates after today are not judged.
+  The month's late and undertime convert to days with the CSC table, except
+  for staff who earn no leave credits. The view shows the month and every
+  date; the list shows the total and the days absent.
+- **Not yet.** Deducting the total from VL; how a missing tap counts for good
+  (HR assumed complete for now); OB and travel orders, which the sample does
+  not show (HR marks those days OFF on the Duty Roster meanwhile); shifts past
+  midnight and 16-hour duty, set aside until a nurse's DTR is in hand. The CSC
+  table in code is the one above and still has to be checked against HR's
+  printed copy.
 
 ## Recomputation
 

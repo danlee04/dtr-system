@@ -6,6 +6,8 @@ use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\Employee;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,7 +60,7 @@ class DtrUploadResourceTest extends TestCase
                     $this->pdf('SANTOS, ANA.pdf', (new DtrPdf('SANTOS, ANA'))->contents()),
                 ],
             ])
-            ->assertHasNoActionErrors();
+            ->assertHasNoFormErrors();
 
         $this->assertStringContainsString('1 needs an employee', $this->notificationBody());
         $page->assertNotified('Read 2 DTRs');
@@ -90,7 +92,7 @@ class DtrUploadResourceTest extends TestCase
             ->mountAction('uploadDtrs')
             ->set('mountedActions.0.data.files', ['forged' => 'someone-elses/dtr.pdf'])
             ->callMountedAction()
-            ->assertHasActionErrors(['files']);
+            ->assertHasFormErrors(['files']);
 
         $this->assertTrue(Storage::disk('local')->exists('someone-elses/dtr.pdf'));
         $this->assertSame(0, DtrUpload::query()->count());
@@ -123,7 +125,7 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->callAction(TestAction::make('chooseEmployee')->table($upload), data: ['employee_id' => $dave->id])
-            ->assertHasNoActionErrors();
+            ->assertHasNoFormErrors();
 
         $this->assertSame($dave->id, $upload->fresh()->employee_id);
     }
@@ -146,6 +148,38 @@ class DtrUploadResourceTest extends TestCase
             ->filterTable('needs_employee')
             ->assertCanSeeTableRecords([$unmatched])
             ->assertCanNotSeeTableRecords([$matched]);
+    }
+
+    /** October 1 on 8–12 and 1–5: 14 and 9 minutes late, 15 and 10 under. */
+    private function computableUpload(): DtrUpload
+    {
+        $employee = Employee::factory()->create();
+        ScheduleAssignment::factory()->for($employee)->for(Schedule::factory())->create(['effective_from' => '2026-10-01']);
+
+        return DtrUpload::factory()->for($employee)
+            ->has(DtrDay::factory()->state(['date' => '2026-10-01', 'am_arrival' => '08:14', 'am_departure' => '11:45', 'pm_arrival' => '13:09', 'pm_departure' => '16:50']), 'days')
+            ->create();
+    }
+
+    public function test_the_view_shows_the_late_and_undertime_of_each_day_and_the_month(): void
+    {
+        $this->travelTo('2026-11-03 09:00');
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($this->computableUpload()))
+            // October 2026 has 22 weekdays; only the 1st has taps.
+            ->assertMountedActionModalSee(['23 min, 2 times', '25 min, 2 times', '48 min = 0.100 day', '21 days', 'Present', 'Absent']);
+    }
+
+    public function test_the_list_shows_each_dtrs_late_and_undertime(): void
+    {
+        $this->travelTo('2026-11-03 09:00');
+        $this->actingAs(User::factory()->create());
+        $this->computableUpload();
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertSeeText(['48 min', '0.100 day']);
     }
 
     public function test_the_view_shows_every_date_of_the_month_with_the_times_printed(): void

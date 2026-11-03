@@ -21,7 +21,7 @@ class DtrUploadsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['employee', 'uploadedBy'])->withCount('days'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['employee', 'uploadedBy', 'days'])->withCount('days'))
             ->columns([
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
@@ -40,6 +40,19 @@ class DtrUploadsTable
                 TextColumn::make('days_count')
                     ->label('Days with entries')
                     ->alignEnd(),
+                TextColumn::make('late_and_undertime')
+                    ->label('Late + undertime')
+                    ->state(fn (DtrUpload $record): ?string => $record->employee_id === null ? null : ($record->computed()->late + $record->computed()->undertime).' min')
+                    ->description(fn (DtrUpload $record): ?string => $record->employee_id === null || $record->computed()->dayEquivalent === null
+                        ? null
+                        : "{$record->computed()->dayEquivalent} day")
+                    ->placeholder('—')
+                    ->alignEnd(),
+                TextColumn::make('absent')
+                    ->label('Absent (days)')
+                    ->state(fn (DtrUpload $record): int|float|null => $record->employee_id === null ? null : $record->computed()->absent)
+                    ->placeholder('—')
+                    ->alignEnd(),
                 TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->dateTime('M j, Y g:i A')
@@ -55,7 +68,7 @@ class DtrUploadsTable
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading('Daily Time Record')
-                    ->modalWidth(Width::FiveExtraLarge),
+                    ->modalWidth(Width::SevenExtraLarge),
                 Action::make('chooseEmployee')
                     ->label('Choose employee')
                     ->icon(Heroicon::OutlinedUserPlus)
