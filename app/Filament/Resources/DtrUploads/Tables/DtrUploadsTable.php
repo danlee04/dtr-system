@@ -42,15 +42,13 @@ class DtrUploadsTable
                     ->alignEnd(),
                 TextColumn::make('late_and_undertime')
                     ->label('Late + undertime')
-                    ->state(fn (DtrUpload $record): ?string => $record->employee_id === null ? null : ($record->computed()->late + $record->computed()->undertime).' min')
-                    ->description(fn (DtrUpload $record): ?string => $record->employee_id === null || $record->computed()->dayEquivalent === null
-                        ? null
-                        : "{$record->computed()->dayEquivalent} day")
+                    ->state(fn (DtrUpload $record): ?string => $record->isComputed() ? ($record->computed()->late + $record->computed()->undertime).' min' : null)
+                    ->description(fn (DtrUpload $record): ?string => $record->isComputed() ? "{$record->computed()->dayEquivalent} day" : null)
                     ->placeholder('—')
                     ->alignEnd(),
                 TextColumn::make('absent')
                     ->label('Absent (days)')
-                    ->state(fn (DtrUpload $record): int|float|null => $record->employee_id === null ? null : $record->computed()->absent)
+                    ->state(fn (DtrUpload $record): int|float|null => $record->isComputed() ? $record->computed()->absent : null)
                     ->placeholder('—')
                     ->alignEnd(),
                 TextColumn::make('created_at')

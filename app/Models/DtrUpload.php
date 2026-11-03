@@ -32,6 +32,16 @@ class DtrUpload extends Model
         return $this->computed ??= app(DtrCalculator::class)->compute($this);
     }
 
+    /**
+     * Whether the DTR is judged at all: it needs an employee, and one who
+     * earns leave credits, because late and undertime come off VL. Job order
+     * and contract of service DTRs are shown as printed.
+     */
+    public function isComputed(): bool
+    {
+        return $this->employee?->employment_status->earnsLeaveCredits() ?? false;
+    }
+
     /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {

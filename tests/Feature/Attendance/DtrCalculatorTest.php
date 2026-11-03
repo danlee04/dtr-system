@@ -19,6 +19,7 @@ use App\Services\Attendance\ComputedDay;
 use App\Services\Attendance\ComputedDtr;
 use App\Services\Attendance\DtrCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DtrCalculatorTest extends TestCase
@@ -219,12 +220,25 @@ class DtrCalculatorTest extends TestCase
         ]);
     }
 
-    public function test_staff_without_leave_credits_keep_their_minutes_unconverted(): void
+    /** @return array<string, array{EmploymentStatus, int}> */
+    public static function statuses(): array
     {
-        $dtr = $this->compute($this->regular(['employment_status' => EmploymentStatus::JobOrder]), [
+        return [
+            'permanent' => [EmploymentStatus::Permanent, 17],
+            'co-terminous' => [EmploymentStatus::Coterminous, 17],
+            'job order' => [EmploymentStatus::JobOrder, 0],
+            'contract of service' => [EmploymentStatus::ContractOfService, 0],
+        ];
+    }
+
+    #[DataProvider('statuses')]
+    public function test_only_staff_who_earn_leave_credits_are_computed(EmploymentStatus $status, int $late): void
+    {
+        // Late and undertime come off VL, which job order and contract of service staff do not have.
+        $dtr = $this->compute($this->regular(['employment_status' => $status]), [
             '2026-10-09' => ['am_arrival' => '08:17'],
         ]);
 
-        $this->assertSame([17, null], [$dtr->late, $dtr->dayEquivalent]);
+        $this->assertSame([$late, $late > 0], [$dtr->late, $dtr->days !== []]);
     }
 }

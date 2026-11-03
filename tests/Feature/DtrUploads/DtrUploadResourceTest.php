@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\DtrUploads;
 
+use App\Enums\EmploymentStatus;
 use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
@@ -151,9 +152,9 @@ class DtrUploadResourceTest extends TestCase
     }
 
     /** October 1 on 8–12 and 1–5: 14 and 9 minutes late, 15 and 10 under. */
-    private function computableUpload(): DtrUpload
+    private function computableUpload(EmploymentStatus $status = EmploymentStatus::Permanent): DtrUpload
     {
-        $employee = Employee::factory()->create();
+        $employee = Employee::factory()->create(['employment_status' => $status]);
         ScheduleAssignment::factory()->for($employee)->for(Schedule::factory())->create(['effective_from' => '2026-10-01']);
 
         return DtrUpload::factory()->for($employee)
@@ -180,6 +181,18 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->assertSeeText(['48 min', '0.100 day']);
+    }
+
+    public function test_a_job_order_dtr_is_shown_but_not_computed(): void
+    {
+        $this->travelTo('2026-11-03 09:00');
+        $this->actingAs(User::factory()->create());
+        $upload = $this->computableUpload(EmploymentStatus::JobOrder);
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertDontSeeText('48 min')
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee(['earn no leave credits', '8:14 AM']);
     }
 
     public function test_the_view_shows_every_date_of_the_month_with_the_times_printed(): void

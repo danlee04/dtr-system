@@ -79,7 +79,9 @@ Assumptions stated during the design and not corrected:
 - A shift that crosses midnight belongs to the date it starts on.
 - The CSC conversion is a report only.
 - Job Order and Contract of Service personnel have no leave credits, so their
-  figures stay in minutes.
+  figures stay in minutes. **Changed 2026-11-03:** HR computes tardiness and
+  undertime for permanent and co-terminous staff only; job order and contract
+  of service DTRs are read and shown, not computed (see **DTR upload**).
 
 ## Approach
 
@@ -532,9 +534,11 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   and a work day with no tap and no leave is absent. Leave that is not
   cancelled (pending or approved) covers its dates or its half day; a timed
   suspension ends the day at its time; dates after today are not judged.
-  The month's late and undertime convert to days with the CSC table, except
-  for staff who earn no leave credits. The view shows the month and every
-  date; the list shows the total and the days absent.
+  The month's late and undertime convert to days with the CSC table. Only
+  staff who earn leave credits (permanent and co-terminous) are computed,
+  since the total comes off VL; a job order or contract of service DTR is
+  shown as printed. The view shows the month and every date; the list shows
+  the total and the days absent.
 - **OB and travel orders** (added the same day). HR enters them on the **OB
   & travel orders** screen from the signed slips: the employee, the type, the
   dates, the whole day or one half (one date only), a reference number and
@@ -666,8 +670,8 @@ office, employment status and month state:
   because the official table rounds some values differently: 6 minutes is
   0.012, not 0.013. The tests check every value.
 - It deducts nothing from leave credits. Job order and contract of service
-  rows show minutes only, with no day-equivalent. Absences are reported
-  separately, in days.
+  rows show minutes only, with no day-equivalent (since 2026-11-03 they are
+  not computed at all). Absences are reported separately, in days.
 
 | Min | Day | Min | Day | Min | Day | Min | Day | Min | Day | Min | Day |
 |---|---|---|---|---|---|---|---|---|---|---|---|

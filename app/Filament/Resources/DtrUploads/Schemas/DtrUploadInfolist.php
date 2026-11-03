@@ -47,19 +47,20 @@ class DtrUploadInfolist
                     ->schema([
                         TextEntry::make('not_computed')
                             ->hiddenLabel()
-                            ->state('Choose the employee, and the app computes this DTR against their schedule.')
+                            ->state(fn (DtrUpload $record): string => $record->employee_id === null
+                                ? 'Choose the employee, and the app computes this DTR against their schedule.'
+                                : 'Job order and contract of service staff earn no leave credits, so their DTR is shown as printed and not computed.')
                             ->color('warning')
-                            ->visible(fn (DtrUpload $record): bool => $record->employee_id === null)
+                            ->visible(fn (DtrUpload $record): bool => ! $record->isComputed())
                             ->columnSpanFull(),
                         self::figure('late', 'Late', fn (ComputedDtr $dtr): string => self::minutes($dtr->late, $dtr->lateCount)),
                         self::figure('undertime', 'Undertime', fn (ComputedDtr $dtr): string => self::minutes($dtr->undertime, $dtr->undertimeCount)),
-                        self::figure('total', 'Late + undertime', fn (ComputedDtr $dtr): string => ($dtr->late + $dtr->undertime).' min '
-                            .($dtr->dayEquivalent === null ? '(earns no leave credits)' : "= {$dtr->dayEquivalent} day")),
+                        self::figure('total', 'Late + undertime', fn (ComputedDtr $dtr): string => ($dtr->late + $dtr->undertime)." min = {$dtr->dayEquivalent} day"),
                         self::figure('absent', 'Absent', fn (ComputedDtr $dtr): string => self::count($dtr->absent, 'day')),
                         self::figure('missing', 'Days with a missing tap', fn (ComputedDtr $dtr): string => self::count($dtr->daysMissingTaps, 'day')),
                         self::figure('no_schedule', 'Days without a schedule', fn (ComputedDtr $dtr): string => self::count($dtr->daysWithoutSchedule, 'day'))
                             ->color('warning')
-                            ->visible(fn (DtrUpload $record): bool => $record->employee_id !== null && $record->computed()->daysWithoutSchedule > 0),
+                            ->visible(fn (DtrUpload $record): bool => $record->isComputed() && $record->computed()->daysWithoutSchedule > 0),
                     ]),
                 Section::make('Days')
                     ->contained(false)
@@ -103,7 +104,7 @@ class DtrUploadInfolist
         return TextEntry::make($name)
             ->label($label)
             ->state(fn (DtrUpload $record): string => $value($record->computed()))
-            ->visible(fn (DtrUpload $record): bool => $record->employee_id !== null);
+            ->visible(fn (DtrUpload $record): bool => $record->isComputed());
     }
 
     /** @return list<array<string, mixed>> */

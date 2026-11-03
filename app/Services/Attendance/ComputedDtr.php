@@ -23,11 +23,11 @@ final readonly class ComputedDtr
 
     public int $daysWithoutSchedule;
 
-    /** Late and undertime as days of leave, by the CSC table; null for staff who earn no leave credits. */
-    public ?string $dayEquivalent;
+    /** Late and undertime as days of leave, by the CSC table. */
+    public string $dayEquivalent;
 
     /** @param  array<string, ComputedDay>  $days  Y-m-d → day */
-    public function __construct(public array $days, bool $earnsLeaveCredits)
+    public function __construct(public array $days)
     {
         $this->late = array_sum(array_column($days, 'late'));
         $this->lateCount = array_sum(array_column($days, 'lateCount'));
@@ -36,6 +36,6 @@ final readonly class ComputedDtr
         $this->absent = (float) array_sum(array_column($days, 'absent'));
         $this->daysMissingTaps = count(array_filter($days, fn (ComputedDay $day): bool => $day->missing !== []));
         $this->daysWithoutSchedule = count(array_filter($days, fn (ComputedDay $day): bool => $day->status === AttendanceStatus::NoSchedule));
-        $this->dayEquivalent = $earnsLeaveCredits ? CscConversion::days($this->late + $this->undertime) : null;
+        $this->dayEquivalent = CscConversion::days($this->late + $this->undertime);
     }
 }

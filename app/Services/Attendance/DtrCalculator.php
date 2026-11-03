@@ -43,8 +43,9 @@ final class DtrCalculator
     {
         $employee = $upload->employee;
 
-        if ($employee === null) {
-            return new ComputedDtr([], true);
+        // Late and undertime come off VL, so only staff who earn leave credits are computed (HR, 2026-11-03).
+        if (! $upload->isComputed()) {
+            return new ComputedDtr([]);
         }
 
         $from = $upload->period_start->toImmutable();
@@ -80,7 +81,7 @@ final class DtrCalculator
             $days[$date] = $this->day(CarbonImmutable::parse($date), $resolved, $rows->get($date), $covers, $suspensions->get($date));
         }
 
-        return new ComputedDtr($days, $employee->employment_status->earnsLeaveCredits());
+        return new ComputedDtr($days);
     }
 
     /** @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers */
@@ -134,11 +135,7 @@ final class DtrCalculator
         }
 
         $scheduledHalves = count($taps);
-        $tapped = array_filter(
-            $halves,
-            fn (array $half, int $index): bool => $taps[$index][0] !== null || $taps[$index][1] !== null,
-            ARRAY_FILTER_USE_BOTH,
-        );
+        $tapped = array_filter(array_keys($halves), fn (int $index): bool => $taps[$index][0] !== null || $taps[$index][1] !== null);
 
         if ($tapped === []) {
             return new ComputedDay(AttendanceStatus::Absent, absent: count($halves) / $scheduledHalves, note: $note);
