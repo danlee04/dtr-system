@@ -58,6 +58,18 @@ class EmployeeResourceTest extends TestCase
             ->assertCanSeeTableRecords($employees);
     }
 
+    public function test_the_employees_are_listed_by_last_name_then_first_name(): void
+    {
+        // Added, and numbered, out of name order.
+        $santos = Employee::factory()->create(['employee_number' => '0001', 'last_name' => 'Santos', 'first_name' => 'Ana']);
+        $pedroCruz = Employee::factory()->create(['employee_number' => '0002', 'last_name' => 'Cruz', 'first_name' => 'Pedro']);
+        $abad = Employee::factory()->create(['employee_number' => '0003', 'last_name' => 'Abad', 'first_name' => 'Zeny']);
+        $juanCruz = Employee::factory()->create(['employee_number' => '0004', 'last_name' => 'Cruz', 'first_name' => 'Juan']);
+
+        Livewire::test(ListEmployees::class)
+            ->assertCanSeeTableRecords([$abad, $juanCruz, $pedroCruz, $santos], inOrder: true);
+    }
+
     public function test_hr_adds_an_employee(): void
     {
         Livewire::test(ListEmployees::class)->mountAction('create')

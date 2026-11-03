@@ -13,6 +13,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class EmployeesTable
 {
@@ -28,7 +29,10 @@ class EmployeesTable
                     ->label('Name')
                     ->formatStateUsing(fn (Employee $record): string => $record->full_name)
                     ->searchable(['last_name', 'first_name'])
-                    ->sortable(['last_name', 'first_name']),
+                    // Not sortable(['last_name', 'first_name']): Filament 5.9 sorts by the array's last column first.
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query
+                        ->orderBy('last_name', $direction)
+                        ->orderBy('first_name', $direction)),
                 TextColumn::make('office.name')
                     ->sortable(),
                 TextColumn::make('employment_status')
