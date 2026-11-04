@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\Employees\Pages;
 
 use App\Filament\Resources\Employees\EmployeeResource;
-use App\Filament\Resources\Employees\Widgets\EmployeeLeaveBalances;
 use App\Models\Employee;
+use App\Models\Schedule;
+use App\Services\Attendance\ComputedDtr;
+use App\Services\EmployeeOverview;
 use BackedEnum;
+use Carbon\CarbonImmutable;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
@@ -14,11 +17,12 @@ use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
+use Livewire\Attributes\Computed;
 
 /**
- * One employee: who they are in the heading, their balances above the tabs,
- * and their details beside the Schedules and Leave tabs, which need a page of
- * their own. Editing opens in a modal over it.
+ * One employee, laid out after HR's reference: who they are in the heading,
+ * then the Overview (cards, details, what needs a look) beside the Schedules
+ * and Leave tabs, which need a page of their own. Editing opens in a modal.
  *
  * @property Employee $record
  */
@@ -31,12 +35,12 @@ class ViewEmployee extends ViewRecord
         return $this->record->full_name;
     }
 
-    /** Their initials beside their name. Both views escape what they print. */
+    /** Their photo, or their initials without one, beside their name. Both views escape what they print. */
     public function getHeading(): Htmlable
     {
         return new HtmlString(view('filament.employees.heading', [
             'employee' => $this->record,
-            'avatar' => $this->initialsAvatar(),
+            'avatar' => $this->record->photoUrl() ?? $this->initialsAvatar(),
         ])->render());
     }
 
@@ -56,7 +60,7 @@ class ViewEmployee extends ViewRecord
 
     public function getContentTabLabel(): ?string
     {
-        return 'Details';
+        return 'Overview';
     }
 
     public function getContentTabIcon(): string|BackedEnum|null
@@ -64,12 +68,16 @@ class ViewEmployee extends ViewRecord
         return Heroicon::OutlinedIdentification;
     }
 
-    /** Only for those who earn leave: the rest would show four zeroes. */
-    protected function getHeaderWidgets(): array
+    /**
+     * What the Overview's cards and callout show, worked out once a request.
+     * Computed, so the browser cannot call it.
+     *
+     * @return array{earns: bool, month: CarbonImmutable, lastMonth: ComputedDtr|null, balances: array<string, string>, schedule: Schedule|null, needsALook: array{step: string, count?: int}|null}
+     */
+    #[Computed]
+    public function overview(): array
     {
-        return $this->record->employment_status->earnsLeaveCredits()
-            ? [EmployeeLeaveBalances::class]
-            : [];
+        return app(EmployeeOverview::class)->for($this->record, CarbonImmutable::today());
     }
 
     protected function getHeaderActions(): array

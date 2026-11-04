@@ -25,9 +25,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * The employee's leave: every credit and deduction, newest first. The
- * balances are the cards above the page's tabs. Rows are never edited; a
- * correction is an adjustment, through LeaveLedger.
+ * The employee's leave: every credit and deduction, newest first, under the
+ * balances (also cards on the Overview). Rows are never edited; a correction
+ * is an adjustment, through LeaveLedger.
  */
 class LeaveLedgerEntriesRelationManager extends RelationManager
 {
@@ -46,6 +46,10 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            // Redrawn as leave is filed or adjusted here. Only those who earn leave have balances.
+            ->description(fn (): ?string => $this->employee()->employment_status->earnsLeaveCredits()
+                ? 'Balance: '.collect(app(LeaveLedger::class)->balances($this->employee()))->map(fn (string $days, string $code): string => "{$code} {$days}")->implode(' · ')
+                : null)
             ->columns([
                 TextColumn::make('posted_on')
                     ->label('Date')

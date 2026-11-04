@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -21,6 +22,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'middle_name',
     'suffix',
     'position',
+    'photo_path',
     'office_id',
     'employment_status',
     'biometric_id',
@@ -33,10 +35,35 @@ class Employee extends Model
     /** @use HasFactory<EmployeeFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
+    /** The private disk and folder their photos are kept in, never the public one. */
+    public const string PHOTO_DISK = 'local';
+
+    public const string PHOTO_DIRECTORY = 'employee-photos';
+
     /** @var array<string, mixed> */
     protected $attributes = [
         'is_active' => true,
     ];
+
+    protected static function booted(): void
+    {
+        // A replaced or removed photo leaves no file behind.
+        static::updated(function (Employee $employee): void {
+            $old = $employee->getOriginal('photo_path');
+
+            if ($employee->wasChanged('photo_path') && filled($old)) {
+                Storage::disk(self::PHOTO_DISK)->delete($old);
+            }
+        });
+    }
+
+    /** A link to their photo that works for half an hour, or null without one. */
+    public function photoUrl(): ?string
+    {
+        return filled($this->photo_path)
+            ? Storage::disk(self::PHOTO_DISK)->temporaryUrl($this->photo_path, now()->addMinutes(30))
+            : null;
+    }
 
     /** @return BelongsTo<Office, $this> */
     public function office(): BelongsTo

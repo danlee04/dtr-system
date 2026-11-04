@@ -151,7 +151,7 @@ class EmployeeResourceTest extends TestCase
 
         $this->get(EmployeeResource::getUrl('view', ['record' => $employee]))
             ->assertOk()
-            ->assertSee('Details')
+            ->assertSee('Overview')
             ->assertSee('Schedules')
             ->assertSee('Leave');
     }

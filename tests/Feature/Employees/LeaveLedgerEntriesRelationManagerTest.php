@@ -6,7 +6,6 @@ use App\Enums\EmploymentStatus;
 use App\Enums\LedgerKind;
 use App\Filament\Resources\Employees\Pages\ViewEmployee;
 use App\Filament\Resources\Employees\RelationManagers\LeaveLedgerEntriesRelationManager;
-use App\Filament\Resources\Employees\Widgets\EmployeeLeaveBalances;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
@@ -18,8 +17,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\TestCase;
-
-use function Livewire\invade;
 
 class LeaveLedgerEntriesRelationManagerTest extends TestCase
 {
@@ -44,22 +41,20 @@ class LeaveLedgerEntriesRelationManagerTest extends TestCase
         ]);
     }
 
-    public function test_the_tab_shows_the_rows_and_the_page_the_balances(): void
+    public function test_the_tab_shows_the_rows_and_the_balances(): void
     {
         $row = LeaveLedgerEntry::factory()->for($this->employee)->create(['leave_type' => 'VL', 'days' => '10.000', 'kind' => LedgerKind::Opening]);
 
-        $this->manager()->assertCanSeeTableRecords([$row]);
-
-        Livewire::test(EmployeeLeaveBalances::class, ['record' => $this->employee])
-            ->assertSee(['Vacation Leave', '10.000', 'Wellness Leave', '0.000']);
+        $this->manager()
+            ->assertCanSeeTableRecords([$row])
+            ->assertSee('Balance: VL 10.000 · SL 0.000 · SPL 0.000 · WL 0.000');
     }
 
     public function test_the_balances_show_only_for_those_who_earn_leave(): void
     {
-        $page = fn (Employee $employee) => Livewire::test(ViewEmployee::class, ['record' => $employee->getRouteKey()])->instance();
+        $this->employee = Employee::factory()->create(['employment_status' => EmploymentStatus::JobOrder]);
 
-        $this->assertSame([EmployeeLeaveBalances::class], invade($page($this->employee))->getHeaderWidgets());
-        $this->assertSame([], invade($page(Employee::factory()->create(['employment_status' => EmploymentStatus::JobOrder])))->getHeaderWidgets());
+        $this->manager()->assertDontSee('Balance:');
     }
 
     public function test_hr_files_leave_from_the_tab_for_this_employee(): void

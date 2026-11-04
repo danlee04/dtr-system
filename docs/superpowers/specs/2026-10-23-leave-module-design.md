@@ -408,7 +408,9 @@ Application.xlsx` in `storage/app/samples/`, git-ignored), received 23 October
 | Applications | Own applications and their status; **File leave** with the live day count and pay split; cancel while pending; print |
 | Leave types | Each type's description and, where tracked, the balance |
 
-**Everyone:** Change password, in the user menu.
+**Everyone:** Profile, in the user menu: the password, and since 2026-11-04,
+for an account linked to an employee, the employee's photo. The password may
+then be left blank; for anyone else the page is still only the password.
 
 **HR's screens (additions)**
 

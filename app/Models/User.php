@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -17,7 +18,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['name', 'email', 'password', 'role', 'is_active', 'employee_id'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, LogsActivity, Notifiable;
@@ -66,6 +67,12 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->is_active && ($this->isStaff() || $this->hasCurrentEmployee());
+    }
+
+    /** An employee account shows the employee's photo in the user menu; the rest keep Filament's initials. */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->employee?->photoUrl();
     }
 
     public function isAdmin(): bool

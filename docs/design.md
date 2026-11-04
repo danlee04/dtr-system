@@ -37,7 +37,7 @@ colours (success = green, warning = amber, danger = red, info = blue).
 
 | Role | Light | Dark | Used for |
 |---|---|---|---|
-| Primary | `--primary-500` fill, `--primary-700` text | `--primary-400` text | The main button of a view; links; the count on the topbar bell; the initials avatars (`--primary-100` / `--primary-800`) |
+| Primary | `--primary-500` fill, `--primary-700` text | `--primary-400` text | The main button of a view; links; the count on the topbar bell; the initials avatars (`--primary-100` / `--primary-800`); on an employee's page, the open tab, the lead card and the Needs a look card |
 | Secondary | Filament `gray` buttons (white, thin ring) | same, dark | Every action that is not the main one |
 | Accent | none | none | There is no separate accent hue: colour beyond amber is status or data only |
 | Page background | `--gray-50` | `--gray-950` | Behind cards; the topbar on desktop |
@@ -77,7 +77,7 @@ leave by type: Vacation `--success-500`, Sick `--info-500`, Special privilege
 | `--text-base` | 16px | Card and section titles |
 | `--text-xl` | 20px | A shown page heading, on phones |
 | `--text-2xl` | 24px | A shown page heading, from 640px |
-| 1.75rem | 28px | Dashboard figures |
+| 1.75rem | 28px | Dashboard figures; the figures on an employee's cards; an employee's name on their page, from 640px |
 | 2.25rem | 36px | The dashboard's lead figure |
 
 - **Weights:** 400 for body text; 500 for labels, links and the current nav item;
@@ -110,7 +110,7 @@ One unit, `--spacing`, is 4px. Use its multiples: 4, 8, 12, 16, 20, 24, 32.
 | `--radius-md` | 6px | Badges |
 | `--radius-lg` | 8px | Buttons, inputs, nav items, chart bars |
 | `--radius-xl` | 12px | Cards, sections, tables, grid frames, the sidebar card, topbar cards |
-| full | pill | Avatars, progress bars, counts |
+| full | pill | Avatars, progress bars, counts, an employee's tabs |
 
 - **Lines:** 1px, at the line colour above. No heavy shadows: Filament's own card
   shadow at most.
@@ -251,6 +251,28 @@ Filament notifications:
 - **Series colours** come from `.is-late` and `.is-undertime`; a stack of lines
   inside a card is `.dtr-dash-stack`.
 
+### An employee's page
+
+Laid out after a reference HR chose, and the only page with a heading on screen.
+
+- **Heading:** a 56px round photo beside the name (their initials without one),
+  and the name 28px from 640px. Under the name: the position and office in grey,
+  then chips for the status, the employment status and the number.
+- **Photo:** Filament's round uploader with its cropper, in the employee form for
+  HR and on the Profile page for the employee.
+- **Tabs:** pills on a grey track (`--gray-100`; dark: white at 5%), started
+  from the left. The open one is `--primary-400` with dark text, and a focused one
+  gets the 2px outline.
+- **Cards** (`.dtr-profile-cards`): an icon box, a 12px label in a dark shade
+  of the card's colour, the figure, and a grey line under it. Last month leads in
+  solid `--primary-400`. Each balance is tinted (14%; dark: 16%) in its leave
+  chart colour, and the schedule in grey. Six across from 1280px; below that, as
+  many as fit at 9rem.
+- **Details:** Filament sections, divided, with inline labels: one fact a row.
+- **Needs a look** (`.dtr-callout`): an amber tint and ring, a 40px amber icon
+  box, "Needs a look", a 16px heading, one sentence and one button. It shows
+  only when something needs a look.
+
 All in `dashboard.blade.php`.
 
 ## 5. States
@@ -321,7 +343,7 @@ All in `dashboard.blade.php`.
 |---|---|
 | `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings |
 | `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
-| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page heading and chips (`.dtr-person`, `.dtr-person-chips`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`) |
+| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`) |
 | `resources/views/filament/dashboard.blade.php` | The dashboard (`.dtr-dash-*`) |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |

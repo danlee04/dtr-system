@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Office;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Common\Entity\Cell\StringCell;
 use OpenSpout\Common\Entity\Row;
@@ -37,8 +38,6 @@ final class MonthlyTotals
      */
     public function rows(?Office $office, CarbonImmutable $month): array
     {
-        $from = $month->startOfMonth()->toDateString();
-        $to = $month->endOfMonth()->toDateString();
         $earning = array_filter(EmploymentStatus::cases(), fn (EmploymentStatus $status): bool => $status->earnsLeaveCredits());
 
         $employees = Employee::query()
@@ -50,30 +49,25 @@ final class MonthlyTotals
             ->orderBy('first_name')
             ->get();
 
-        $uploads = DtrUpload::query()
-            ->whereIn('employee_id', $employees->modelKeys())
-            ->whereDate('period_start', '<=', $to)
-            ->whereDate('period_end', '>=', $from)
-            ->with(['employee', 'days'])
-            ->get()
-            ->groupBy('employee_id');
+        $uploads = $this->uploads($employees->modelKeys(), $month);
 
-        return $employees->map(function (Employee $employee) use ($uploads, $from, $to): array {
+        return $employees->map(function (Employee $employee) use ($uploads, $month): array {
             if (! $uploads->has($employee->id)) {
                 return ['employee' => $employee, 'dtr' => null, 'notes' => ['No DTR uploaded']];
             }
 
-            // A newer upload replaces any it overlaps, so the DTRs' dates never collide.
-            $days = [];
-
-            foreach ($uploads->get($employee->id) as $upload) {
-                $days += $upload->computed()->days;
-            }
-
-            $dtr = new ComputedDtr(array_filter($days, fn (string $date): bool => $date >= $from && $date <= $to, ARRAY_FILTER_USE_KEY));
+            $dtr = $this->combine($uploads->get($employee->id), $month);
 
             return ['employee' => $employee, 'dtr' => $dtr, 'notes' => $this->notes($dtr)];
         })->all();
+    }
+
+    /** One employee's month, counted as their row is; null when no DTR covers it. */
+    public function dtr(Employee $employee, CarbonImmutable $month): ?ComputedDtr
+    {
+        $uploads = $this->uploads([$employee->id], $month);
+
+        return $uploads->has($employee->id) ? $this->combine($uploads->get($employee->id), $month) : null;
     }
 
     /** The rows as an Excel sheet, written to $path; 'php://output' sends it. */
@@ -112,6 +106,43 @@ final class MonthlyTotals
         }
 
         $writer->close();
+    }
+
+    /**
+     * The DTRs that cover the month, by employee id.
+     *
+     * @param  list<int>  $employeeIds
+     * @return Collection<int, Collection<int, DtrUpload>>
+     */
+    private function uploads(array $employeeIds, CarbonImmutable $month): Collection
+    {
+        return DtrUpload::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereDate('period_start', '<=', $month->endOfMonth()->toDateString())
+            ->whereDate('period_end', '>=', $month->startOfMonth()->toDateString())
+            ->with(['employee', 'days'])
+            ->get()
+            ->groupBy('employee_id');
+    }
+
+    /**
+     * One employee's DTRs as one month: two half-month uploads add up, and
+     * only the month's own dates count.
+     *
+     * @param  Collection<int, DtrUpload>  $uploads
+     */
+    private function combine(Collection $uploads, CarbonImmutable $month): ComputedDtr
+    {
+        $from = $month->startOfMonth()->toDateString();
+        $to = $month->endOfMonth()->toDateString();
+        // A newer upload replaces any it overlaps, so the DTRs' dates never collide.
+        $days = [];
+
+        foreach ($uploads as $upload) {
+            $days += $upload->computed()->days;
+        }
+
+        return new ComputedDtr(array_filter($days, fn (string $date): bool => $date >= $from && $date <= $to, ARRAY_FILTER_USE_KEY));
     }
 
     /** @return list<string> */

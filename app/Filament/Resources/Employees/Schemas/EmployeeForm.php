@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Employees\Schemas;
 
 use App\Enums\EmploymentStatus;
+use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -16,6 +18,8 @@ class EmployeeForm
     {
         return $schema
             ->components([
+                self::photoField()
+                    ->columnSpanFull(),
                 // Headings, not cards: a card inside the modal is a box in a box.
                 // Four across, the same as the employee's page, so nothing sits alone.
                 Section::make('Employment')
@@ -77,5 +81,24 @@ class EmployeeForm
                             ->inline(false),
                     ]),
             ]);
+    }
+
+    /**
+     * Their photo, here for HR and on the Profile page for the employee:
+     * cropped square, kept on the private disk. Not SVG, which can carry script.
+     */
+    public static function photoField(): FileUpload
+    {
+        return FileUpload::make('photo_path')
+            ->label('Photo')
+            ->avatar()
+            ->imageEditor()
+            ->circleCropper()
+            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->maxSize(10240)
+            ->disk(Employee::PHOTO_DISK)
+            ->directory(Employee::PHOTO_DIRECTORY)
+            ->visibility('private')
+            ->helperText('A JPG, PNG or WebP of up to 10 MB, cropped square.');
     }
 }
