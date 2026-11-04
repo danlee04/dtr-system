@@ -86,7 +86,7 @@
         gap: calc(var(--spacing) * 3);
         min-width: 0;
         padding: calc(var(--spacing) * 5);
-        border-radius: 1rem;
+        border-radius: var(--radius-xl);
         background-color: var(--dash-card);
         box-shadow: 0 0 0 1px var(--dash-line);
         color: var(--dash-text);
@@ -211,6 +211,22 @@
     .dtr-dash-track > span {
         display: block;
         flex: none;
+        background-color: var(--key);
+    }
+
+    /* The two series, in the legend and in the bars. */
+    .dtr-dash .is-late {
+        --key: var(--warning-400);
+    }
+
+    .dtr-dash .is-undertime {
+        --key: var(--info-400);
+    }
+
+    /* A few lines one under the other, 8px apart. */
+    .dtr-dash-stack {
+        display: grid;
+        gap: calc(var(--spacing) * 2);
     }
 
     .dtr-dash-day {
@@ -266,9 +282,10 @@
     }
 
     /* C: the quick actions as tiles, then who is out today. */
+    /* As many tiles across as fit at 64px each; the rest wrap to a second row rather than crowd. */
     .dtr-dash-actions {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
         gap: calc(var(--spacing) * 2);
     }
 
@@ -522,8 +539,8 @@
                 <h2 id="dash-a" class="dtr-dash-sub">Late and undertime in {{ $lastMonth->format('F Y') }}, as days of leave by the CSC table</h2>
             </div>
             <ul class="dtr-dash-legend">
-                <li><span class="dtr-dash-key" style="--key: var(--warning-400)"></span>Late ({{ $month['late'] }} min)</li>
-                <li><span class="dtr-dash-key" style="--key: var(--info-400)"></span>Undertime ({{ $month['undertime'] }} min)</li>
+                <li><span class="dtr-dash-key is-late"></span>Late ({{ $month['late'] }} min)</li>
+                <li><span class="dtr-dash-key is-undertime"></span>Undertime ({{ $month['undertime'] }} min)</li>
             </ul>
         </div>
 
@@ -535,8 +552,8 @@
                     <div class="dtr-dash-col" tabindex="0" aria-label="{{ $weekdays[$weekday] }}: {{ $minutes['late'] }} minutes late, {{ $minutes['undertime'] }} minutes under">
                         <span class="dtr-dash-tip" aria-hidden="true">{{ $minutes['late'] }} min late · {{ $minutes['undertime'] }} min under</span>
                         <div class="dtr-dash-track">
-                            <span style="height: {{ $minutes['late'] / $tallest * 100 }}%; background-color: var(--warning-400)"></span>
-                            <span style="height: {{ $minutes['undertime'] / $tallest * 100 }}%; background-color: var(--info-400)"></span>
+                            <span class="is-late" style="height: {{ $minutes['late'] / $tallest * 100 }}%"></span>
+                            <span class="is-undertime" style="height: {{ $minutes['undertime'] / $tallest * 100 }}%"></span>
                         </div>
                         <span class="dtr-dash-day" aria-hidden="true">{{ mb_substr($weekdays[$weekday], 0, 3) }}</span>
                     </div>
@@ -615,7 +632,7 @@
     {{-- E: what to do next. --}}
     <section class="dtr-dash-card dtr-dash-e" aria-labelledby="dash-e">
         <span class="dtr-dash-bulb" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedLightBulb" /></span>
-        <div style="display: grid; gap: 0.5rem;">
+        <div class="dtr-dash-stack">
             @switch ($nextStep['step'])
                 @case('opening-balances')
                     <h2 id="dash-e" class="dtr-dash-title">Enter the opening balances</h2>
@@ -691,7 +708,7 @@
         </div>
 
         @forelse ($month['officesBehind'] as $office)
-            <div style="display: grid; gap: 0.375rem;">
+            <div class="dtr-dash-stack">
                 <div class="dtr-dash-between">
                     <span>{{ $office['office'] }}</span>
                     <span class="dtr-dash-muted">{{ $office['uploaded'] }} of {{ $office['staff'] }}</span>

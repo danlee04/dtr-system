@@ -2,7 +2,7 @@
     @include('filament.entry-grid')
 
     @if ($asOf === null)
-        <p role="alert" style="color: var(--danger-600);">
+        <p role="alert" class="dtr-grid-errors">
             Set LEAVE_START_DATE in .env to the 1st of the month the system takes over, then come back.
         </p>
     @endif
@@ -10,7 +10,7 @@
     <x-filament::section
         class="dtr-grid"
         :heading="$asOf !== null ? 'Balances as of '.$asOf->format('M j, Y') : 'Opening balances'"
-        description="Copied once from HR's own records. The system posts every credit after this date."
+        description="Copied once from HR's own records; the system posts every credit after this date."
     >
         <x-slot name="afterHeader">
             <label class="dtr-grid-picker">
@@ -27,7 +27,7 @@
         </x-slot>
 
         @if ($errors->any())
-            <ul role="alert" style="color: var(--danger-600); display: grid; gap: 0.25rem; margin-bottom: 1rem;">
+            <ul role="alert" class="dtr-grid-errors">
                 @foreach ($errors->all() as $message)
                     <li>{{ $message }}</li>
                 @endforeach
@@ -80,7 +80,7 @@
                                         <td @class(['dtr-grid-value', 'dtr-grid-divider' => $code === 'FL'])>{{ $rows[$employee->id][$code] ?? '' }}</td>
                                     @else
                                         <td @class(['dtr-grid-divider' => $code === 'FL'])>
-                                            <div @class(['fi-input-wrp', 'fi-invalid' => $errors->has($cell)]) style="margin-inline-start: auto; width: fit-content;">
+                                            <div @class(['fi-input-wrp dtr-grid-cell-end', 'fi-invalid' => $errors->has($cell)])>
                                                 <div class="fi-input-wrp-content-ctn">
                                                     <input
                                                         wire:model="{{ $cell }}"
@@ -106,7 +106,7 @@
                 :paginator="$employees"
                 :page-options="$pageSizes"
                 current-page-option-property="perPage"
-                style="margin-top: 0.75rem;"
+                class="dtr-grid-after"
             />
 
             <div class="dtr-grid-bar">

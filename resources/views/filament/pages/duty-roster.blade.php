@@ -4,10 +4,10 @@
     <x-filament::section
         class="dtr-grid"
         :heading="$days !== [] ? $days[0]->format('F Y') : 'Duty roster'"
-        description="A schedule code for each day, for staff whose duty changes day to day. A blank day follows the employee's fixed schedule."
+        description="A schedule code for each day for staff whose duty changes; a blank day follows their fixed schedule."
     >
         <x-slot name="afterHeader">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            <div class="dtr-grid-pickers">
                 <label class="dtr-grid-picker">
                     Office
                     <x-filament::input.wrapper>
@@ -30,7 +30,7 @@
         </x-slot>
 
         @if ($errors->any())
-            <ul role="alert" style="color: var(--danger-600); display: grid; gap: 0.25rem; margin-bottom: 1rem;">
+            <ul role="alert" class="dtr-grid-errors">
                 @foreach ($errors->all() as $message)
                     <li>{{ $message }}</li>
                 @endforeach
@@ -107,7 +107,7 @@
                 :paginator="$employees"
                 :page-options="$pageSizes"
                 current-page-option-property="perPage"
-                style="margin-top: 0.75rem;"
+                class="dtr-grid-after"
             />
 
             <div class="dtr-grid-bar">

@@ -191,6 +191,13 @@ decoration.
 | `.dtr-grid-weekend` | A weekend column |
 | `.dtr-grid-legend` | The key to the codes or colours |
 | `.dtr-grid-bar` | The save bar, fixed to the bottom of the screen |
+| `.dtr-grid-pickers` | The filters in a section's header, side by side |
+| `.dtr-grid-errors` | The list of problems above a grid (and the page-level alert) |
+| `.dtr-grid-after` | What follows a grid: its pagination, a closing hint |
+| `.dtr-grid-start` | A heading over a text column, read from the start |
+| `.dtr-grid-badges` | Badges side by side in a cell |
+| `.dtr-grid-cell-end` | A typed cell held to the end of its column |
+| `tr.is-muted` | A row with nothing to count, such as an employee with no DTR |
 
 - **Names:** surname first ("Dela Cruz, Juan S."). The employee number goes under
   the name in grey, with the office when every office is listed.
@@ -204,7 +211,8 @@ decoration.
 - **Grid cells:** `wire:model` (deferred), with an `aria-label` naming the row and
   the column ("Dela Cruz, Juan S., Nov 15").
 - **Errors:** Filament marks the field. A grid marks the cell (`fi-invalid`) and
-  lists every problem in words, in a `role="alert"` list at the top of its section.
+  lists every problem in words, in a `role="alert"` list (`.dtr-grid-errors`) at
+  the top of its section.
 
 ### Modals
 
@@ -237,7 +245,10 @@ Filament notifications:
 - **Segmented bar:** with a legend giving each part's share.
 - **Gauge:** an SVG half-circle.
 - **List rows:** an initials avatar, two lines of text, and the status on the right.
-- **Quick-action tiles:** a 44px icon box over its label.
+- **Quick-action tiles:** a 44px icon box over its label. As many fit across as
+  allow 64px each; the rest wrap to the next row.
+- **Series colours** come from `.is-late` and `.is-undertime`; a stack of lines
+  inside a card is `.dtr-dash-stack`.
 
 All in `dashboard.blade.php`.
 
@@ -309,7 +320,7 @@ All in `dashboard.blade.php`.
 |---|---|
 | `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings |
 | `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
-| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values |
+| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page heading and chips (`.dtr-person`, `.dtr-person-chips`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`) |
 | `resources/views/filament/dashboard.blade.php` | The dashboard (`.dtr-dash-*`) |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |
@@ -325,7 +336,8 @@ All in `dashboard.blade.php`.
 - **Values:** use Filament's variables (`--gray-*`, `--primary-*`, `--spacing`,
   `--text-*`, `--radius-*`), never raw hex, and define every colour for `.dark` too.
 - **Inline `style=""`** only for values that come from data, such as bar widths
-  and heights.
+  and heights, or a series colour picked by the row's label (`--key`). Layout
+  and fixed colours go in classes.
 - **Reuse before writing new:** a grid page includes `filament.entry-grid`; a new
   page follows the section-with-filters pattern of the Monthly Summary.
 
@@ -338,16 +350,12 @@ All in `dashboard.blade.php`.
 
 ## 9. Known deviations
 
-To be aligned when the page is next touched; the intentional exceptions are marked.
+None open: on 2026-11-04 every screen was brought in line with this guide. List a
+new deviation here, with the page, when one is found and not fixed at once.
 
-- **Card radius:** the dashboard's cards use a 16px radius; the rule is 12px (`--radius-xl`).
-- **Inline styles:** several views use `style=""` for small layout (gaps, flex);
-  these belong in classes.
-- **Descriptions:** the Monthly Summary, Duty Roster and Opening Balances sections
-  have descriptions; keep each to one sentence.
-- **Quick-action labels:** around 1400px wide they crowd each other; the tiles
-  should wrap to two rows.
-- **Paper documents** (the HRM-07 leave form) use raw hex and Arial. Intentional:
-  they are printed forms, not screens.
-- **The initials avatar** on an employee's page is an SVG with amber hex values.
-  Intentional: an image cannot read CSS variables.
+Intentional exceptions:
+
+- **Paper documents** (the HRM-07 leave form) use raw hex and Arial: they are
+  printed forms, not screens.
+- **The initials avatar** on an employee's page is an SVG with amber hex values:
+  an image cannot read CSS variables.

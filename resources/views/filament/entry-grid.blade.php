@@ -32,12 +32,49 @@
         scroll-padding-bottom: 6rem;
     }
 
+    /* A section header's filters side by side, each with its label. */
+    .dtr-grid-pickers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) * 3);
+    }
+
     .dtr-grid-picker {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         font-size: 0.875rem;
         font-weight: 500;
+    }
+
+    /* What is wrong with what was typed, in words, above the grid. */
+    .dtr-grid-errors {
+        display: grid;
+        gap: calc(var(--spacing) * 1);
+        margin-bottom: calc(var(--spacing) * 4);
+        color: var(--danger-600);
+    }
+
+    .dark .dtr-grid-errors {
+        color: var(--danger-400);
+    }
+
+    /* What follows the grid: its pagination, a closing hint. */
+    .dtr-grid-after {
+        margin-top: calc(var(--spacing) * 3);
+    }
+
+    /* Badges side by side in a cell. */
+    .dtr-grid-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) * 1);
+    }
+
+    /* A typed cell held to the end of its column, under its right-aligned heading. */
+    .dtr-grid-cell-end {
+        width: fit-content;
+        margin-inline-start: auto;
     }
 
     .dtr-grid-count {
@@ -93,6 +130,11 @@
         text-align: center;
     }
 
+    /* A heading over text, read from the start. */
+    .dtr-grid-table thead th.dtr-grid-start {
+        text-align: start;
+    }
+
     .dtr-grid-table .dtr-grid-group th {
         padding-bottom: 0;
         text-align: center;
@@ -108,6 +150,11 @@
 
     .dtr-grid-table tbody tr > * {
         border-top: 1px solid var(--grid-line);
+    }
+
+    /* A row with nothing to count, as an employee with no DTR in a report. */
+    .dtr-grid-table tbody tr.is-muted {
+        color: var(--grid-muted);
     }
 
     .dtr-grid-table tbody tr:hover > * {

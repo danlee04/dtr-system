@@ -4,7 +4,7 @@
     <x-filament::section class="dtr-grid" :heading="$monthName ?? 'Monthly summary'"
         description="Late, undertime and absences of permanent and co-terminous staff, from their uploaded DTRs.">
         <x-slot name="afterHeader">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            <div class="dtr-grid-pickers">
                 <label class="dtr-grid-picker">
                     Office
                     <x-filament::input.wrapper>
@@ -27,7 +27,7 @@
         </x-slot>
 
         @if ($errors->any())
-            <ul role="alert" style="color: var(--danger-600); display: grid; gap: 0.25rem; margin-bottom: 1rem;">
+            <ul role="alert" class="dtr-grid-errors">
                 @foreach ($errors->all() as $message)
                     <li>{{ $message }}</li>
                 @endforeach
@@ -54,7 +54,7 @@
                         </tr>
                         <tr>
                             <th scope="col" class="dtr-grid-name">Employee</th>
-                            <th scope="col" style="text-align: start;">Office</th>
+                            <th scope="col" class="dtr-grid-start">Office</th>
                             <th scope="col" class="dtr-grid-divider">Times</th>
                             <th scope="col">Minutes</th>
                             <th scope="col" class="dtr-grid-divider">Times</th>
@@ -62,12 +62,12 @@
                             <th scope="col" class="dtr-grid-divider">Absent<span class="dtr-grid-sub">days</span>
                             </th>
                             <th scope="col">Equivalent<span class="dtr-grid-sub">days of leave</span></th>
-                            <th scope="col" class="dtr-grid-divider" style="text-align: start;">Notes</th>
+                            <th scope="col" class="dtr-grid-divider dtr-grid-start">Notes</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($rows as ['employee' => $employee, 'dtr' => $dtr, 'notes' => $notes])
-                            <tr wire:key="summary-{{ $employee->id }}" @style(['color: var(--grid-muted)' => $dtr === null])>
+                            <tr wire:key="summary-{{ $employee->id }}" @class(['is-muted' => $dtr === null])>
                                 <th scope="row" class="dtr-grid-name">
                                     {{ $employee->full_name }}
                                     <span class="dtr-grid-sub">{{ $employee->employee_number }}</span>
@@ -80,7 +80,7 @@
                                 <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->absent ?? '—' }}</td>
                                 <td class="dtr-grid-value">{{ $dtr?->dayEquivalent ?? '—' }}</td>
                                 <td class="dtr-grid-divider">
-                                    <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                                    <div class="dtr-grid-badges">
                                         @foreach ($notes as $note)
                                             <x-filament::badge color="warning">{{ $note }}</x-filament::badge>
                                         @endforeach
@@ -93,9 +93,9 @@
             </div>
 
             <x-filament::pagination :paginator="$rows" :page-options="$pageSizes" current-page-option-property="perPage"
-                style="margin-top: 0.75rem;" />
+                class="dtr-grid-after" />
 
-            <p class="dtr-grid-hint" style="margin-top: 0.75rem;">
+            <p class="dtr-grid-hint dtr-grid-after">
                 The equivalent is late and undertime together, as days of leave by the CSC table. A DTR that matched no
                 employee is left out until you choose its employee on DTR Uploads.
             </p>
