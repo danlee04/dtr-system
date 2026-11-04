@@ -28,7 +28,29 @@
         --dtr-current: color-mix(in oklab, var(--color-white) 10%, transparent);
     }
 
-    /* Every page's heading a step smaller and lighter than Filament's 30px bold, so the page itself leads. */
+    /*
+        No page title on screen: the sidebar marks the page that is open, and the breadcrumbs
+        and the page's own sections say the rest. The h1 stays for screen readers. An
+        employee's page keeps its heading, their initials and name, since it says whose page it is.
+    */
+    .fi-page:not(.fi-resource-view-record-page) .fi-header-heading {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* A header left with nothing to show, as the dashboard's, gives back the gap after it. */
+    .fi-page:not(.fi-resource-view-record-page) .fi-header:not(.fi-header-has-breadcrumbs, .fi-header-has-subheading):not(:has(.fi-header-actions-ctn)) {
+        margin-bottom: calc(var(--spacing) * -8);
+    }
+
+    /* The headings still shown a step smaller and lighter than Filament's 30px bold. */
     .fi-header-heading {
         font-size: var(--text-xl);
         line-height: var(--text-xl--line-height);

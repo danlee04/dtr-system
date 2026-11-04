@@ -7,6 +7,6 @@
     <img src="{{ asset('images/trc-caraga-logo.png') }}" alt="" class="dtr-brand-mark">
     <span class="dtr-brand-text">
         <span class="dtr-brand-name">{{ filament()->getBrandName() }}</span>
-        <span class="dtr-brand-sub">TRC Caraga</span>
+        <span class="dtr-brand-sub">DTRC Caraga</span>
     </span>
 </span>
