@@ -45,9 +45,15 @@
         border: 0;
     }
 
+    /* Filament's 2rem above the page and under its header, half that with the titles gone. */
+    .fi-page-header-main-ctn {
+        row-gap: calc(var(--spacing) * 4);
+        padding-block: calc(var(--spacing) * 4);
+    }
+
     /* A header left with nothing to show, as the dashboard's, gives back the gap after it. */
     .fi-page:not(.fi-resource-view-record-page) .fi-header:not(.fi-header-has-breadcrumbs, .fi-header-has-subheading):not(:has(.fi-header-actions-ctn)) {
-        margin-bottom: calc(var(--spacing) * -8);
+        margin-bottom: calc(var(--spacing) * -4);
     }
 
     /* The headings still shown a step smaller and lighter than Filament's 30px bold. */

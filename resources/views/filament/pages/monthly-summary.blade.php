@@ -1,11 +1,8 @@
 <x-filament-panels::page>
     @include('filament.entry-grid')
 
-    <x-filament::section
-        class="dtr-grid"
-        :heading="$monthName ?? 'Monthly summary'"
-        description="Late, undertime and absences of permanent and co-terminous staff, from their uploaded DTRs."
-    >
+    <x-filament::section class="dtr-grid" :heading="$monthName ?? 'Monthly summary'"
+        description="Late, undertime and absences of permanent and co-terminous staff, from their uploaded DTRs.">
         <x-slot name="afterHeader">
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
                 <label class="dtr-grid-picker">
@@ -39,7 +36,8 @@
 
         @if ($rows->total() > 0)
             <p class="dtr-grid-count">
-                {{ $rows->total() }} {{ str('employee')->plural($rows->total()) }} who earn leave credits · {{ $withDtr }} with a DTR for the month
+                {{ $rows->total() }} {{ str('employee')->plural($rows->total()) }} who earn leave credits ·
+                {{ $withDtr }} with a DTR for the month
             </p>
 
             <div class="dtr-grid-wrap is-full">
@@ -61,7 +59,8 @@
                             <th scope="col">Minutes</th>
                             <th scope="col" class="dtr-grid-divider">Times</th>
                             <th scope="col">Minutes</th>
-                            <th scope="col" class="dtr-grid-divider">Absent<span class="dtr-grid-sub">days</span></th>
+                            <th scope="col" class="dtr-grid-divider">Absent<span class="dtr-grid-sub">days</span>
+                            </th>
                             <th scope="col">Equivalent<span class="dtr-grid-sub">days of leave</span></th>
                             <th scope="col" class="dtr-grid-divider" style="text-align: start;">Notes</th>
                         </tr>
@@ -93,30 +92,21 @@
                 </table>
             </div>
 
-            <x-filament::pagination
-                :paginator="$rows"
-                :page-options="$pageSizes"
-                current-page-option-property="perPage"
-                style="margin-top: 0.75rem;"
-            />
+            <x-filament::pagination :paginator="$rows" :page-options="$pageSizes" current-page-option-property="perPage"
+                style="margin-top: 0.75rem;" />
 
             <p class="dtr-grid-hint" style="margin-top: 0.75rem;">
-                The equivalent is late and undertime together, as days of leave by the CSC table. A DTR that matched no employee is left out until you choose its employee on DTR Uploads.
+                The equivalent is late and undertime together, as days of leave by the CSC table. A DTR that matched no
+                employee is left out until you choose its employee on DTR Uploads.
             </p>
         @elseif ($monthName === null)
-            <x-filament::empty-state
-                :contained="false"
-                :icon="\Filament\Support\Icons\Heroicon::OutlinedCalendar"
-                heading="Choose a month"
-                description="The summary covers one calendar month."
-            />
+            <x-filament::empty-state :contained="false" :icon="\Filament\Support\Icons\Heroicon::OutlinedCalendar" heading="Choose a month"
+                description="The summary covers one calendar month." />
         @else
-            <x-filament::empty-state
-                :contained="false"
-                :icon="\Filament\Support\Icons\Heroicon::OutlinedUserGroup"
-                heading="No one to summarize"
-                :description="filled($officeId) ? 'This office has no active employees who earn leave credits.' : 'No active employee earns leave credits yet.'"
-            />
+            <x-filament::empty-state :contained="false" :icon="\Filament\Support\Icons\Heroicon::OutlinedUserGroup" heading="No one to summarize"
+                :description="filled($officeId)
+                    ? 'This office has no active employees who earn leave credits.'
+                    : 'No active employee earns leave credits yet.'" />
         @endif
     </x-filament::section>
 </x-filament-panels::page>
