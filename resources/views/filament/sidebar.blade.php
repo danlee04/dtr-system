@@ -370,9 +370,13 @@
     .fi-sidebar-footer .fi-user-menu,
     .fi-sidebar-footer .fi-user-menu .fi-dropdown-trigger {
         width: 100%;
+        min-width: 0;
     }
 
+    /* Filament keeps this button from shrinking, which pushed a long name out of the sidebar. */
     .fi-sidebar .fi-user-menu-trigger {
+        flex-shrink: 1;
+        min-width: 0;
         width: 100%;
         padding: calc(var(--spacing) * 2);
         border-radius: 0.5rem;
