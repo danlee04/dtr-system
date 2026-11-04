@@ -40,7 +40,6 @@ class LeaveOpeningBalancesPageTest extends TestCase
         LeaveLedgerEntry::factory()->for($pedro)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-12-01']);
 
         Livewire::test(LeaveOpeningBalances::class)
-            ->set('officeId', $this->office->id)
             ->assertSeeText('Locked')
             ->assertDontSeeHtml("rows.{$this->juan->id}.VL")
             ->assertSeeHtml("rows.{$pedro->id}.VL");
@@ -51,20 +50,38 @@ class LeaveOpeningBalancesPageTest extends TestCase
         $this->get(LeaveOpeningBalances::getUrl())->assertOk()->assertSee('Balances as of Oct 31, 2026');
     }
 
-    public function test_choosing_an_office_loads_its_grid(): void
+    public function test_everyone_who_earns_credits_is_listed_with_their_balances(): void
     {
         LeaveLedgerEntry::factory()->for($this->juan)->create(['leave_type' => 'VL', 'days' => '10', 'kind' => LedgerKind::Opening, 'posting_key' => "opening:{$this->juan->id}:VL"]);
+        Employee::factory()->for(Office::factory())->create(['last_name' => 'Santos', 'first_name' => 'Maria', 'middle_name' => null]);
 
         Livewire::test(LeaveOpeningBalances::class)
-            ->set('officeId', $this->office->id)
             ->assertSet("rows.{$this->juan->id}.VL", '10.000')
-            ->assertSee('Dela Cruz, Juan S.');
+            ->assertSee(['Dela Cruz, Juan S.', 'Santos, Maria'])
+            // The same number typed differently is no change.
+            ->set("rows.{$this->juan->id}.VL", '10')
+            ->assertDontSee('unsaved change');
+    }
+
+    public function test_the_office_filter_hides_rows_but_keeps_what_was_typed_in_them(): void
+    {
+        $maria = Employee::factory()->for(Office::factory())->create(['last_name' => 'Santos', 'first_name' => 'Maria', 'middle_name' => null]);
+
+        Livewire::test(LeaveOpeningBalances::class)
+            ->set("rows.{$maria->id}.VL", '5')
+            ->set('officeId', $this->office->id)
+            ->assertSee('Dela Cruz, Juan S.')
+            ->assertDontSee('Santos, Maria')
+            ->assertSee('1 unsaved change')
+            ->call('save')
+            ->assertNotified('Opening balances saved: 1 change');
+
+        $this->assertSame('5.000', $maria->leaveLedgerEntries()->sole()->days);
     }
 
     public function test_saving_the_grid_writes_the_rows(): void
     {
         Livewire::test(LeaveOpeningBalances::class)
-            ->set('officeId', $this->office->id)
             ->set("rows.{$this->juan->id}.SL", '7.5')
             ->call('save')
             ->assertHasNoErrors()
@@ -76,12 +93,26 @@ class LeaveOpeningBalancesPageTest extends TestCase
     public function test_a_bad_cell_is_marked(): void
     {
         Livewire::test(LeaveOpeningBalances::class)
-            ->set('officeId', $this->office->id)
             ->set("rows.{$this->juan->id}.SL", 'abc')
             ->call('save')
             ->assertHasErrors(["rows.{$this->juan->id}.SL"]);
 
         $this->assertSame(0, LeaveLedgerEntry::count());
+    }
+
+    public function test_the_grid_comes_a_page_at_a_time(): void
+    {
+        // With Dela Cruz, eleven rows: Ason to Ison fill the first page of ten.
+        foreach (range('A', 'J') as $letter) {
+            Employee::factory()->for($this->office)->create(['last_name' => "{$letter}son", 'first_name' => 'Pat', 'middle_name' => null]);
+        }
+
+        Livewire::test(LeaveOpeningBalances::class)
+            ->set('perPage', 10)
+            ->assertSee('Ison, Pat')
+            ->assertDontSee('Json, Pat')
+            ->call('nextPage')
+            ->assertSee('Json, Pat');
     }
 
     public function test_without_a_start_date_the_page_says_so_and_saves_nothing(): void
@@ -91,7 +122,6 @@ class LeaveOpeningBalancesPageTest extends TestCase
         $this->get(LeaveOpeningBalances::getUrl())->assertOk()->assertSee('Set LEAVE_START_DATE');
 
         Livewire::test(LeaveOpeningBalances::class)
-            ->set('officeId', $this->office->id)
             ->set("rows.{$this->juan->id}.SL", '7.5')
             ->call('save');
 

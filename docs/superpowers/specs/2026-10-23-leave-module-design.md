@@ -418,7 +418,7 @@ Application.xlsx` in `storage/app/samples/`, git-ignored), received 23 October
 | Employee → Leave tab | Balances, history, add adjustment, file for this employee | admin, hr |
 | Employees | `position` field | admin, hr |
 | Users | Every account; the role Admin, HR or Employee; the linked employee, required for Employee | admin |
-| Opening balances | The grid, one office at a time | admin, hr |
+| Opening balances | The grid of everyone who earns credits, 25 rows a page, with an office filter (since 2026-11-04; it was one office at a time). Every row stays loaded, so the filter and the pages lose nothing typed; Save writes every row, and unsaved cells are counted on the server | admin, hr |
 | Schedules | The `leave_days` field ("Days charged to VL/SL for a day of leave") | admin, hr |
 | Dashboard | Count of pending applications | admin, hr |
 

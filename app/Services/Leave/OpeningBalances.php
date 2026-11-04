@@ -9,13 +9,14 @@ use App\Models\Employee;
 use App\Models\LeaveLedgerEntry;
 use App\Models\Office;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
  * The balances HR copies from its own records on the day the system takes
- * over, one office at a time. They are the only ledger rows that can change:
+ * over. They are the only ledger rows that can change:
  * a typo is fixed by saving again, until the employee has any other row.
  */
 final class OpeningBalances
@@ -35,17 +36,20 @@ final class OpeningBalances
     private const string DAYS = '/^\d{1,3}(\.\d{1,3})?\z/';
 
     /**
-     * The office's active employees who earn credits, surname first.
+     * The active employees who earn credits, of the office or of every office
+     * when there is none, surname first.
      *
      * @return EloquentCollection<int, Employee>
      */
-    public function employees(Office $office): EloquentCollection
+    public function employees(?Office $office): EloquentCollection
     {
         $earning = array_filter(EmploymentStatus::cases(), fn (EmploymentStatus $status): bool => $status->earnsLeaveCredits());
 
-        return $office->employees()
+        return Employee::query()
+            ->when($office, fn (Builder $query, Office $office): Builder => $query->whereBelongsTo($office))
             ->whereIn('employment_status', $earning)
             ->where('is_active', true)
+            ->with('office')
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get();
@@ -54,7 +58,7 @@ final class OpeningBalances
     /**
      * @return array<int, array<string, string>> employee id → leave type code → days, '' where there is no opening row
      */
-    public function read(Office $office): array
+    public function read(?Office $office): array
     {
         $employees = $this->employees($office);
         $openings = $this->openings($employees->modelKeys());
@@ -73,15 +77,15 @@ final class OpeningBalances
      * Saves the cells sent: a number sets the opening row, a blank or zero
      * removes it. Every cell is checked first, and nothing is saved while one
      * is wrong. Cells that did not change are skipped, so a locked employee's
-     * row can be sent back as it was; cells for anyone outside the office, or
-     * who earns no credits, are ignored.
+     * row can be sent back as it was; cells for anyone outside the office
+     * (when there is one), inactive, or who earns no credits, are ignored.
      *
      * @param  array<int|string, mixed>  $rows  employee id → leave type code → typed days
      * @return int the number of rows added, changed or removed
      *
      * @throws ValidationException keyed rows.{employee id}.{code}
      */
-    public function save(Office $office, CarbonImmutable $start, array $rows): int
+    public function save(?Office $office, CarbonImmutable $start, array $rows): int
     {
         $employees = $this->employees($office)
             ->filter(fn (Employee $employee): bool => is_array($rows[$employee->id] ?? null));

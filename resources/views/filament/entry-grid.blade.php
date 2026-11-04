@@ -55,7 +55,7 @@
         border-radius: 0.75rem;
     }
 
-    /* As wide as the page, for a grid that gains from the room: a report, a month of days. */
+    /* As wide as the page, so a grid uses the room it has. */
     .dtr-grid-wrap.is-full {
         width: auto;
     }

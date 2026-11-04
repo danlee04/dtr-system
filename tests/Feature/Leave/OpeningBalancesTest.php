@@ -98,6 +98,17 @@ class OpeningBalancesTest extends TestCase
         $this->assertSame(0, LeaveLedgerEntry::count());
     }
 
+    public function test_without_an_office_everyone_who_earns_credits_is_read_and_saved(): void
+    {
+        $other = Employee::factory()->create();
+        Employee::factory()->create(['employment_status' => EmploymentStatus::JobOrder]);
+        Employee::factory()->create(['is_active' => false]);
+        $openings = app(OpeningBalances::class);
+
+        $this->assertEqualsCanonicalizing([$this->juan->id, $other->id], array_keys($openings->read(null)));
+        $this->assertSame(1, $openings->save(null, CarbonImmutable::parse('2026-11-01'), [$other->id => ['VL' => '10']]));
+    }
+
     /** @param  array<int, array<string, string>>  $rows */
     private function save(array $rows): int
     {

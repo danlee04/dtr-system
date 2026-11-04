@@ -17,7 +17,7 @@
                 Office
                 <x-filament::input.wrapper>
                     <x-filament::input.select wire:model.live="officeId">
-                        <option value="">Choose an office</option>
+                        <option value="">All offices</option>
                         @foreach ($offices as $id => $name)
                             <option value="{{ $id }}">{{ $name }}</option>
                         @endforeach
@@ -34,12 +34,12 @@
             </ul>
         @endif
 
-        @if ($employees->isNotEmpty())
+        @if ($employees->total() > 0)
             <p class="dtr-grid-count">
-                {{ $employees->count() }} {{ str('employee')->plural($employees->count()) }} who earn leave credits · {{ $entered }} with balances typed in
+                {{ $employees->total() }} {{ str('employee')->plural($employees->total()) }} who earn leave credits · {{ $entered }} with balances typed in
             </p>
 
-            <div class="dtr-grid-wrap">
+            <div class="dtr-grid-wrap is-full">
                 <table class="dtr-grid-table">
                     <thead>
                         <tr class="dtr-grid-group">
@@ -66,7 +66,7 @@
                             <tr wire:key="opening-{{ $employee->id }}">
                                 <th scope="row" class="dtr-grid-name">
                                     {{ $employee->full_name }}
-                                    <span class="dtr-grid-sub">{{ $employee->employee_number }}</span>
+                                    <span class="dtr-grid-sub">{{ $employee->employee_number }} · {{ $employee->office->name }}</span>
                                     @if ($isLocked)
                                         <span class="dtr-grid-lock">
                                             <x-filament::icon :icon="\Filament\Support\Icons\Heroicon::LockClosed" :size="\Filament\Support\Enums\IconSize::Small" />
@@ -85,7 +85,7 @@
                                                     <input
                                                         wire:model="{{ $cell }}"
                                                         wire:dirty.class="dtr-grid-changed"
-                                                        class="fi-input dtr-grid-input"
+                                                        @class(['fi-input dtr-grid-input', 'dtr-grid-changed' => isset($unsaved["{$employee->id}.{$code}"])])
                                                         inputmode="decimal"
                                                         autocomplete="off"
                                                         maxlength="7"
@@ -102,26 +102,31 @@
                 </table>
             </div>
 
+            <x-filament::pagination
+                :paginator="$employees"
+                :page-options="$pageSizes"
+                current-page-option-property="perPage"
+                style="margin-top: 0.75rem;"
+            />
+
             <div class="dtr-grid-bar">
                 <x-filament::button wire:click="save">Save opening balances</x-filament::button>
-                <x-filament::badge color="warning" wire:dirty>Unsaved changes</x-filament::badge>
+                {{-- Counted on the server too: a cell typed on another page is off the screen, where the browser no longer marks it. --}}
+                @if ($unsaved !== [])
+                    <x-filament::badge color="warning">{{ count($unsaved) }} unsaved {{ str('change')->plural(count($unsaved)) }}</x-filament::badge>
+                @else
+                    <x-filament::badge color="warning" wire:dirty>Unsaved changes</x-filament::badge>
+                @endif
                 <span class="dtr-grid-hint">
-                    Days, up to three decimals; leave a cell blank for none. <strong>Taken this year</strong> is the VL and forced leave already used, for the forced-leave rule on Dec 31.
+                    Days, up to three decimals; leave a cell blank for none. <strong>Taken this year</strong> is the VL and forced leave already used, for the forced-leave rule on Dec 31. Save keeps every page and office, not only the one on screen.
                 </span>
             </div>
-        @elseif (filled($officeId))
+        @else
             <x-filament::empty-state
                 :contained="false"
                 :icon="\Filament\Support\Icons\Heroicon::OutlinedUserGroup"
                 heading="No one to enter"
-                description="This office has no active employees who earn leave credits."
-            />
-        @else
-            <x-filament::empty-state
-                :contained="false"
-                :icon="\Filament\Support\Icons\Heroicon::OutlinedBuildingOffice2"
-                heading="Choose an office"
-                description="Its employees who earn leave credits appear here, one row each."
+                :description="filled($officeId) ? 'This office has no active employees who earn leave credits.' : 'No active employee earns leave credits yet.'"
             />
         @endif
     </x-filament::section>
