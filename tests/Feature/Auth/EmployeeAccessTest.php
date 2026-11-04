@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Pages\DutyRoster;
+use App\Filament\Pages\HabitualTardiness;
 use App\Filament\Pages\LeaveOpeningBalances;
 use App\Filament\Pages\MonthlySummary;
 use App\Filament\Resources\DayExceptions\DayExceptionResource;
@@ -51,6 +52,7 @@ class EmployeeAccessTest extends TestCase
             DutyRoster::getUrl(),
             LeaveOpeningBalances::getUrl(),
             MonthlySummary::getUrl(),
+            HabitualTardiness::getUrl(),
             DtrUploadResource::getUrl('index'),
             DayExceptionResource::getUrl('index'),
         ] as $url) {

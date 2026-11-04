@@ -706,17 +706,29 @@ code (see **Open items**).
 
 ### Habitual tardiness
 
+Built 2026-11-04 for the DTR upload design, as the **Habitual Tardiness** page
+under Time & Attendance, staff only. `HabitualTardiness` applies the rule to
+the monthly summary's late counts.
+
 - **The CSC rule:** late ten or more times in a month, in at least two months
   of the same semester (January–June or July–December), or in two consecutive
   months of the same year.
 - **Every late counts once.** Late in the morning and late back from lunch on
   the same day is two.
-- Only finalized months count, so the basis of a memo cannot shift under it.
+- **Every DTR uploaded counts**, as on the monthly summary. Against the first
+  design, unfinalized months are not left out: the upload design has no month
+  closing, so a newer upload can still change a month's count.
 - The summary marks each month with ten or more lates. The **Habitual
-  tardiness** page takes a year and a semester and lists every employee with at
-  least one such month, their count for each month, and a **Habitual** mark for
-  those who meet the rule. It is the basis for HR's memo; the system does not
-  write the memo.
+  Tardiness** page takes a year and a semester, last month's by default, as the
+  summary opens on last month. It lists every employee with at least one such
+  month, surname first with the employee number and office; their lates for
+  each of the six months ("—" where no DTR covers the month); and a **Habitual**
+  mark with the months that make it. It is the basis for HR's memo; the system
+  does not write the memo.
+- **Excel:** the same rows as an .xlsx, written as the summary's is.
+- Only active permanent and co-terminous staff are listed, as on the summary.
+  The counts are kept 10 minutes, since a half year computes up to seven
+  months of DTRs.
 - Consecutive months are read within one calendar year, so December and the
   following January do not pair. June and July do pair, so an employee with
   ten or more lates in both is marked **Habitual** in either semester's view.

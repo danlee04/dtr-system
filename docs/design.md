@@ -17,7 +17,7 @@ few Blade partials in `resources/views/filament/` (see **Where the styles live**
   badges, modals, empty states, notifications) as they are. Write our own markup
   only for the data-entry grids, the dashboard and the frame.
 - **Dense where HR types, roomy where HR reads.** The grids (Duty Roster, Opening
-  Balances, Monthly Summary) pack rows tightly for long sessions; the dashboard
+  Balances, Monthly Summary, Habitual Tardiness) pack rows tightly for long sessions; the dashboard
   gives each card room. Both use the same tokens.
 - **No titles on screen.** The sidebar marks the page that is open and the
   breadcrumbs and sections say the rest; each page's `h1` stays for screen
@@ -56,7 +56,7 @@ colours (success = green, warning = amber, danger = red, info = blue).
 |---|---|---|
 | `success` | Done, fine | Approved, Active, progress bars, the on-time gauge |
 | `warning` | Waiting or needs a look | Pending, unsaved changes, report notes ("10+ lates") |
-| `danger` | Wrong or destructive | Validation errors, Absent, Delete |
+| `danger` | Wrong or destructive | Validation errors, Absent, Habitual, Delete |
 | `info` | Away on purpose | Leave, OB, travel order |
 | `gray` | Inactive or not counted | Cancelled, Inactive, rest day |
 
@@ -223,7 +223,8 @@ decoration.
 ### Badges
 
 - `x-filament::badge`, coloured by the enum's `getColor()`, always with its word.
-- Report notes ("No DTR uploaded", "10+ lates") are `warning` badges.
+- Report notes ("No DTR uploaded", "10+ lates") are `warning` badges, and so is
+  a month's count of ten or more lates. **Habitual** is `danger`.
 
 ### Empty states
 
