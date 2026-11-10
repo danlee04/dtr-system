@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DtrUploads\Tables;
 
+use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
 use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Services\Attendance\DtrImporter;
@@ -65,7 +66,7 @@ class DtrUploadsTable
             ])
             ->recordActions([
                 ViewAction::make()
-                    ->modalHeading('Daily Time Record')
+                    ->modalHeading(fn (DtrUpload $record): string => DtrUploadInfolist::heading($record))
                     ->modalWidth(Width::SevenExtraLarge),
                 Action::make('chooseEmployee')
                     ->label('Choose employee')

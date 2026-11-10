@@ -220,6 +220,114 @@
         background-color: color-mix(in oklab, var(--color-white) 75%, transparent);
     }
 
+    /* A figure that needs a look, as a DTR's blanks to fill. */
+    .dtr-profile-card.is-warning {
+        --tone: var(--warning-400);
+    }
+
+    /*
+     * A DTR's view: whose it is beside their photo or initials, the month in
+     * cards that fill the row, then its days (grid classes in entry-grid).
+     */
+    .dtr-record-head {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 3);
+        margin-bottom: calc(var(--spacing) * 4);
+    }
+
+    .dtr-record-line {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record-sub,
+    .dtr-record-desc,
+    .dtr-record-notes {
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    .dark .dtr-record-sub,
+    .dark .dtr-record-desc,
+    .dark .dtr-record-notes {
+        color: var(--gray-400);
+    }
+
+    .dtr-record-warning,
+    .dtr-record-notes .is-warning {
+        color: var(--warning-700);
+    }
+
+    .dark .dtr-record-warning,
+    .dark .dtr-record-notes .is-warning {
+        color: var(--warning-400);
+    }
+
+    .dtr-record-warning {
+        font-size: var(--text-sm);
+    }
+
+    .dtr-record-notes .is-warning {
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record .dtr-profile-cards {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    }
+
+    .dtr-record-heading {
+        margin-top: calc(var(--spacing) * 6);
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .dtr-record-desc {
+        margin-block: calc(var(--spacing) * 1) calc(var(--spacing) * 3);
+    }
+
+    .dtr-record-desc strong {
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record-days th,
+    .dtr-record-days td {
+        white-space: nowrap;
+    }
+
+    .dtr-record-days tbody th {
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record-time {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dtr-record-days td.dtr-record-notes {
+        min-width: 12rem;
+        white-space: normal;
+    }
+
+    .dtr-record-legend {
+        margin-top: calc(var(--spacing) * 3);
+        margin-bottom: 0;
+        font-size: var(--text-xs);
+    }
+
+    .dtr-record-legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+    }
+
+    .dtr-record-swatch {
+        width: 0.875rem;
+        height: 0.875rem;
+        border-radius: 0.25rem;
+        background-color: var(--grid-weekend);
+        box-shadow: inset 0 0 0 1px var(--grid-line);
+    }
+
     /* What needs a look, after the reference's "due a review" card: an amber tint, an icon, a sentence, one button. */
     .dtr-callout {
         display: flex;

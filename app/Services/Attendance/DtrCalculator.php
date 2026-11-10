@@ -4,6 +4,7 @@ namespace App\Services\Attendance;
 
 use App\Enums\AttendanceStatus;
 use App\Enums\DayKind;
+use App\Enums\DtrSlot;
 use App\Enums\HolidayType;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveCoverage;
@@ -12,6 +13,7 @@ use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
+use App\Models\ManualTap;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection as SupportCollection;
 
@@ -27,7 +29,8 @@ use Illuminate\Support\Collection as SupportCollection;
  * all, and no leave, is absent.
  *
  * The DTR's columns are the slots: A.M. Arrival and Departure for the first
- * half of the day, P.M. for the second. O.T. is not read.
+ * half of the day, P.M. for the second. O.T. is not read. A slot printed
+ * blank takes the time HR copied in from the signed DTR, if any.
  */
 final class DtrCalculator
 {
@@ -35,6 +38,12 @@ final class DtrCalculator
     private const TAPS = [
         2 => [['time in', 'lunch out'], ['lunch in', 'time out']],
         1 => [['time in', 'time out']],
+    ];
+
+    /** The column HR fills for each tap in TAPS. A one-block day's taps are read from A.M. arrival and P.M. departure first. */
+    private const SLOTS = [
+        2 => [[DtrSlot::AmArrival, DtrSlot::AmDeparture], [DtrSlot::PmArrival, DtrSlot::PmDeparture]],
+        1 => [[DtrSlot::AmArrival, DtrSlot::PmDeparture]],
     ];
 
     public function __construct(private ScheduleResolver $resolver) {}
@@ -75,17 +84,45 @@ final class DtrCalculator
             ->get()
             ->mapWithKeys(fn (Holiday $holiday): array => [$holiday->date->toDateString() => self::minute($holiday->suspension_starts_at)]);
 
+        $filled = ManualTap::query()
+            ->whereBelongsTo($employee)
+            ->whereDate('date', '>=', $from)
+            ->whereDate('date', '<=', $to)
+            ->get()
+            ->groupBy(fn (ManualTap $tap): string => $tap->date->toDateString());
+
         $days = [];
 
         foreach ($this->resolver->days($employee, $from, $to) as $date => $resolved) {
-            $days[$date] = $this->day(CarbonImmutable::parse($date), $resolved, $rows->get($date), $covers, $suspensions->get($date));
+            $columns = self::columns($rows->get($date), $filled->get($date));
+            $days[$date] = $this->day(CarbonImmutable::parse($date), $resolved, $columns, $covers, $suspensions->get($date));
         }
 
         return new ComputedDtr($days);
     }
 
-    /** @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers */
-    private function day(CarbonImmutable $date, ResolvedDay $resolved, ?DtrDay $row, SupportCollection $covers, ?int $suspendedAt): ComputedDay
+    /**
+     * Each time column of the date: as printed, or else as HR filled it.
+     *
+     * @param  ?SupportCollection<int, ManualTap>  $filled
+     * @return array<string, ?string> slot => "08:14" or "08:14:00"
+     */
+    private static function columns(?DtrDay $row, ?SupportCollection $filled): array
+    {
+        $columns = [];
+
+        foreach (DtrSlot::cases() as $slot) {
+            $columns[$slot->value] = $row?->{$slot->value} ?? $filled?->firstWhere('slot', $slot)?->time;
+        }
+
+        return $columns;
+    }
+
+    /**
+     * @param  array<string, ?string>  $columns  slot => time
+     * @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers
+     */
+    private function day(CarbonImmutable $date, ResolvedDay $resolved, array $columns, SupportCollection $covers, ?int $suspendedAt): ComputedDay
     {
         if ($resolved->kind !== DayKind::WorkDay) {
             return new ComputedDay(AttendanceStatus::from($resolved->kind->value));
@@ -112,8 +149,8 @@ final class DtrCalculator
         }
 
         $taps = count($halves) === 2
-            ? [[$row?->am_arrival, $row?->am_departure], [$row?->pm_arrival, $row?->pm_departure]]
-            : [[$row?->am_arrival ?? $row?->pm_arrival, $row?->pm_departure ?? $row?->am_departure]];
+            ? [[$columns['am_arrival'], $columns['am_departure']], [$columns['pm_arrival'], $columns['pm_departure']]]
+            : [[$columns['am_arrival'] ?? $columns['pm_arrival'], $columns['pm_departure'] ?? $columns['am_departure']]];
 
         $covered = $this->covered(count($halves), $date, $covers);
 
@@ -138,17 +175,21 @@ final class DtrCalculator
         $tapped = array_filter(array_keys($halves), fn (int $index): bool => $taps[$index][0] !== null || $taps[$index][1] !== null);
 
         if ($tapped === []) {
-            return new ComputedDay(AttendanceStatus::Absent, absent: count($halves) / $scheduledHalves, note: $note);
+            $fillable = array_merge(...array_map(fn (int $index): array => self::SLOTS[$scheduledHalves][$index], array_keys($halves)));
+
+            return new ComputedDay(AttendanceStatus::Absent, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable);
         }
 
-        [$late, $lateCount, $undertime, $undertimeCount, $missing] = [0, 0, 0, 0, []];
+        [$late, $lateCount, $undertime, $undertimeCount, $missing, $fillable] = [0, 0, 0, 0, [], []];
 
         foreach ($halves as $index => $half) {
             [$arrived, $left] = $taps[$index];
             [$arrivedName, $leftName] = self::TAPS[$scheduledHalves][$index];
+            [$arrivedSlot, $leftSlot] = self::SLOTS[$scheduledHalves][$index];
 
             if ($arrived === null) {
                 $missing[] = $arrivedName;
+                $fillable[] = $arrivedSlot;
             } elseif (($minutes = self::minute($arrived) - $half['in']) > 0) {
                 $late += $minutes;
                 $lateCount++;
@@ -156,13 +197,14 @@ final class DtrCalculator
 
             if ($left === null) {
                 $missing[] = $leftName;
+                $fillable[] = $leftSlot;
             } elseif (($minutes = $half['out'] - self::minute($left)) > 0) {
                 $undertime += $minutes;
                 $undertimeCount++;
             }
         }
 
-        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note);
+        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note, fillable: $fillable);
     }
 
     /**

@@ -1,0 +1,226 @@
+<style>
+  .dm { font-family: Inter, system-ui, sans-serif; color: #09090b; font-size: 14px; line-height: 1.45; }
+  .dm * { box-sizing: border-box; }
+  .dm-page { background: #fafafa; padding: 16px; border-radius: 12px; }
+  .dm-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .dm-crumbs { color: #71717a; font-size: 14px; }
+  .dm-crumbs b { color: #09090b; font-weight: 500; }
+  .dm-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px; font-size: 14px; font-weight: 500; border: 1px solid rgba(9,9,11,.12); background: #fff; color: #3f3f46; }
+  .dm-btn.danger { color: #b91c1c; border-color: rgba(185,28,28,.35); }
+  .dm-btn.primary { background: #f59e0b; border-color: #f59e0b; color: #09090b; }
+  .dm-card { background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(9,9,11,.07), 0 1px 2px rgba(0,0,0,.04); padding: 16px 20px; margin-bottom: 16px; }
+  .dm-who { display: flex; gap: 12px; align-items: center; }
+  .dm-av { width: 44px; height: 44px; border-radius: 999px; background: #fef3c7; color: #92400e; display: grid; place-items: center; font-weight: 600; flex: none; }
+  .dm-name { font-size: 16px; font-weight: 600; }
+  .dm-sub { font-size: 12px; color: #71717a; margin-top: 2px; }
+  .dm-figs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+  .dm-fig { border-radius: 12px; padding: 12px 14px; background: #f4f4f5; }
+  .dm-fig .l { font-size: 12px; color: #52525b; font-weight: 500; }
+  .dm-fig .v { font-size: 22px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .dm-fig .s { font-size: 12px; color: #71717a; }
+  .dm-fig.warn { background: #fffbeb; box-shadow: inset 0 0 0 1px #fcd34d; }
+  .dm-fig.warn .l, .dm-fig.warn .s { color: #92400e; }
+  .dm-h { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .dm-desc { font-size: 12px; color: #71717a; margin: 0 0 12px; }
+  .dm-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 0 0 1px rgba(9,9,11,.07); }
+  table.dm-t { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; background: #fff; }
+  .dm-t th { font-size: 12px; font-weight: 500; color: #71717a; text-align: left; padding: 6px 10px; border-bottom: 1px solid rgba(9,9,11,.08); background: #fafafa; }
+  .dm-t thead tr:first-child th { text-align: center; border-bottom: 0; padding-bottom: 0; }
+  .dm-t td { padding: 7px 10px; border-bottom: 1px solid rgba(9,9,11,.05); white-space: nowrap; vertical-align: middle; }
+  .dm-t .num { text-align: right; }
+  .dm-t tr.rest td { color: #a1a1aa; background: #fafafa; }
+  .dm-t tr.absent td { background: #fef2f2; }
+  .dm-day b { font-weight: 500; color: inherit; }
+  .dm-add { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border: 1px dashed #d97706; color: #b45309; border-radius: 6px; font-size: 12px; font-weight: 500; background: #fffbeb; }
+  .dm-hr { display: inline-flex; align-items: center; gap: 6px; text-decoration: underline dotted #2563eb; text-underline-offset: 3px; }
+  .dm-tag { font-size: 12px; font-weight: 600; padding: 0 6px; border-radius: 6px; background: #dbeafe; color: #1e40af; }
+  .dm-badge { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 6px; display: inline-block; }
+  .dm-badge.ok { background: #dcfce7; color: #166534; }
+  .dm-badge.bad { background: #fee2e2; color: #991b1b; }
+  .dm-badge.info { background: #dbeafe; color: #1e40af; }
+  .dm-badge.gray { background: #f4f4f5; color: #52525b; }
+  .dm-note { color: #71717a; font-size: 12px; }
+  .dm-note.warn { color: #b45309; font-weight: 500; }
+  .dm-legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #71717a; margin-top: 12px; align-items: center; }
+  .dm-legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .dm-swatch { width: 14px; height: 14px; border-radius: 4px; background: #fafafa; box-shadow: inset 0 0 0 1px rgba(9,9,11,.12); }
+  .dm-more td { text-align: center; color: #a1a1aa; font-size: 12px; }
+  /* modal */
+  .dm-shade { background: rgba(9,9,11,.45); padding: 28px; border-radius: 12px; }
+  .dm-modal { background: #fff; border-radius: 12px; max-width: 640px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,.25); }
+  .dm-modal-h { padding: 20px 24px 0; }
+  .dm-modal-b { padding: 16px 24px; }
+  .dm-modal-f { padding: 12px 24px 20px; display: flex; gap: 10px; align-items: center; }
+  .dm-slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .dm-slot .k { font-size: 12px; font-weight: 500; color: #3f3f46; margin-bottom: 6px; }
+  .dm-slot .ro { height: 38px; display: flex; align-items: center; padding: 0 10px; border-radius: 8px; background: #f4f4f5; color: #52525b; font-variant-numeric: tabular-nums; }
+  .dm-slot .cap { font-size: 12px; color: #71717a; margin-top: 4px; }
+  .dm-input { height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(9,9,11,.15); color: #a1a1aa; }
+  .dm-input.focus { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.35); color: #09090b; }
+  .dm-input.filled { color: #09090b; }
+  .dm-label { font-size: 12px; font-weight: 500; color: #3f3f46; margin-bottom: 6px; display: block; }
+  .dm-radios { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .dm-radio { border: 1px solid rgba(9,9,11,.12); border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+  .dm-radio.on { border-color: #f59e0b; background: #fffbeb; }
+  .dm-dot { width: 16px; height: 16px; border-radius: 999px; border: 2px solid #a1a1aa; flex: none; }
+  .dm-radio.on .dm-dot { border: 5px solid #d97706; }
+  .dm-text { height: 38px; border-radius: 8px; border: 1px solid rgba(9,9,11,.15); }
+  .dm-spacer { flex: 1; }
+  .dm-pick { margin-top: 28px; }
+  .dm-why { font-size: 13px; color: #52525b; margin: 6px 0 0; }
+</style>
+
+<h2>Ang DTR, kapag pwede nang punan ni HR ang mga blanko</h2>
+<p class="subtitle">Ito ang mungkahi ko. Halimbawang datos lang, hindi totoong empleyado. Sa dulo, pumili kung page o modal.</p>
+
+<div class="dm">
+
+  <div class="mockup">
+    <div class="mockup-header">1. Ang DTR (sariling page, binubuksan mula sa list)</div>
+    <div class="mockup-body">
+      <div class="dm-page">
+        <div class="dm-top">
+          <div class="dm-crumbs">DTR uploads &nbsp;›&nbsp; <b>Dela Cruz, Juan S. · October 2026</b></div>
+          <span class="dm-btn danger">Delete</span>
+        </div>
+
+        <div class="dm-card">
+          <div class="dm-who">
+            <div class="dm-av">JD</div>
+            <div>
+              <div class="dm-name">Dela Cruz, Juan S.</div>
+              <div class="dm-sub">2019-0142 · Medical Records · Regular, 8:00–12:00 and 1:00–5:00</div>
+              <div class="dm-sub">Oct 1–31, 2026 · Printed name DELA CRUZ, JUAN S. · Uploaded Nov 3 by Ana Santos</div>
+            </div>
+          </div>
+          <div class="dm-figs">
+            <div class="dm-fig"><div class="l">Late</div><div class="v">23 min</div><div class="s">2 times</div></div>
+            <div class="dm-fig"><div class="l">Undertime</div><div class="v">25 min</div><div class="s">2 times</div></div>
+            <div class="dm-fig"><div class="l">Late + undertime</div><div class="v">48 min</div><div class="s">= 0.100 day (CSC)</div></div>
+            <div class="dm-fig"><div class="l">Absent</div><div class="v">1 day</div><div class="s">Oct 7</div></div>
+            <div class="dm-fig warn"><div class="l">Blanks to fill</div><div class="v">3</div><div class="s">on 2 days · needs a look</div></div>
+          </div>
+        </div>
+
+        <div class="dm-card">
+          <p class="dm-h">Days</p>
+          <p class="dm-desc">As the IT Unit printed it. Click a blank to copy in the time written on the DTR and signed by the supervisor.</p>
+          <div class="dm-wrap">
+            <table class="dm-t">
+              <thead>
+                <tr><th></th><th colspan="2">A.M.</th><th colspan="2">P.M.</th><th colspan="5"></th></tr>
+                <tr>
+                  <th>Day</th><th>Arrival</th><th>Departure</th><th>Arrival</th><th>Departure</th>
+                  <th>O.T.</th><th class="num">Late (min)</th><th class="num">Undertime (min)</th><th>Status</th><th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="dm-day"><b>Thu</b>, Oct 1</td><td>7:52 AM</td><td>12:01 PM</td><td>12:55 PM</td><td>5:03 PM</td><td></td><td class="num"></td><td class="num"></td><td><span class="dm-badge ok">Present</span></td><td></td></tr>
+                <tr><td class="dm-day"><b>Fri</b>, Oct 2</td><td>8:14 AM</td><td>12:00 PM</td><td>12:58 PM</td><td><span class="dm-add">+ Add</span></td><td></td><td class="num">14</td><td class="num"></td><td><span class="dm-badge ok">Present</span></td><td><span class="dm-note warn">No time out</span></td></tr>
+                <tr class="rest"><td class="dm-day"><b>Sat</b>, Oct 3</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><span class="dm-badge gray">Rest day</span></td><td></td></tr>
+                <tr class="rest"><td class="dm-day"><b>Sun</b>, Oct 4</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><span class="dm-badge gray">Rest day</span></td><td></td></tr>
+                <tr><td class="dm-day"><b>Mon</b>, Oct 5</td><td>7:58 AM</td><td>12:02 PM</td><td>1:09 PM</td><td>5:00 PM</td><td></td><td class="num">9</td><td class="num"></td><td><span class="dm-badge ok">Present</span></td><td></td></tr>
+                <tr><td class="dm-day"><b>Tue</b>, Oct 6</td><td>7:49 AM</td><td>12:00 PM</td><td>12:57 PM</td><td><span class="dm-hr">5:00 PM <span class="dm-tag">HR</span></span></td><td></td><td class="num"></td><td class="num"></td><td><span class="dm-badge ok">Present</span></td><td><span class="dm-note">HR: forgot to tap</span></td></tr>
+                <tr class="absent"><td class="dm-day"><b>Wed</b>, Oct 7</td><td><span class="dm-add">+ Add</span></td><td><span class="dm-add">+ Add</span></td><td><span class="dm-add">+ Add</span></td><td><span class="dm-add">+ Add</span></td><td></td><td class="num"></td><td class="num"></td><td><span class="dm-badge bad">Absent</span></td><td></td></tr>
+                <tr><td class="dm-day"><b>Thu</b>, Oct 8</td><td>7:55 AM</td><td>11:45 AM</td><td>1:00 PM</td><td>4:50 PM</td><td></td><td class="num"></td><td class="num">25</td><td><span class="dm-badge ok">Present</span></td><td></td></tr>
+                <tr><td class="dm-day"><b>Fri</b>, Oct 9</td><td></td><td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td><td><span class="dm-badge info">Official business</span></td><td><span class="dm-note">OB-2026-118</span></td></tr>
+                <tr class="rest"><td class="dm-day"><b>Sat</b>, Oct 10</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><span class="dm-badge gray">Rest day</span></td><td></td></tr>
+                <tr class="rest"><td class="dm-day"><b>Sun</b>, Oct 11</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><span class="dm-badge gray">Rest day</span></td><td></td></tr>
+                <tr><td class="dm-day"><b>Mon</b>, Oct 12</td><td>7:59 AM</td><td><span class="dm-add">+ Add</span></td><td><span class="dm-add">+ Add</span></td><td>5:01 PM</td><td></td><td class="num"></td><td class="num"></td><td><span class="dm-badge ok">Present</span></td><td><span class="dm-note warn">No lunch out, lunch in</span></td></tr>
+                <tr class="dm-more"><td colspan="10">… hanggang Oct 31</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="dm-legend">
+            <span><span class="dm-add">+ Add</span> blank that needs a time</span>
+            <span><span class="dm-hr">5:00 PM <span class="dm-tag">HR</span></span> copied in by HR</span>
+            <span><span class="dm-swatch"></span> not a work day</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:24px">
+    <div class="mockup-header">2. Kapag kinlik ang "+ Add" sa Fri, Oct 2</div>
+    <div class="mockup-body">
+      <div class="dm-shade">
+        <div class="dm-modal">
+          <div class="dm-modal-h">
+            <p class="dm-h">Fill in Fri, Oct 2</p>
+            <p class="dm-desc" style="margin:0">Copy the time written on the DTR and signed by the supervisor.</p>
+          </div>
+          <div class="dm-modal-b">
+            <div class="dm-slots">
+              <div class="dm-slot"><div class="k">A.M. arrival</div><div class="ro">8:14 AM</div><div class="cap">Printed</div></div>
+              <div class="dm-slot"><div class="k">A.M. departure</div><div class="ro">12:00 PM</div><div class="cap">Printed</div></div>
+              <div class="dm-slot"><div class="k">P.M. arrival</div><div class="ro">12:58 PM</div><div class="cap">Printed</div></div>
+              <div class="dm-slot"><div class="k">P.M. departure</div><div class="dm-input focus">5:00 PM <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div></div>
+            </div>
+            <span class="dm-label">Reason</span>
+            <div class="dm-radios">
+              <div class="dm-radio on"><span class="dm-dot"></span>Forgot to tap</div>
+              <div class="dm-radio"><span class="dm-dot"></span>Out on official business</div>
+            </div>
+            <span class="dm-label">Note (optional)</span>
+            <div class="dm-text"></div>
+          </div>
+          <div class="dm-modal-f">
+            <span class="dm-btn primary">Save</span>
+            <span class="dm-btn">Cancel</span>
+          </div>
+        </div>
+      </div>
+      <p class="dm-why">Lahat ng blanko ng araw na iyon ay lalabas dito nang sabay (sa Oct 7, apat; sa Oct 12, dalawa), kaya isang bukas lang kahit ilan ang kulang. Ang mga oras na printed ay makikita pero hindi mababago.</p>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:24px">
+    <div class="mockup-header">3. Kapag kinlik ang oras na may HR tag (Tue, Oct 6)</div>
+    <div class="mockup-body">
+      <div class="dm-shade">
+        <div class="dm-modal">
+          <div class="dm-modal-h">
+            <p class="dm-h">Fill in Tue, Oct 6</p>
+            <p class="dm-desc" style="margin:0">Copied in by Ana Santos on Nov 10 · Forgot to tap</p>
+          </div>
+          <div class="dm-modal-b">
+            <div class="dm-slots">
+              <div class="dm-slot"><div class="k">A.M. arrival</div><div class="ro">7:49 AM</div><div class="cap">Printed</div></div>
+              <div class="dm-slot"><div class="k">A.M. departure</div><div class="ro">12:00 PM</div><div class="cap">Printed</div></div>
+              <div class="dm-slot"><div class="k">P.M. arrival</div><div class="ro">12:57 PM</div><div class="cap">Printed</div></div>
+              <div class="dm-slot"><div class="k">P.M. departure</div><div class="dm-input filled">5:00 PM <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="cap">By HR</div></div>
+            </div>
+          </div>
+          <div class="dm-modal-f">
+            <span class="dm-btn primary">Save</span>
+            <span class="dm-btn">Cancel</span>
+            <span class="dm-spacer"></span>
+            <span class="dm-btn danger">Remove HR times</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="dm-pick">
+  <h3>Saan bubukas ang DTR?</h3>
+  <div class="options">
+    <div class="option" data-choice="page" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Sariling page (mungkahi ko)</h3>
+        <p>Maluwag ang table, may sariling link, at isang modal lang ang lalabas kapag nagpupuno. Babalik sa list gamit ang breadcrumb o Back.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="modal" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Modal pa rin, gaya ngayon</h3>
+        <p>Pareho ang laman, pero sa ibabaw ng list. Kapag nagpupuno, may pangalawang modal na papatong sa una.</p>
+      </div>
+    </div>
+  </div>
+</div>

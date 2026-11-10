@@ -40,7 +40,7 @@ class ViewEmployee extends ViewRecord
     {
         return new HtmlString(view('filament.employees.heading', [
             'employee' => $this->record,
-            'avatar' => $this->record->photoUrl() ?? $this->initialsAvatar(),
+            'avatar' => $this->record->avatarUrl(),
         ])->render());
     }
 
@@ -107,22 +107,5 @@ class ViewEmployee extends ViewRecord
             ! $employee->is_active => ['label' => 'Inactive', 'color' => 'gray'],
             default => ['label' => 'Active', 'color' => 'success'],
         };
-    }
-
-    /**
-     * Their initials as a small SVG, built here: no photo to show, and no
-     * name sent to an avatar service.
-     */
-    private function initialsAvatar(): string
-    {
-        $initials = mb_strtoupper(mb_substr($this->record->first_name, 0, 1).mb_substr($this->record->last_name, 0, 1));
-
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">'
-            .'<rect width="64" height="64" fill="#fef3c7"/>'
-            .'<text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#92400e">'
-            .htmlspecialchars($initials, ENT_XML1)
-            .'</text></svg>';
-
-        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 }

@@ -198,6 +198,10 @@ decoration.
 | `.dtr-grid-badges` | Badges side by side in a cell |
 | `.dtr-grid-cell-end` | A typed cell held to the end of its column |
 | `tr.is-muted` | A row with nothing to count, such as an employee with no DTR |
+| `tr.is-off` | A date that is not a work date: grey fill and grey text |
+| `tr.is-absent` | An absent date: a faint red tint, always with its Absent badge |
+| `.dtr-grid-add` | A blank HR may fill: a dashed amber box ("+ Add") on a Filament link action |
+| `.dtr-grid-hr` / `.dtr-grid-hr-tag` | A time HR copied in: the time as text, then a blue "HR" tag |
 
 - **Names:** surname first ("Dela Cruz, Juan S."). The employee number goes under
   the name in grey, with the office when every office is listed.
@@ -218,7 +222,36 @@ decoration.
 
 - Filament action modals for create, edit and view, and Filament's confirmations
   for destructive actions. No modals of our own.
-- Widths: `SixExtraLarge` for the employee form; `SevenExtraLarge` for a DTR's view.
+- Widths: `SixExtraLarge` for the employee form; `SevenExtraLarge` for a DTR's view;
+  `TwoExtraLarge` for the fill-in modal.
+- A modal may open one more over it, as Filament nests actions: a DTR's view opens
+  the fill-in modal from a blank. Closing the inner one returns to the outer.
+
+### A DTR's view
+
+The modal over the DTR uploads list, headed with the employee's name and the
+month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
+
+- **Who:** the photo or initials (`x-filament::avatar`), then the employee number
+  and office, the schedule the month was measured against, and the printed name
+  with who uploaded it (`.dtr-record-head`, `.dtr-record-line`, `.dtr-record-sub`).
+- **Cards:** the employee page's cards (`.dtr-profile-card`), grey, filling the
+  row: Late, Undertime, Late + undertime, Absent, and Blanks to fill, which turns
+  `is-warning` (amber tint) while any blank is left. A DTR that is not computed
+  shows one warning sentence instead (`.dtr-record-warning`).
+- **Days:** a grid with A.M. and P.M. as group headings over Arrival and
+  Departure, as on the paper form. Grey rows are not work dates, red-tinted rows
+  are absent, and Notes say what is missing in amber.
+- **Blanks:** a blank the computation needs is a `.dtr-grid-add` link; a time HR
+  filled is a link too, showing the time and the HR tag, with a tooltip saying
+  who filled it, when and why. Each has an `aria-label` naming the slot and date
+  ("Add P.M. departure, Fri, Oct 2").
+- **Legend** under the grid for + Add, HR and the grey rows.
+- **Fill-in modal:** "Fill in Fri, Oct 2", the date's four slots in a row
+  (printed times as read-only text marked Printed, the blanks and HR's times as
+  time inputs, the clicked one focused), the reason as two radio choices, an
+  optional note; Save, Cancel, and an outlined danger "Remove HR times" when the
+  date has any.
 
 ### Badges
 
@@ -289,6 +322,8 @@ All in `dashboard.blade.php`.
 | Invalid | Red ring on the field or cell, and the problem in words | Forms and grids |
 | Empty | An empty-state component | Lists and grids with nothing to show |
 | Locked | The value as text, a lock icon, and one line saying why | Opening balances that can no longer change |
+| To fill | A dashed amber "+ Add" in the blank, and an amber Blanks to fill card | A DTR's blanks that HR can fill from the signed paper |
+| Filled by HR | The time, then a blue "HR" tag, and the reason in Notes | A time HR copied into a DTR's blank |
 | Stale | A line saying how old the figures are | The dashboard's DTR figures, kept 10 minutes |
 
 ## 6. Accessibility
@@ -343,7 +378,7 @@ All in `dashboard.blade.php`.
 |---|---|
 | `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings |
 | `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
-| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`) |
+| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`) |
 | `resources/views/filament/dashboard.blade.php` | The dashboard (`.dtr-dash-*`) |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |

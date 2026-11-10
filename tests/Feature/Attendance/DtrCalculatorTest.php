@@ -3,6 +3,7 @@
 namespace Tests\Feature\Attendance;
 
 use App\Enums\AttendanceStatus;
+use App\Enums\DtrSlot;
 use App\Enums\EmploymentStatus;
 use App\Enums\ExceptionType;
 use App\Enums\HolidayType;
@@ -13,11 +14,15 @@ use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
+use App\Models\ManualTap;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Services\Attendance\ComputedDay;
 use App\Services\Attendance\ComputedDtr;
 use App\Services\Attendance\DtrCalculator;
+use App\Services\Attendance\DtrImporter;
+use App\Services\Attendance\PrintedDtr;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -240,5 +245,98 @@ class DtrCalculatorTest extends TestCase
         ]);
 
         $this->assertSame([$late, $late > 0], [$dtr->late, $dtr->days !== []]);
+    }
+
+    /** HR copies in a time the employee wrote on the DTR and the supervisor signed. */
+    private function hrFills(Employee $employee, string $date, DtrSlot $slot, string $time): void
+    {
+        ManualTap::factory()->for($employee)->create(['date' => $date, 'slot' => $slot, 'time' => $time]);
+    }
+
+    public function test_a_time_hr_filled_counts_like_a_printed_tap(): void
+    {
+        $employee = $this->regular();
+        $this->hrFills($employee, '2026-10-02', DtrSlot::PmDeparture, '16:30');
+
+        $day = $this->compute($employee, [
+            '2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58'],
+        ])->days['2026-10-02'];
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 30, 1], $this->figures($day));
+        $this->assertSame([], $day->missing);
+    }
+
+    public function test_times_hr_filled_on_a_day_without_a_tap_make_it_a_day_at_work(): void
+    {
+        $employee = $this->regular();
+        $this->hrFills($employee, '2026-10-16', DtrSlot::AmArrival, '08:05');
+        $this->hrFills($employee, '2026-10-16', DtrSlot::PmDeparture, '17:00');
+
+        $day = $this->compute($employee)->days['2026-10-16'];
+
+        $this->assertSame([AttendanceStatus::Present, 5, 1, 0, 0], $this->figures($day));
+        $this->assertSame([0.0, ['lunch out', 'lunch in']], [$day->absent, $day->missing]);
+    }
+
+    public function test_a_printed_time_wins_over_one_hr_filled(): void
+    {
+        $employee = $this->regular();
+        $this->hrFills($employee, '2026-10-02', DtrSlot::PmDeparture, '16:00');
+
+        $day = $this->compute($employee, [
+            '2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58', 'pm_departure' => '17:05'],
+        ])->days['2026-10-02'];
+
+        $this->assertSame(0, $day->undertime);
+    }
+
+    public function test_times_hr_filled_still_count_after_the_month_is_uploaded_again(): void
+    {
+        $employee = $this->regular();
+        $this->compute($employee, ['2026-10-02' => ['am_arrival' => '07:47']]);
+        $this->hrFills($employee, '2026-10-02', DtrSlot::PmDeparture, '16:30');
+
+        // IT reprints the month; the newer upload replaces the older one.
+        $reprint = app(DtrImporter::class)->import(new PrintedDtr(
+            $employee->full_name,
+            CarbonImmutable::parse('2026-10-01'),
+            CarbonImmutable::parse('2026-10-31'),
+            ['2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58']],
+        ), 'reprint.pdf', null);
+
+        $this->assertSame(1, DtrUpload::query()->count());
+        $this->assertSame(30, app(DtrCalculator::class)->compute($reprint)->days['2026-10-02']->undertime);
+    }
+
+    public function test_hr_may_fill_the_missing_taps_and_every_slot_of_a_half_with_none(): void
+    {
+        $employee = $this->regular();
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-20', 'date_to' => '2026-10-20', 'coverage' => LeaveCoverage::SecondHalf]);
+
+        $days = $this->compute($employee, [
+            '2026-10-01' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58', 'pm_departure' => '17:05'],
+            '2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_departure' => '17:05'],
+        ])->days;
+
+        $this->assertSame([], $days['2026-10-01']->fillable);
+        $this->assertSame([DtrSlot::PmArrival], $days['2026-10-02']->fillable);
+        $this->assertSame(DtrSlot::cases(), $days['2026-10-16']->fillable);
+        // The afternoon is on an OB, so only the morning is left to fill.
+        $this->assertSame([DtrSlot::AmArrival, DtrSlot::AmDeparture], $days['2026-10-20']->fillable);
+        $this->assertSame([], $days['2026-10-10']->fillable);
+    }
+
+    public function test_on_a_one_block_day_time_in_is_the_am_arrival_and_time_out_the_pm_departure(): void
+    {
+        $employee = Employee::factory()->create();
+        $straight = Schedule::factory()->create(['block1_in' => '07:00', 'block1_out' => '15:00', 'block2_in' => null, 'block2_out' => null]);
+        ScheduleAssignment::factory()->for($employee)->for($straight)->create(['effective_from' => '2026-10-01']);
+        $this->hrFills($employee, '2026-10-02', DtrSlot::PmDeparture, '14:45');
+
+        $days = $this->compute($employee, ['2026-10-02' => ['am_arrival' => '06:55'], '2026-10-05' => ['pm_departure' => '15:00']])->days;
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 15, 1], $this->figures($days['2026-10-02']));
+        $this->assertSame([DtrSlot::AmArrival], $days['2026-10-05']->fillable);
+        $this->assertSame([DtrSlot::AmArrival, DtrSlot::PmDeparture], $days['2026-10-06']->fillable);
     }
 }

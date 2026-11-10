@@ -538,7 +538,8 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   staff who earn leave credits (permanent and co-terminous) are computed,
   since the total comes off VL; a job order or contract of service DTR is
   shown as printed. The view shows the month and every date; the list shows
-  the total and the days absent.
+  the total and the days absent. A time HR copied into a blank counts as a
+  tap; see **Times HR fills in**.
 - **OB and travel orders** (added the same day). HR enters them on the **OB
   & travel orders** screen from the signed slips: the employee, the type, the
   dates, the whole day or one half (one date only), a reference number and
@@ -550,6 +551,129 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   (HR assumed complete for now); shifts past midnight and 16-hour duty, set
   aside until a nurse's DTR is in hand. The CSC table in code is the one above
   and still has to be checked against HR's printed copy.
+
+## Times HR fills in
+
+Added 2026-11-10.
+
+**Why.** An employee who forgets to tap, most often at time out, writes the
+time on the IT Unit's printout, and their supervisor signs it. HR copies that
+time. The same happens when the employee was out on official business when a
+tap was due. Until now the app showed such a slot as a missing tap, or the
+whole date as absent, so its figures differed from the signed DTR.
+
+**What HR can do.** On a DTR's view, HR fills a blank A.M. or P.M. arrival or
+departure with the time written on the paper, with a reason, **Forgot to tap**
+or **Out on official business**, and an optional note. HR can change or remove
+a time it filled. A filled time counts exactly like a printed one: late and
+undertime are read from it, it is no longer a missing tap, and a work date
+that had no tap stops being absent.
+
+**Not in this.**
+- Changing a printed time. What IT printed is never edited; a wrong printout
+  is uploaded again.
+- O.T., which is not computed.
+- Job order and contract of service DTRs, which are not computed, so filling
+  them would change nothing; and a DTR whose employee is not chosen yet, since
+  the times belong to the employee.
+- The missing-tap rule: a blank no one filled still costs nothing and is
+  listed.
+- Approval in the app. The supervisor signs on paper; HR copies.
+- A page of its own for the DTR. HR chose to keep the view in its modal.
+
+**Must never happen.** An HR time hiding a printed one; HR's times lost when IT
+uploads the month again; an HR time that looks like one IT printed.
+
+**Storage.** `manual_taps`: `employee_id` (restrict on delete), `date`, `slot`
+(`am_arrival`, `am_departure`, `pm_arrival`, `pm_departure`), `time`, `reason`
+(`forgot_to_tap`, `official_business`), `remarks` (255, nullable),
+`filled_by_user_id` (null on delete; whoever saved the time last) and
+timestamps; one row per employee, date and slot. Logged to the activity log like the other records. A filled
+time belongs to the employee and the date, not to an upload, so it applies to
+whichever upload covers the date and survives a newer upload of the month.
+When a newer printout has a time in the same slot, the printed time wins; the
+HR time is kept but not used or shown.
+
+**Which blanks can be filled.** The slots the computation lists as missing on
+a work date it judges, and every slot of the halves not covered on a date it
+marks absent. On a one-block schedule, time in goes in A.M. arrival and time
+out in P.M. departure, the columns the computation reads first. Nothing is
+offered on rest days, holidays, suspended halves, halves covered by leave, an
+OB or a travel order, dates after today, dates without a schedule, or night
+shifts not yet computed.
+
+**Checks on save.** All on the server; the date and slots the browser sends
+are not trusted.
+- Staff only, through the upload's `update` policy.
+- The date lies in the upload's period and has a blank to fill or an HR time;
+  otherwise the action is hidden, and Filament neither opens nor runs a hidden
+  action. Only the slots that are fillable or already HR's have inputs, and only
+  those are saved. A modal left open while IT's reprint is uploaded saves
+  nothing, since the newer upload replaced the DTR it was opened on.
+- A reason, and at least one time ("Enter at least one time").
+- Each time falls between the times before and after it on that row, printed
+  or filled, so 5:00 AM typed for 5:00 PM is caught: "5:00 AM is before the
+  P.M. arrival, 12:58 PM. Check AM or PM."
+
+**Computation.** `DtrCalculator` reads each slot as the printed time, or else
+HR's. Nothing else changes, and every screen built on it follows: the list,
+the view, the Monthly Summary and its Excel, Habitual Tardiness, the
+dashboard and an employee's page. The dashboard and Habitual Tardiness keep
+their figures for 10 minutes, as they do after any change.
+
+**The DTR modal.** Redesigned; still a 7xl modal over the list.
+- Heading: the employee's name and the month ("Dela Cruz, Juan S. · October
+  2026"), or the printed name while no employee is chosen.
+- At the top: the photo or initials, the name, the employee number, the
+  office and the schedule (what late and undertime were measured against),
+  then the printed name and who uploaded the file, and when.
+- Five cards: Late (minutes, times), Undertime (minutes, times), Late +
+  undertime (minutes and the CSC day equivalent), Absent (days), and Blanks to
+  fill (the missing taps on dates with any tap, and on how many dates; amber
+  when there are any; an absent date counts under Absent).
+  Days without a schedule stays as a warning when there are any. A DTR that
+  is not computed shows the existing sentence instead of the cards.
+- The days: every date of the period, with A.M. and P.M. as group headings
+  over Arrival and Departure, as on the form; then O.T., Late (min),
+  Undertime (min), Status and Notes. A date that is not a work date is grey;
+  an absent date is tinted red, with its badge.
+- A blank that can be filled shows a dashed amber **+ Add** button. A time HR
+  filled shows with a blue **HR** tag, is a button too, and has a tooltip
+  saying who filled it, when and why. Its Notes add "HR: forgot to tap" and
+  the note.
+- A legend under the table explains + Add, HR and the grey rows.
+
+**The fill-in modal.** Opens over the DTR modal from + Add or from an HR time.
+- Heading "Fill in Fri, Oct 2". Description: "Copy the time written on the
+  DTR and signed by the supervisor", or, on a date with HR times, who filled
+  them, when and why.
+- The four slots in a row: printed times as read-only text marked "Printed";
+  the fillable blanks and HR's times as time inputs, the clicked one focused;
+  any other slot as "—".
+- Reason: two choices, required, prefilled from the date's HR times. Note:
+  optional.
+- **Save** and **Cancel**, and **Remove HR times** when the date has any.
+  Clearing one input and saving removes that time.
+- After saving: a notification with the count ("2 times saved", "HR times
+  removed"), and the new figures in the DTR modal's cards and rows and in the
+  list's Late + undertime and Absent columns.
+
+**Tests.** The calculator with HR times: late or undertime read from a filled
+time, an absent date becoming present, a printed time winning, a newer upload
+keeping them. Each check on save, every refusal included. Saving, changing and
+removing, with the reason, note and author kept. Staff only.
+
+**Left to the builder.** How the modal's rows get their buttons (a custom
+entry or an embedded Livewire component) and how the list refreshes; the time
+input; what the schedule line says when the month has several schedules; the
+names of classes and methods. docs/design.md gains the + Add button, the HR
+tag and the fill-in modal, in the same commit as the screen.
+
+**Claude's calls**, not put to HR: the AM/PM order check on save; Remove HR
+times without a second confirmation, since the fill-in modal is already a
+deliberate step, the time can be entered again and the log keeps it; the
+reason prefilled from the date's first HR time; a change records whoever
+saved it last.
 
 ## Recomputation
 

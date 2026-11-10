@@ -14,6 +14,7 @@
         --grid-hover: color-mix(in oklab, var(--gray-950) 3%, var(--color-white));
         --grid-weekend: color-mix(in oklab, var(--gray-950) 5%, var(--color-white));
         --grid-current: color-mix(in oklab, var(--primary-500) 9%, var(--color-white));
+        --grid-absent: color-mix(in oklab, var(--danger-500) 7%, var(--color-white));
         --grid-muted: var(--gray-500);
     }
 
@@ -24,6 +25,7 @@
         --grid-hover: color-mix(in oklab, var(--color-white) 4%, var(--gray-900));
         --grid-weekend: color-mix(in oklab, var(--color-white) 6%, var(--gray-900));
         --grid-current: color-mix(in oklab, var(--primary-400) 12%, var(--gray-900));
+        --grid-absent: color-mix(in oklab, var(--danger-400) 12%, var(--gray-900));
         --grid-muted: var(--gray-400);
     }
 
@@ -269,5 +271,54 @@
 
     .dark .dtr-grid-legend strong {
         color: var(--color-white);
+    }
+
+    /* A DTR's dates: grey when not a work date; tinted red when absent, which its badge also says. */
+    .dtr-grid-table tbody tr.is-off > * {
+        background-color: var(--grid-weekend);
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-table tbody tr.is-absent > * {
+        background-color: var(--grid-absent);
+    }
+
+    /* A blank HR may fill from the signed DTR: a dashed amber box, with dark text on its tint (about 7:1). */
+    .dtr-grid-add {
+        padding: 0.125rem 0.5rem;
+        border: 1px dashed var(--warning-600);
+        border-radius: var(--radius-md);
+        background-color: color-mix(in oklab, var(--warning-400) 14%, transparent);
+        color: var(--warning-800);
+    }
+
+    .dtr-grid-add > .fi-icon {
+        color: inherit;
+    }
+
+    .dark .dtr-grid-add {
+        border-color: var(--warning-400);
+        color: var(--warning-300);
+    }
+
+    /* A time HR copied in reads like a printed one, then a blue "HR" tag: the word, not only the colour. */
+    .dtr-grid-hr {
+        padding-block: 0.125rem;
+        color: inherit;
+    }
+
+    .dtr-grid-hr-tag {
+        display: inline-block;
+        padding-inline: 0.375rem;
+        border-radius: var(--radius-md);
+        background-color: color-mix(in oklab, var(--info-500) 14%, transparent);
+        color: var(--info-700);
+        font-size: var(--text-xs);
+        font-weight: 600;
+        line-height: 1.25rem;
+    }
+
+    .dark .dtr-grid-hr-tag {
+        color: var(--info-300);
     }
 </style>

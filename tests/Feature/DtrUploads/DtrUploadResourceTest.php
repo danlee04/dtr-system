@@ -2,11 +2,14 @@
 
 namespace Tests\Feature\DtrUploads;
 
+use App\Enums\DtrSlot;
 use App\Enums\EmploymentStatus;
+use App\Enums\ManualTapReason;
 use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\Employee;
+use App\Models\ManualTap;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
@@ -170,7 +173,7 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
             // October 2026 has 22 weekdays; only the 1st has taps.
-            ->assertMountedActionModalSee(['23 min, 2 times', '25 min, 2 times', '48 min = 0.100 day', '21 days', 'Present', 'Absent']);
+            ->assertMountedActionModalSee(['23 min', '2 times', '25 min', '48 min', '= 0.100 day (CSC)', '21 days', 'Present', 'Absent']);
     }
 
     public function test_the_list_shows_each_dtrs_late_and_undertime(): void
@@ -206,5 +209,179 @@ class DtrUploadResourceTest extends TestCase
             ->mountAction(TestAction::make('view')->table($upload))
             // Oct 31 printed nothing, and still has its row, as on paper.
             ->assertMountedActionModalSee(['Thu, Oct 1', '5:13 PM', 'Seminar', 'Sat, Oct 31']);
+    }
+
+    /** October 2 on 8–12 and 1–5, printed without its time out. */
+    private function uploadWithoutTimeOut(EmploymentStatus $status = EmploymentStatus::Permanent): DtrUpload
+    {
+        $this->travelTo('2026-11-03 09:00');
+        $employee = Employee::factory()->create(['employment_status' => $status]);
+        ScheduleAssignment::factory()->for($employee)->for(Schedule::factory())->create(['effective_from' => '2026-10-01']);
+
+        return DtrUpload::factory()->for($employee)
+            ->has(DtrDay::factory()->state(['date' => '2026-10-02', 'am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58', 'pm_departure' => null]), 'days')
+            ->create();
+    }
+
+    /** @return list<TestAction> the DTR's view, then the fill-in modal for a date */
+    private function fillIn(DtrUpload $upload, string $date, DtrSlot $slot = DtrSlot::PmDeparture): array
+    {
+        return [
+            TestAction::make('view')->table($upload),
+            TestAction::make('fillDay')->schemaComponent('dtr')->arguments(['date' => $date, 'slot' => $slot->value]),
+        ];
+    }
+
+    public function test_hr_copies_in_a_time_written_on_the_signed_dtr(): void
+    {
+        $hr = User::factory()->create();
+        $this->actingAs($hr);
+        $upload = $this->uploadWithoutTimeOut();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: [
+                'pm_departure' => '16:30',
+                'reason' => ManualTapReason::ForgotToTap->value,
+                'remarks' => 'Signed by the section chief',
+            ])
+            ->assertHasNoFormErrors()
+            ->assertNotified('1 time saved')
+            // Back in the DTR: the time out it now has is 30 minutes early.
+            ->assertMountedActionModalSee(['30 min', '1 time', 'HR: forgot to tap']);
+
+        $tap = ManualTap::sole();
+        $this->assertSame(
+            [$upload->employee_id, '2026-10-02', DtrSlot::PmDeparture, '16:30:00', ManualTapReason::ForgotToTap, 'Signed by the section chief', $hr->id],
+            [$tap->employee_id, $tap->date->toDateString(), $tap->slot, $tap->time, $tap->reason, $tap->remarks, $tap->filled_by_user_id],
+        );
+    }
+
+    public function test_the_view_marks_the_blanks_to_fill_and_the_times_hr_filled(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        ManualTap::factory()->for($upload->employee)->create(['date' => '2026-10-05', 'slot' => DtrSlot::AmArrival, 'time' => '08:03']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee(['Blanks to fill', 'Add P.M. departure, Fri, Oct 2', '8:03 AM', 'HR']);
+    }
+
+    public function test_saving_takes_at_least_one_time(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => null, 'reason' => ManualTapReason::ForgotToTap->value])
+            ->assertNotified('Enter at least one time');
+
+        $this->assertDatabaseCount(ManualTap::class, 0);
+    }
+
+    public function test_a_time_out_of_order_is_caught_as_an_am_pm_mix_up(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => '05:00', 'reason' => ManualTapReason::ForgotToTap->value])
+            ->assertHasFormErrors(['pm_departure']);
+
+        $this->assertDatabaseCount(ManualTap::class, 0);
+    }
+
+    public function test_a_printed_time_cannot_be_overwritten(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        // P.M. arrival is printed, so the modal has no field for it; a value sent for it anyway is not saved.
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02', DtrSlot::PmArrival), data: [
+                'pm_arrival' => '13:30',
+                'pm_departure' => '17:00',
+                'reason' => ManualTapReason::ForgotToTap->value,
+            ]);
+
+        $this->assertSame([DtrSlot::PmDeparture], ManualTap::query()->pluck('slot')->all());
+    }
+
+    public function test_dates_outside_the_dtr_or_with_nothing_to_fill_cannot_be_opened(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        // A hidden action cannot be mounted or called, even by a crafted request. November is not on this DTR, and October 3 is a Saturday.
+        foreach (['2026-11-02', '2026-10-03', 'not a date'] as $date) {
+            Livewire::test(ListDtrUploads::class)->assertActionHidden($this->fillIn($upload, $date));
+        }
+    }
+
+    public function test_a_fill_in_left_open_while_the_month_is_reprinted_saves_nothing(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $page = Livewire::test(ListDtrUploads::class)->mountAction($this->fillIn($upload, '2026-10-02'));
+
+        // The reprint replaces the upload the modal was opened on.
+        $upload->delete();
+
+        $page->fillForm(['pm_departure' => '17:00', 'reason' => ManualTapReason::ForgotToTap->value])->callMountedAction();
+
+        $this->assertDatabaseCount(ManualTap::class, 0);
+    }
+
+    public function test_a_job_order_dtr_has_no_blanks_to_fill(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut(EmploymentStatus::JobOrder);
+
+        Livewire::test(ListDtrUploads::class)->assertActionHidden($this->fillIn($upload, '2026-10-02'));
+    }
+
+    public function test_the_fill_in_modal_opens_with_the_times_reason_and_note_hr_left(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        ManualTap::factory()->for($upload->employee)->create(['date' => '2026-10-02', 'slot' => DtrSlot::PmDeparture, 'time' => '17:00', 'reason' => ManualTapReason::OfficialBusiness, 'remarks' => 'Meeting at PHO']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->fillIn($upload, '2026-10-02'))
+            ->assertActionDataSet(['pm_departure' => '17:00', 'reason' => ManualTapReason::OfficialBusiness, 'remarks' => 'Meeting at PHO']);
+    }
+
+    public function test_hr_changes_a_time_it_filled_and_clearing_it_removes_it(): void
+    {
+        $hr = User::factory()->create();
+        $this->actingAs($hr);
+        $upload = $this->uploadWithoutTimeOut();
+        $tap = ManualTap::factory()->for($upload->employee)->create(['date' => '2026-10-02', 'slot' => DtrSlot::PmDeparture, 'time' => '17:00']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => '17:10', 'reason' => ManualTapReason::OfficialBusiness->value])
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(['17:10:00', ManualTapReason::OfficialBusiness, $hr->id], [$tap->fresh()->time, $tap->fresh()->reason, $tap->fresh()->filled_by_user_id]);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => null, 'reason' => ManualTapReason::OfficialBusiness->value])
+            ->assertNotified('HR times removed');
+
+        $this->assertModelMissing($tap);
+    }
+
+    public function test_remove_hr_times_clears_the_dates_times_and_keeps_the_dtr_open(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $tap = ManualTap::factory()->for($upload->employee)->create(['date' => '2026-10-02', 'slot' => DtrSlot::PmDeparture]);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction([...$this->fillIn($upload, '2026-10-02'), TestAction::make('removeHrTimes')])
+            ->assertNotified('HR times removed')
+            ->assertMountedActionModalSee('Blanks to fill');
+
+        $this->assertModelMissing($tap);
     }
 }

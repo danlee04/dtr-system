@@ -65,6 +65,27 @@ class Employee extends Model
             : null;
     }
 
+    /**
+     * Their photo, or their initials as a small SVG built here: no name sent
+     * to an avatar service.
+     */
+    public function avatarUrl(): string
+    {
+        if (($photo = $this->photoUrl()) !== null) {
+            return $photo;
+        }
+
+        $initials = mb_strtoupper(mb_substr($this->first_name, 0, 1).mb_substr($this->last_name, 0, 1));
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">'
+            .'<rect width="64" height="64" fill="#fef3c7"/>'
+            .'<text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#92400e">'
+            .htmlspecialchars($initials, ENT_XML1)
+            .'</text></svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
+
     /** @return BelongsTo<Office, $this> */
     public function office(): BelongsTo
     {

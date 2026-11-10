@@ -6,6 +6,7 @@ use App\Services\Attendance\ComputedDtr;
 use App\Services\Attendance\DtrCalculator;
 use Database\Factories\DtrUploadFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,10 +27,36 @@ class DtrUpload extends Model
 
     private ?ComputedDtr $computed = null;
 
+    /** @var Collection<string, ManualTap>|null */
+    private ?Collection $filledTimes = null;
+
     /** The DTR judged against the app's schedules, worked out once per request; see DtrCalculator. */
     public function computed(): ComputedDtr
     {
         return $this->computed ??= app(DtrCalculator::class)->compute($this);
+    }
+
+    /**
+     * The times HR copied in for this DTR's employee and dates, keyed "2026-10-02 pm_departure".
+     *
+     * @return Collection<string, ManualTap>
+     */
+    public function filledTimes(): Collection
+    {
+        return $this->filledTimes ??= ManualTap::query()
+            ->where('employee_id', $this->employee_id)
+            ->whereDate('date', '>=', $this->period_start)
+            ->whereDate('date', '<=', $this->period_end)
+            ->with('filledBy')
+            ->get()
+            ->keyBy(fn (ManualTap $tap): string => "{$tap->date->toDateString()} {$tap->slot->value}");
+    }
+
+    /** Drops what this request worked out, after HR changes a time on the DTR. */
+    public function forgetComputed(): void
+    {
+        $this->computed = null;
+        $this->filledTimes = null;
     }
 
     /**
