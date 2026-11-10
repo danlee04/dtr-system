@@ -93,7 +93,7 @@ class ScheduleResourceTest extends TestCase
             ->callMountedAction()
             ->assertHasNoFormErrors();
 
-        $this->assertSame('22:00–02:00, 03:00–07:00', Schedule::sole()->hours);
+        $this->assertSame('10:00 PM – 2:00 AM, 3:00 AM – 7:00 AM', Schedule::sole()->hours);
     }
 
     public function test_times_that_run_past_24_hours_are_refused(): void

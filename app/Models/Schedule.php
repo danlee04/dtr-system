@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\ScheduleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -87,15 +88,17 @@ class Schedule extends Model
     }
 
     /**
-     * "08:00–12:00, 13:00–17:00".
+     * "8:00 AM – 12:00 PM, 1:00 PM – 5:00 PM", in the 12-hour time HR reads
+     * on the DTR (HR, 2026-11-10).
      *
      * @return Attribute<string, never>
      */
     protected function hours(): Attribute
     {
         return Attribute::get(fn (): string => collect($this->times())
+            ->map(fn (string $time): string => CarbonImmutable::createFromFormat('H:i', $time)->format('g:i A'))
             ->chunk(2)
-            ->map(fn ($block): string => $block->implode('–'))
+            ->map(fn ($block): string => $block->implode(' – '))
             ->implode(', '));
     }
 

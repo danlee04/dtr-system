@@ -412,6 +412,8 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 - **Formats:**
   - Units: "24 min", "0.125 days", "3 of 97".
   - Dates: "Oct 31, 2026", or "October 2026" for a month.
+  - Times: 12-hour, as on the DTR: "8:14 AM"; a schedule's hours "8:00 AM – 12:00 PM,
+    1:00 PM – 5:00 PM" (`Schedule::hours`). The 24-hour form is for storage only.
   - Names: "Dela Cruz, Juan S.".
   - Plurals: `str()->plural()`.
 - **Notifications** say what happened, with the count.
