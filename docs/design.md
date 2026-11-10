@@ -132,7 +132,8 @@ decoration.
   - **Topbar:** it blends into the page. Search sits on its left (Ctrl+K). On its
     right, staff see the "Waiting for you" bell and **Upload DTRs**.
   - **Phones** keep Filament's topbar and slide-out sidebar.
-- **Content** runs the full width of the screen (`maxContentWidth(Width::Full)`).
+- **Content** runs the full width of the screen (`maxContentWidth(Width::Full)`),
+  except the Profile: a few fields, at `FourExtraLarge`, so they read as one column.
 - **Breakpoints** (Filament's): 640px, 768px, 1024px (the desktop frame), 1280px
   (the dashboard's four columns).
 - **A page, top to bottom:**
@@ -337,6 +338,20 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   only when something needs a look.
 
 All in `entries.blade.php`.
+
+### The Profile
+
+Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword`).
+
+- **Who** (an account linked to an employee): a card with the round photo
+  uploader on the left and, beside it, the name (20px semibold), the position
+  and office in grey, and "Click the photo to change it." (`.dtr-profile-identity`).
+- **Employment:** a compact, divided section with inline labels, one fact a row:
+  Employee No., Office, Position, Employment status, Date hired, Schedule. Shown,
+  never typed, with "As HR keeps it. Ask HR to correct anything here."
+- **Account:** the email, then the new password (optional for an employee, who
+  may save only a photo), its confirmation and the current password.
+- Staff without an employee see only Account.
 
 ## 5. States
 

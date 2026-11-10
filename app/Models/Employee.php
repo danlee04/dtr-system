@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\EmploymentStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -96,6 +98,17 @@ class Employee extends Model
     public function scheduleAssignments(): HasMany
     {
         return $this->hasMany(ScheduleAssignment::class);
+    }
+
+    /** The fixed schedule assigned for a date, or null; a roster's day is the roster's. */
+    public function scheduleOn(CarbonImmutable $date): ?Schedule
+    {
+        return $this->scheduleAssignments()
+            ->whereDate('effective_from', '<=', $date)
+            ->where(fn (Builder $query): Builder => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $date))
+            ->latest('effective_from')
+            ->with('schedule')
+            ->first()?->schedule;
     }
 
     /** @return HasMany<RosterEntry, $this> */

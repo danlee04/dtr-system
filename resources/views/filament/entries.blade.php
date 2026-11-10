@@ -232,6 +232,32 @@
         flex-grow: 0;
     }
 
+    /* Beside the photo on someone's own profile: their name, their post, and how to change the photo. */
+    .dtr-profile-identity {
+        display: grid;
+        gap: calc(var(--spacing) * 1);
+    }
+
+    .dtr-profile-identity-name {
+        font-size: var(--text-xl);
+        line-height: 1.3;
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-950);
+    }
+
+    .dark .dtr-profile-identity-name {
+        color: var(--color-white);
+    }
+
+    .dtr-profile-identity-hint {
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    .dark .dtr-profile-identity-hint {
+        color: var(--gray-400);
+    }
+
     /* A figure that needs a look, as a DTR's blanks to fill. */
     .dtr-profile-card.is-warning {
         --tone: var(--warning-400);

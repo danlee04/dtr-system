@@ -11,7 +11,6 @@ use App\Services\Attendance\MonthlyTotals;
 use App\Services\Leave\LeaveLedger;
 use App\Services\Leave\LeavePosting;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 
 /**
  * What an employee's Overview tab shows (filament.employees.cards and
@@ -31,12 +30,7 @@ final class EmployeeOverview
         $earns = $employee->employment_status->earnsLeaveCredits();
         // Only the DTRs of those who earn leave are computed.
         $lastMonth = $earns ? $this->monthlyTotals->dtr($employee, $month) : null;
-        $schedule = $employee->scheduleAssignments()
-            ->whereDate('effective_from', '<=', $today)
-            ->where(fn (Builder $query): Builder => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $today))
-            ->latest('effective_from')
-            ->with('schedule')
-            ->first()?->schedule;
+        $schedule = $employee->scheduleOn($today);
 
         return [
             'earns' => $earns,
