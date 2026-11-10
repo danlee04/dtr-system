@@ -220,6 +220,18 @@
         background-color: color-mix(in oklab, var(--color-white) 75%, transparent);
     }
 
+    /*
+     * "(optional)" beside a form field's label, read with its name, instead of
+     * at the far end of the row where Filament puts what follows a label.
+     */
+    .fi-fo-field-label-ctn:has(.dtr-field-optional) {
+        column-gap: calc(var(--spacing) * 1);
+    }
+
+    .fi-fo-field-label-ctn > .fi-sc:has(.dtr-field-optional) {
+        flex-grow: 0;
+    }
+
     /* A figure that needs a look, as a DTR's blanks to fill. */
     .dtr-profile-card.is-warning {
         --tone: var(--warning-400);

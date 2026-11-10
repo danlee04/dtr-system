@@ -210,6 +210,16 @@ decoration.
 ### Inputs and forms
 
 - **Resources:** Filament form fields, with their labels, helper text and rules.
+- **Required and optional:** most fields are required, so no field shows an
+  asterisk. A field that may be left blank shows a grey "(optional)" right after
+  its label (`.dtr-field-optional`). Both are set once, for every form, in
+  `AppServiceProvider::configureFields()`; a field gets the mark from its rules
+  (not `required()`, not disabled), so nothing is typed per field. The mark is not
+  part of the label, so validation messages keep the plain name. Switches,
+  checkboxes, fields without a visible label and table filters get no mark. A field
+  that is optional alone but one of a set that needs one value opts out with
+  `->afterLabel(null)`, as the fill-in modal's times do; a field that always has a
+  value (a select without a blank choice) is `required()`.
 - **Our pages:** `x-filament::input.wrapper` with `input` or `select`, inside a
   visible `<label class="dtr-grid-picker">`.
 - **Grid cells:** `wire:model` (deferred), with an `aria-label` naming the row and
@@ -378,7 +388,7 @@ All in `dashboard.blade.php`.
 |---|---|
 | `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings |
 | `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
-| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`) |
+| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`); the "(optional)" mark beside a form field's label (`.dtr-field-optional`) |
 | `resources/views/filament/dashboard.blade.php` | The dashboard (`.dtr-dash-*`) |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |

@@ -77,6 +77,8 @@ class LeaveApplicationForm
                 ->label('Part of the day')
                 ->options(LeaveCoverage::class)
                 ->default(LeaveCoverage::WholeDay->value)
+                // It always has a value, so it is not marked optional.
+                ->required()
                 ->selectablePlaceholder(false)
                 ->visible(fn (Get $get): bool => self::oneDate($get))
                 ->live(),
@@ -96,7 +98,8 @@ class LeaveApplicationForm
                 ->required(fn (Get $get): bool => self::needsText($get))
                 ->columnSpan(2),
             TextInput::make('division_head')
-                ->label('Division Head (signs 7.B)')
+                ->label('Division Head')
+                ->helperText('Signs 7.B of the form.')
                 ->maxLength(255)
                 ->columnSpan(2),
             // Label on top, so the switch lines up with the Division Head beside it.

@@ -247,6 +247,8 @@ class FillDayAction extends Action
                 ->schema(array_map(fn (DtrSlot $slot): TextEntry|TimePicker => match (true) {
                     in_array($slot, $day['editable'], true) => TimePicker::make($slot->value)
                         ->label($slot->getLabel())
+                        // No "(optional)": none is needed on its own, but one of them is.
+                        ->afterLabel(null)
                         ->seconds(false)
                         ->autofocus($slot === $focus)
                         ->helperText($day['filled']->has($slot->value) ? 'By HR' : null)
@@ -261,7 +263,7 @@ class FillDayAction extends Action
                 ->inline()
                 ->required(),
             TextInput::make('remarks')
-                ->label('Note (optional)')
+                ->label('Note')
                 ->maxLength(255),
         ];
     }

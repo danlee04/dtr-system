@@ -30,6 +30,19 @@ class OfficeResourceTest extends TestCase
             ->assertCanSeeTableRecords($offices);
     }
 
+    public function test_only_a_field_that_may_be_left_blank_is_marked_and_none_has_an_asterisk(): void
+    {
+        $list = Livewire::test(ListOffices::class);
+        // The table's filters are all optional, so none says so.
+        $list->assertDontSeeHtml('(optional)');
+
+        // Name is required, Head of office is not, and Active is a switch.
+        $form = $list->mountAction('create')->getMountedActionModalHtml();
+
+        $this->assertSame(1, substr_count($form, '(optional)'));
+        $this->assertStringNotContainsString('fi-fo-field-label-required-mark', $form);
+    }
+
     public function test_hr_adds_an_office_with_the_head_who_signs_form_48(): void
     {
         Livewire::test(ListOffices::class)->mountAction('create')
