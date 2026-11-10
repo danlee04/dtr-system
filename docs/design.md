@@ -318,9 +318,10 @@ Filament notifications:
 
 Laid out after a reference HR chose, and the only page with a heading on screen.
 
-- **Heading:** a 56px round photo beside the name (their initials without one),
-  and the name 28px from 640px. Under the name: the position and office in grey,
-  then chips for the status, the employment status and the number.
+- **Heading:** 16px under the breadcrumbs, a 56px round photo (their initials
+  without one) centred on the name, and the name 28px from 640px. Under the name,
+  lined up with it: the position and office in grey, then chips for the status,
+  the employment status and the number.
 - **Photo:** Filament's round uploader with its cropper, in the employee form for
   HR and on the Profile page for the employee.
 - **Tabs:** pills on a grey track (`--gray-100`; dark: white at 5%), started

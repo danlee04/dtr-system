@@ -50,21 +50,18 @@
         color: var(--gray-400);
     }
 
+    /* Room under the breadcrumbs before the photo and name: twice Filament's 8px. */
+    .fi-resource-employees.fi-resource-view-record-page .fi-breadcrumbs {
+        margin-bottom: calc(var(--spacing) * 4);
+    }
+
     @media (min-width: 40rem) {
         .fi-resource-employees .dtr-person-name {
             font-size: 1.75rem;
             line-height: 1.3;
         }
 
-        /* The avatar runs down beside the chips, as the reference's photo does, and the chips line up under the name. */
-        .fi-resource-employees .dtr-person {
-            align-items: flex-start;
-        }
-
-        .fi-resource-employees .dtr-person-avatar {
-            margin-bottom: calc(var(--spacing) * -6);
-        }
-
+        /* The photo sits centred on the name (HR, 2026-11-10); the chips line up under the name. */
         .fi-resource-employees .fi-header-subheading {
             margin-top: calc(var(--spacing) * 1);
             margin-inline-start: calc(var(--spacing) * 17);
