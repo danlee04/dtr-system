@@ -5,6 +5,7 @@ namespace App\Filament\Resources\DtrUploads\Schemas;
 use App\Enums\AttendanceStatus;
 use App\Enums\DayKind;
 use App\Enums\DtrSlot;
+use App\Filament\Resources\DtrUploads\Actions\AddDayExceptionAction;
 use App\Filament\Resources\DtrUploads\Actions\FillDayAction;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
@@ -43,7 +44,7 @@ class DtrUploadInfolist
             ->components([
                 View::make('filament.dtr-uploads.dtr')
                     ->key('dtr')
-                    ->registerActions([FillDayAction::make()])
+                    ->registerActions([FillDayAction::make(), AddDayExceptionAction::make()])
                     ->viewData(fn (DtrUpload $record): array => self::viewData($record))
                     ->columnSpanFull(),
             ]);
@@ -167,6 +168,8 @@ class DtrUploadInfolist
                 'late' => $result?->late ?: null,
                 'undertime' => $result?->undertime ?: null,
                 'status' => $result?->status,
+                // A part of the day with no tap, which an OB or travel order could cover.
+                'untapped' => $result?->untappedCoverage() !== null,
                 // Each note with whether it needs a look.
                 'notes' => array_values(array_filter([
                     $result?->note !== null ? [$result->note, false] : null,

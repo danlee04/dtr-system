@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\Attendance\ComputedDay;
 use App\Services\Attendance\ComputedDtr;
 use App\Services\Attendance\DtrCalculator;
+use Carbon\CarbonImmutable;
 use Database\Factories\DtrUploadFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -50,6 +52,25 @@ class DtrUpload extends Model
             ->with('filledBy')
             ->get()
             ->keyBy(fn (ManualTap $tap): string => "{$tap->date->toDateString()} {$tap->slot->value}");
+    }
+
+    /**
+     * A date the browser sent, if it is a real date on this computed DTR: the
+     * date and what it came to. Anything else is null.
+     *
+     * @return array{0: CarbonImmutable, 1: ComputedDay}|null
+     */
+    public function computedDayFor(mixed $date): ?array
+    {
+        if (! is_string($date) || ! $this->isComputed() || ! CarbonImmutable::canBeCreatedFromFormat($date, 'Y-m-d')) {
+            return null;
+        }
+
+        $parsed = CarbonImmutable::createFromFormat('!Y-m-d', $date);
+        $day = $this->computed()->days[$date] ?? null;
+
+        // A date like Feb 31 rolls over to March, and must not stand for it.
+        return $day === null || $parsed->toDateString() !== $date ? null : [$parsed, $day];
     }
 
     /** Drops what this request worked out, after HR changes a time on the DTR. */

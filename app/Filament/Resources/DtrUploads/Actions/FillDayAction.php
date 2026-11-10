@@ -146,20 +146,13 @@ class FillDayAction extends Action
      */
     public static function day(DtrUpload $record, array $arguments): ?array
     {
-        $value = $arguments['date'] ?? null;
+        [$date, $result] = $record->computedDayFor($arguments['date'] ?? null) ?? [null, null];
 
-        if (! is_string($value) || ! $record->isComputed() || ! CarbonImmutable::canBeCreatedFromFormat($value, 'Y-m-d')) {
+        if ($result === null) {
             return null;
         }
 
-        $date = CarbonImmutable::createFromFormat('!Y-m-d', $value);
-        $result = $record->computed()->days[$value] ?? null;
-
-        // A date like Feb 31 rolls over to March, and must not stand for it.
-        if ($result === null || $date->toDateString() !== $value) {
-            return null;
-        }
-
+        $value = $date->toDateString();
         $row = $record->days->first(fn (DtrDay $day): bool => $day->date->toDateString() === $value);
         $filled = (new Collection(DtrSlot::cases()))
             ->filter(fn (DtrSlot $slot): bool => $row?->{$slot->value} === null)

@@ -546,7 +546,13 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   remarks. Entries for one employee may not overlap, except a morning and an
   afternoon on the same date. The computation treats them like leave: a
   covered day takes their status, a covered half is skipped and noted. A
-  roster OFF still wins, because the roster is read first.
+  roster OFF still wins, because the roster is read first. **From the DTR**
+  (added 2026-11-10): on a day with a part that has no tap at all (an absent
+  day, or a half whose arrival and departure are both blank), HR's view shows
+  **+ OB/TO** beside the status. It opens the same form, without the employee
+  (the DTR's), starting on that date and covering that part; To may run later
+  for a travel order of several days. Saving makes the same entry this screen
+  lists, with the same overlap rule; it is changed or removed here.
 - **Not yet.** Deducting the total from VL; how a missing tap counts for good
   (HR assumed complete for now); shifts past midnight and 16-hour duty, set
   aside until a nurse's DTR is in hand. The CSC table in code is the one above

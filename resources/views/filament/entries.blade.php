@@ -333,6 +333,11 @@
         font-variant-numeric: tabular-nums;
     }
 
+    /* Room between a day's status badge and its "+ OB/TO" button. */
+    .dtr-record-days .dtr-grid-badges {
+        gap: calc(var(--spacing) * 2);
+    }
+
     .dtr-record-days td.dtr-record-notes {
         min-width: 12rem;
         white-space: normal;

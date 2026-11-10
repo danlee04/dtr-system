@@ -326,6 +326,34 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([], $days['2026-10-10']->fillable);
     }
 
+    public function test_the_part_of_a_day_with_no_tap_is_what_an_ob_could_cover(): void
+    {
+        $employee = $this->regular();
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-20', 'date_to' => '2026-10-20', 'coverage' => LeaveCoverage::SecondHalf]);
+
+        $days = $this->compute($employee, [
+            '2026-10-01' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58', 'pm_departure' => '17:05'],
+            '2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05'],
+            '2026-10-05' => ['pm_arrival' => '12:58', 'pm_departure' => '17:05'],
+            '2026-10-06' => ['am_arrival' => '07:47', 'pm_departure' => '17:05'],
+        ])->days;
+
+        $this->assertSame(
+            [null, LeaveCoverage::SecondHalf, LeaveCoverage::FirstHalf, null, LeaveCoverage::WholeDay, LeaveCoverage::FirstHalf, null],
+            [
+                $days['2026-10-01']->untappedCoverage(),
+                $days['2026-10-02']->untappedCoverage(),
+                $days['2026-10-05']->untappedCoverage(),
+                // A tap in each half: only taps are missing, not a half.
+                $days['2026-10-06']->untappedCoverage(),
+                $days['2026-10-16']->untappedCoverage(),
+                // The afternoon is on an OB already.
+                $days['2026-10-20']->untappedCoverage(),
+                $days['2026-10-10']->untappedCoverage(),
+            ],
+        );
+    }
+
     public function test_on_a_one_block_day_time_in_is_the_am_arrival_and_time_out_the_pm_departure(): void
     {
         $employee = Employee::factory()->create();

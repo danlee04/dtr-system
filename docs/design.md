@@ -201,6 +201,7 @@ decoration.
 | `tr.is-off` | A date that is not a work date: grey fill and grey text |
 | `tr.is-absent` | An absent date: a faint red tint, always with its Absent badge |
 | `.dtr-grid-add` | A blank HR may fill: a dashed amber box ("+ Add") on a Filament link action |
+| `.dtr-grid-ob` | "+ OB/TO" beside a day's status badge: the dashed box of `.dtr-grid-add`, in the info blue of the OB and travel order badges |
 | `.dtr-grid-hr` / `.dtr-grid-hr-tag` | A time HR copied in: the time as text, then a blue "HR" tag |
 
 - **Names:** surname first ("Dela Cruz, Juan S."). The employee number goes under
@@ -256,6 +257,10 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   filled is a link too, showing the time and the HR tag, with a tooltip saying
   who filled it, when and why. Each has an `aria-label` naming the slot and date
   ("Add P.M. departure, Fri, Oct 2").
+- **+ OB/TO** beside the status of a day with a part that has no tap (absent, or
+  a half with both taps blank), with an `aria-label` naming the date. It opens
+  "OB or travel order from Fri, Oct 16": the OB & travel orders form without its
+  employee, three across, the date and the untapped part filled in.
 - **Legend** under the grid for + Add, HR and the grey rows.
 - **Fill-in modal:** "Fill in Fri, Oct 2", the date's four slots in a row
   (printed times as read-only text marked Printed, the blanks and HR's times as

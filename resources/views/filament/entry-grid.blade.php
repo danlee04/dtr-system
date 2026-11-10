@@ -66,10 +66,11 @@
         margin-top: calc(var(--spacing) * 3);
     }
 
-    /* Badges side by side in a cell. */
+    /* Badges side by side in a cell, and a button beside them on the same line. */
     .dtr-grid-badges {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: calc(var(--spacing) * 1);
     }
 
@@ -299,6 +300,28 @@
     .dark .dtr-grid-add {
         border-color: var(--warning-400);
         color: var(--warning-300);
+    }
+
+    /*
+     * "+ OB/TO" beside a day's badge: the same dashed box as "+ Add", in the blue of
+     * the OB and travel order badges, with dark text on its tint (about 6:1).
+     */
+    .dtr-grid-ob {
+        padding: 0.125rem 0.5rem;
+        border: 1px dashed var(--info-600);
+        border-radius: var(--radius-md);
+        background-color: color-mix(in oklab, var(--info-500) 10%, transparent);
+        color: var(--info-700);
+        white-space: nowrap;
+    }
+
+    .dtr-grid-ob > .fi-icon {
+        color: inherit;
+    }
+
+    .dark .dtr-grid-ob {
+        border-color: var(--info-400);
+        color: var(--info-300);
     }
 
     /* A time HR copied in reads like a printed one, then a blue "HR" tag: the word, not only the colour. */

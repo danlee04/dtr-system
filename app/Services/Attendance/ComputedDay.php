@@ -4,6 +4,7 @@ namespace App\Services\Attendance;
 
 use App\Enums\AttendanceStatus;
 use App\Enums\DtrSlot;
+use App\Enums\LeaveCoverage;
 
 /**
  * One date of a DTR, judged against the schedule: minutes late and under,
@@ -28,4 +29,22 @@ final readonly class ComputedDay
         public ?string $note = null,
         public array $fillable = [],
     ) {}
+
+    /**
+     * The part of the day with no tap at all and nothing covering it, which an
+     * OB or a travel order could cover: the whole day when it is absent, else
+     * the half whose arrival and departure are both blank. Null when every
+     * half has a tap, or the day is not a work day judged.
+     */
+    public function untappedCoverage(): ?LeaveCoverage
+    {
+        $blank = fn (DtrSlot ...$slots): bool => array_all($slots, fn (DtrSlot $slot): bool => in_array($slot, $this->fillable, true));
+
+        return match (true) {
+            $this->status === AttendanceStatus::Absent && $this->absent >= 1.0 => LeaveCoverage::WholeDay,
+            $blank(DtrSlot::AmArrival, DtrSlot::AmDeparture) => LeaveCoverage::FirstHalf,
+            $blank(DtrSlot::PmArrival, DtrSlot::PmDeparture) => LeaveCoverage::SecondHalf,
+            default => null,
+        };
+    }
 }

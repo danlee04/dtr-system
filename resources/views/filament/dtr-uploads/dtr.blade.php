@@ -1,8 +1,9 @@
 @php
     use App\Enums\DtrSlot;
 
-    // Only HR's view registers the fill-in; on My DTR there is none, for anyone.
+    // Only HR's view registers these; on My DTR there are none, for anyone.
     $fill = $getAction('fillDay');
+    $addException = $getAction('addDayException');
 @endphp
 @include('filament.entry-grid')
 
@@ -94,9 +95,15 @@
                         <td class="dtr-grid-value">{{ $row['late'] }}</td>
                         <td class="dtr-grid-value">{{ $row['undertime'] }}</td>
                         <td>
-                            @if ($row['status'])
-                                <x-filament::badge :color="$row['status']->getColor()">{{ $row['status']->getLabel() }}</x-filament::badge>
-                            @endif
+                            <span class="dtr-grid-badges">
+                                @if ($row['status'])
+                                    <x-filament::badge :color="$row['status']->getColor()">{{ $row['status']->getLabel() }}</x-filament::badge>
+                                @endif
+                                @php($exceptionTrigger = $addException && $row['untapped'] ? $addException(['date' => $row['date']]) : null)
+                                @if ($exceptionTrigger?->isVisible())
+                                    {{ $exceptionTrigger }}
+                                @endif
+                            </span>
                         </td>
                         <td class="dtr-record-notes">
                             @foreach ($row['notes'] as [$note, $needsALook])
@@ -113,6 +120,9 @@
         <div class="dtr-grid-legend dtr-record-legend">
             @if ($fill)
                 <span><span class="dtr-grid-add">+ Add</span> a blank to fill from the signed DTR</span>
+            @endif
+            @if ($addException)
+                <span><span class="dtr-grid-ob">+ OB/TO</span> an OB or travel order for a day with no tap</span>
             @endif
             <span><span class="dtr-grid-hr-tag">HR</span> a time HR copied in</span>
             <span><span class="dtr-record-swatch" aria-hidden="true"></span> not a work date</span>

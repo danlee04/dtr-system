@@ -28,61 +28,79 @@ class DayExceptionForm
                     ->searchable()
                     ->required()
                     ->columnSpan(2),
-                Select::make('type')
-                    ->options(ExceptionType::class)
-                    ->default(ExceptionType::OfficialBusiness->value)
-                    ->required(),
-                DatePicker::make('date_from')
-                    ->label('From')
-                    ->required()
-                    ->rules([
-                        fn (Get $get, ?DayException $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $record): void {
-                            if (blank($get('employee_id')) || blank($get('date_to'))) {
-                                return;
-                            }
-
-                            $coverage = $get->enum('coverage', LeaveCoverage::class);
-                            $overlaps = DayException::query()
-                                ->where('employee_id', $get('employee_id'))
-                                ->when($record, fn (Builder $query) => $query->whereKeyNot($record->getKey()))
-                                ->whereDate('date_from', '<=', $get('date_to'))
-                                ->whereDate('date_to', '>=', $value)
-                                ->get()
-                                // A morning and an afternoon may share a date.
-                                ->reject(fn (DayException $other): bool => $coverage !== LeaveCoverage::WholeDay
-                                    && $other->coverage !== LeaveCoverage::WholeDay
-                                    && $other->coverage !== $coverage)
-                                ->isNotEmpty();
-
-                            if ($overlaps) {
-                                $fail('These dates overlap an OB or travel order already recorded for this employee.');
-                            }
-                        },
-                    ]),
-                DatePicker::make('date_to')
-                    ->label('To')
-                    ->required()
-                    ->afterOrEqual('date_from')
-                    ->rules([
-                        fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                            if ($get->enum('coverage', LeaveCoverage::class) !== LeaveCoverage::WholeDay && $value !== $get('date_from')) {
-                                $fail('A morning or an afternoon covers one date only.');
-                            }
-                        },
-                    ]),
-                Select::make('coverage')
-                    ->label('Covers')
-                    ->options(LeaveCoverage::class)
-                    ->default(LeaveCoverage::WholeDay->value)
-                    ->required(),
-                TextInput::make('reference_no')
-                    ->label('Reference no.')
-                    ->maxLength(50)
-                    ->helperText('The slip or travel order number, if it has one.'),
-                TextInput::make('remarks')
-                    ->maxLength(255)
-                    ->columnSpan(2),
+                ...self::fields(fn (Get $get): mixed => $get('employee_id')),
             ]);
+    }
+
+    /**
+     * The entry's own fields: here, and on a DTR's view, where the employee is
+     * the DTR's. $employeeId says whose entries the dates may not overlap.
+     *
+     * @param  Closure(Get): mixed  $employeeId
+     * @return array<int, DatePicker|Select|TextInput>
+     */
+    public static function fields(Closure $employeeId): array
+    {
+        return [
+            Select::make('type')
+                ->options(ExceptionType::class)
+                ->default(ExceptionType::OfficialBusiness->value)
+                ->required(),
+            DatePicker::make('date_from')
+                ->label('From')
+                ->required()
+                ->rules([
+                    // On a DTR's view the record is the DTR, so only an entry being edited is left out.
+                    fn (Get $get, mixed $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $record, $employeeId): void {
+                        $employee = $employeeId($get);
+                        $record = $record instanceof DayException ? $record : null;
+
+                        if (blank($employee) || blank($get('date_to'))) {
+                            return;
+                        }
+
+                        $coverage = $get->enum('coverage', LeaveCoverage::class);
+                        $overlaps = DayException::query()
+                            ->where('employee_id', $employee)
+                            ->when($record, fn (Builder $query) => $query->whereKeyNot($record->getKey()))
+                            ->whereDate('date_from', '<=', $get('date_to'))
+                            ->whereDate('date_to', '>=', $value)
+                            ->get()
+                            // A morning and an afternoon may share a date.
+                            ->reject(fn (DayException $other): bool => $coverage !== LeaveCoverage::WholeDay
+                                && $other->coverage !== LeaveCoverage::WholeDay
+                                && $other->coverage !== $coverage)
+                            ->isNotEmpty();
+
+                        if ($overlaps) {
+                            $fail('These dates overlap an OB or travel order already recorded for this employee.');
+                        }
+                    },
+                ]),
+            DatePicker::make('date_to')
+                ->label('To')
+                ->required()
+                ->afterOrEqual('date_from')
+                ->rules([
+                    fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                        if ($get->enum('coverage', LeaveCoverage::class) !== LeaveCoverage::WholeDay && $value !== $get('date_from')) {
+                            $fail('A morning or an afternoon covers one date only.');
+                        }
+                    },
+                ]),
+            Select::make('coverage')
+                ->label('Covers')
+                ->options(LeaveCoverage::class)
+                ->default(LeaveCoverage::WholeDay->value)
+                ->required(),
+            TextInput::make('reference_no')
+                ->label('Reference no.')
+                ->maxLength(50)
+                ->helperText('The slip or travel order number, if it has one.'),
+            TextInput::make('remarks')
+                ->maxLength(255)
+                ->columnSpan(2),
+        ];
     }
 
     /**

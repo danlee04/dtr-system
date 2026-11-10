@@ -4,8 +4,11 @@ namespace Tests\Feature\DtrUploads;
 
 use App\Enums\DtrSlot;
 use App\Enums\EmploymentStatus;
+use App\Enums\ExceptionType;
+use App\Enums\LeaveCoverage;
 use App\Enums\ManualTapReason;
 use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
+use App\Models\DayException;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\Employee;
@@ -369,6 +372,81 @@ class DtrUploadResourceTest extends TestCase
             ->assertNotified('HR times removed');
 
         $this->assertModelMissing($tap);
+    }
+
+    /** @return list<TestAction> the DTR's view, then the OB or travel order form for a date */
+    private function addException(DtrUpload $upload, string $date): array
+    {
+        return [
+            TestAction::make('view')->table($upload),
+            TestAction::make('addDayException')->schemaComponent('dtr')->arguments(['date' => $date]),
+        ];
+    }
+
+    public function test_hr_records_an_ob_for_an_absent_day_from_the_dtr(): void
+    {
+        $hr = User::factory()->create();
+        $this->actingAs($hr);
+        $upload = $this->uploadWithoutTimeOut();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->addException($upload, '2026-10-29'), data: [
+                'type' => ExceptionType::OfficialBusiness->value,
+                'date_from' => '2026-10-29',
+                'date_to' => '2026-10-29',
+                'coverage' => LeaveCoverage::WholeDay->value,
+                'reference_no' => 'OB-2026-130',
+            ])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Official business recorded: Oct 29, 2026')
+            ->assertMountedActionModalSee('Official business');
+
+        // The same record the OB & travel orders screen lists.
+        $exception = DayException::sole();
+        $this->assertSame(
+            [$upload->employee_id, ExceptionType::OfficialBusiness, '2026-10-29', LeaveCoverage::WholeDay, 'OB-2026-130', $hr->id],
+            [$exception->employee_id, $exception->type, $exception->date_from->toDateString(), $exception->coverage, $exception->reference_no, $exception->created_by_user_id],
+        );
+    }
+
+    public function test_the_ob_form_starts_on_the_date_and_the_half_with_no_tap(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $upload->days()->create(['date' => '2026-10-05', 'am_arrival' => '07:50', 'am_departure' => '12:01']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->addException($upload, '2026-10-05'))
+            ->assertActionDataSet(['date_from' => '2026-10-05', 'date_to' => '2026-10-05', 'coverage' => LeaveCoverage::SecondHalf]);
+    }
+
+    public function test_an_ob_overlapping_one_already_recorded_is_refused(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        DayException::factory()->for($upload->employee)->create(['date_from' => '2026-10-30', 'date_to' => '2026-10-30']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->addException($upload, '2026-10-28'), data: [
+                'type' => ExceptionType::TravelOrder->value,
+                'date_from' => '2026-10-28',
+                'date_to' => '2026-10-30',
+                'coverage' => LeaveCoverage::WholeDay->value,
+            ])
+            ->assertHasFormErrors(['date_from']);
+
+        $this->assertSame(1, DayException::query()->count());
+    }
+
+    public function test_days_with_taps_in_each_half_or_off_work_offer_no_ob(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        // October 2 has a tap in each half; October 3 is a Saturday.
+        foreach (['2026-10-02', '2026-10-03'] as $date) {
+            Livewire::test(ListDtrUploads::class)->assertActionHidden($this->addException($upload, $date));
+        }
     }
 
     public function test_remove_hr_times_clears_the_dates_times_and_keeps_the_dtr_open(): void
