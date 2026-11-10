@@ -56,6 +56,27 @@
         margin-bottom: calc(var(--spacing) * -4);
     }
 
+    /*
+        Every table's search at its left (HR, 2026-11-10), where the eye starts; the
+        filter and column buttons stay at its right. Filament pushes the whole group right.
+    */
+    .fi-ta-header-toolbar > :nth-child(2) {
+        flex: 1;
+        margin-inline-start: 0;
+    }
+
+    .fi-ta-header-toolbar .fi-ta-search-field {
+        margin-inline-end: auto;
+    }
+
+    /*
+        No toolbar action showing (none, or bulk actions hidden until rows are picked):
+        no empty slot, and no gap, before the search, so it lines up with the table.
+    */
+    .fi-ta-header-toolbar > .fi-ta-actions:not(:has(> :not([style*="display: none"]))) {
+        display: none;
+    }
+
     /* The headings still shown a step smaller and lighter than Filament's 30px bold. */
     .fi-header-heading {
         font-size: var(--text-xl);

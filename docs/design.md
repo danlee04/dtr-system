@@ -176,7 +176,10 @@ decoration.
 ### Tables and grids
 
 - **Resource lists** (Employees, Leave Applications, DTR Uploads…) are Filament
-  tables, with their search, filters, sorting, pagination and row actions.
+  tables, with their search, filters, sorting, pagination and row actions. The
+  search sits at the left of a table's toolbar, lined up with its first column;
+  the filter and column buttons stay at the right; bulk actions, once rows are
+  picked, come before the search.
 - **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
 
 | Class | Use |
@@ -422,7 +425,7 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 
 | File | Holds |
 |---|---|
-| `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings |
+| `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings, the tables' search on the left |
 | `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
 | `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`); the "(optional)" mark beside a form field's label (`.dtr-field-optional`) |
 | `resources/views/filament/dashboard-styles.blade.php` | Both dashboards' styles (`.dtr-dash-*`, the employee layout `.dtr-dash.is-mine`) |
