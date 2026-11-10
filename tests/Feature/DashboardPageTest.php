@@ -30,6 +30,20 @@ class DashboardPageTest extends TestCase
             ->assertSee(['Late and undertime', 'Leave to approve', 'Quick actions', 'Out today', 'Recent leave', 'Dela Cruz, Juan']);
     }
 
+    public function test_the_sidebar_has_the_overview_group_a_theme_switch_and_the_user_with_sign_out(): void
+    {
+        $this->actingAs(User::factory()->create(['name' => 'Ana Santos']));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSeeInOrder(['Overview', 'Dashboard'])
+            ->assertSee(['Switch to dark mode', 'Ana Santos', 'Sign out', route('filament.admin.auth.profile'), route('filament.admin.auth.logout')]);
+
+        // The button beside the name signs out, with no menu to open first.
+        $this->post(route('filament.admin.auth.logout'))->assertRedirect();
+        $this->assertGuest();
+    }
+
     public function test_employees_see_their_own_dashboard_not_the_offices(): void
     {
         $this->actingAs(User::factory()->employee()->create())

@@ -7,7 +7,6 @@ use App\Enums\NavigationGroup;
 use App\Filament\Pages\Auth\ChangePassword;
 use App\Models\DtrUpload;
 use App\Models\LeaveApplication;
-use Filament\Enums\UserMenuPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -36,10 +35,14 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('DTR System')
             ->brandLogo(fn (): View => view('filament.brand'))
             ->brandLogoHeight('2.25rem')
-            // Search on the topbar's left, the user at the sidebar's foot.
+            // Search on the topbar's left. The user sits at the sidebar's foot with
+            // no menu to open (filament.sidebar-user), and light or dark is switched
+            // beside the brand (filament.theme-toggle), as HR asked on 2026-11-10.
             ->globalSearchKeyBindings(['ctrl+k', 'command+k'])
             ->globalSearchFieldKeyBindingSuffix()
-            ->userMenu(position: UserMenuPosition::Sidebar)
+            ->userMenu(false)
+            ->renderHook(PanelsRenderHook::SIDEBAR_LOGO_AFTER, fn (): View => view('filament.theme-toggle'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): View => view('filament.sidebar-user'))
             // The topbar's right side, for staff: what is waiting for HR, and the month's main job.
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, fn (): View|string => auth()->user()?->isStaff() ? view('filament.topbar-actions', [
                 'pendingLeave' => LeaveApplication::query()->where('status', LeaveApplicationStatus::Pending)->count(),

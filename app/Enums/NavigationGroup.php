@@ -16,6 +16,8 @@ use Filament\Support\Contracts\HasLabel;
  */
 enum NavigationGroup implements Collapsible, HasLabel
 {
+    // First: the Dashboard, and an employee's own DTR.
+    case Overview;
     case MyLeave;
     case Leave;
     case Personnel;
@@ -25,6 +27,7 @@ enum NavigationGroup implements Collapsible, HasLabel
     public function getLabel(): string
     {
         return match ($this) {
+            self::Overview => 'Overview',
             self::MyLeave => 'My Leave',
             self::Leave => 'Leave',
             self::Personnel => 'Personnel',

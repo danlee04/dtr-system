@@ -2,6 +2,7 @@
 
 namespace App\Filament\Employee\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Models\DtrUpload;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -9,6 +10,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
+use UnitEnum;
 
 /**
  * The signed-in employee's own DTRs, read-only, so they can check the late,
@@ -26,6 +28,8 @@ class MyDtr extends Page
     protected static ?string $title = 'My DTR';
 
     protected static ?string $slug = 'my-dtr';
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Overview;
 
     // Right after the Dashboard.
     protected static ?int $navigationSort = -1;

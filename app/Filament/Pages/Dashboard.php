@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\LeaveApplicationStatus;
+use App\Enums\NavigationGroup;
 use App\Models\DtrUpload;
 use App\Models\LeaveApplication;
 use App\Services\DashboardFigures;
@@ -12,6 +13,7 @@ use Carbon\CarbonImmutable;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use UnitEnum;
 
 /**
  * Staff see the office at a glance (filament.dashboard), laid out after HR's
@@ -20,6 +22,8 @@ use Filament\Schemas\Schema;
  */
 class Dashboard extends BaseDashboard
 {
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Overview;
+
     public function content(Schema $schema): Schema
     {
         if (auth()->user()?->isStaff() ?? false) {

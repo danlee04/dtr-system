@@ -280,21 +280,28 @@
         outline-color: var(--gray-400);
     }
 
-    /* The brand as a card that leads home, lined up with the menu below it. */
+    /*
+        The brand as a card, lined up with the menu below it: the brand leads home, and the
+        light or dark switch sits inside the card at its right. The card is the header, not
+        the link, since a button cannot go inside a link.
+    */
     .fi-sidebar-header {
         height: auto;
-        padding: calc(var(--spacing) * 3) calc(var(--spacing) * 3) 0;
+        margin: calc(var(--spacing) * 3) calc(var(--spacing) * 3) 0;
+        padding: 0 calc(var(--spacing) * 1.5) 0 0;
+        border: 1px solid var(--dtr-line);
+        border-radius: 0.625rem;
     }
 
     .fi-sidebar-header-logo-ctn {
         flex: 1;
+        min-width: 0;
     }
 
     .fi-sidebar-header-logo-ctn > a {
         display: flex;
         padding: calc(var(--spacing) * 2);
-        border: 1px solid var(--dtr-line);
-        border-radius: 0.625rem;
+        border-radius: calc(0.625rem - 1px);
     }
 
     .fi-sidebar-header-logo-ctn > a:hover {
@@ -310,8 +317,9 @@
         room kept for a scrollbar) put each part at a different edge. Without them the
         brand, the menu fills and the user line up as in the reference.
     */
+    /* 20px under the brand card before the first group, as between the groups. */
     .fi-sidebar-nav {
-        padding: calc(var(--spacing) * 3);
+        padding: calc(var(--spacing) * 5) calc(var(--spacing) * 3) calc(var(--spacing) * 3);
         scrollbar-gutter: auto;
         scrollbar-width: thin;
     }
@@ -319,12 +327,6 @@
     .fi-sidebar-nav-groups {
         row-gap: calc(var(--spacing) * 5);
         margin-inline: 0;
-    }
-
-    /* The items in no group (the Dashboard) ruled off from the groups, as at the top of the reference. */
-    .fi-sidebar-group[data-group-label=""] {
-        padding-bottom: calc(var(--spacing) * 5);
-        border-bottom: 1px solid var(--dtr-line);
     }
 
     .fi-sidebar-group-items {
@@ -368,7 +370,7 @@
     /* Filament marks keyboard focus with a fill alone, the same as hover here; a ring tells them apart. */
     .fi-sidebar .fi-sidebar-item-btn:focus-visible,
     .fi-sidebar-header-logo-ctn > a:focus-visible,
-    .fi-sidebar .fi-user-menu-trigger:focus-visible {
+    .dtr-sidebar-user-link:focus-visible {
         outline: 2px solid var(--gray-500);
         outline-offset: -2px;
     }
@@ -387,40 +389,47 @@
         color: var(--gray-950);
     }
 
-    /* The signed-in user at the foot, under a rule; the menu opens upwards from it. */
-    .fi-sidebar-footer {
-        margin: 0;
+    /* Light or dark (filament.theme-toggle), inside the brand card at its right. */
+    .dtr-theme-toggle {
+        display: flex;
+        flex: none;
+        align-items: center;
+    }
+
+    /*
+        The signed-in user at the foot, under a rule, with no menu to open (filament.sidebar-user):
+        their photo and name lead to their profile, and sign out sits beside them.
+    */
+    .dtr-sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1);
         padding: calc(var(--spacing) * 3);
         border-top: 1px solid var(--dtr-line);
     }
 
-    .fi-sidebar-footer .fi-user-menu,
-    .fi-sidebar-footer .fi-user-menu .fi-dropdown-trigger {
-        width: 100%;
+    .dtr-sidebar-user-link {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: calc(var(--spacing) * 2.5);
         min-width: 0;
-    }
-
-    /* Filament keeps this button from shrinking, which pushed a long name out of the sidebar. */
-    .fi-sidebar .fi-user-menu-trigger {
-        flex-shrink: 1;
-        min-width: 0;
-        width: 100%;
         padding: calc(var(--spacing) * 2);
         border-radius: 0.5rem;
     }
 
-    .fi-sidebar .fi-user-menu-trigger:hover {
+    .dtr-sidebar-user-link:hover {
         background-color: var(--dtr-hover);
     }
 
-    /* One line: a long name ends in "…" rather than pushing the row taller. */
-    .fi-sidebar .fi-user-menu-trigger-text {
+    /* One line: a long name ends in "…" rather than pushing sign out off the sidebar. */
+    .dtr-sidebar-user-name {
         flex: 1;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        text-align: start;
+        font-size: var(--text-sm);
         font-weight: var(--font-weight-medium);
         color: var(--gray-950);
     }
@@ -437,13 +446,13 @@
 
     .dark .fi-sidebar .fi-sidebar-item-btn:focus-visible,
     .dark .fi-sidebar-header-logo-ctn > a:focus-visible,
-    .dark .fi-sidebar .fi-user-menu-trigger:focus-visible {
+    .dark .dtr-sidebar-user-link:focus-visible {
         outline-color: var(--gray-400);
     }
 
     .dark .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label,
     .dark .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon,
-    .dark .fi-sidebar .fi-user-menu-trigger-text {
+    .dark .dtr-sidebar-user-name {
         color: var(--color-white);
     }
 </style>

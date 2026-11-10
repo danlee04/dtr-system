@@ -127,8 +127,13 @@ decoration.
 
 - **Frame (desktop, 1024px and up).**
   - **Sidebar:** 16rem wide, a white card set 8px in from the screen's edges. It
-    holds the brand card (seal, "DTR System", "DTRC Caraga"), the groups, and the
-    signed-in user at its foot.
+    holds the brand card (seal, "DTR System", "DTRC Caraga") with the light or
+    dark switch inside it at its right (a moon, or a sun in dark mode;
+    `filament.theme-toggle`); 20px under it, the groups, **Overview** first (the Dashboard, and
+    an employee's My DTR), so no item stands outside a group; and at its foot,
+    under a rule, the signed-in user with no menu to open: their photo and name
+    lead to the Profile, and a Sign out icon button sits beside them
+    (`filament.sidebar-user`).
   - **Topbar:** it blends into the page. Search sits on its left (Ctrl+K). On its
     right, staff see the "Waiting for you" bell and **Upload DTRs**.
   - **Phones** keep Filament's topbar and slide-out sidebar.
@@ -435,6 +440,8 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 | `resources/views/filament/employee/dashboard.blade.php` | An employee's dashboard's cards |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |
+| `resources/views/filament/theme-toggle.blade.php` | The light or dark switch beside the brand (its styles are in `sidebar.blade.php`) |
+| `resources/views/filament/sidebar-user.blade.php` | The signed-in user and Sign out at the sidebar's foot (its styles are in `sidebar.blade.php`) |
 
 ### Writing styles
 
