@@ -675,6 +675,47 @@ deliberate step, the time can be entered again and the log keeps it; the
 reason prefilled from the date's first HR time; a change records whoever
 saved it last.
 
+## An employee's own DTR
+
+Added 2026-11-10.
+
+**Why.** Employees check their own DTR, late, undertime and absences, against
+their copy, so a mistake reaches HR before the month is acted on.
+
+**My DTR**, for accounts linked to a current employee, in the employee's
+sidebar after the Dashboard:
+- A Month picker listing the months with an upload of theirs, latest first; the
+  latest is open on arrival.
+- The DTR as HR's view shows it, read-only: the month as its heading, the
+  schedule and the printed name, the cards (Late, Undertime, Late + undertime
+  with the CSC day equivalent, Absent, Missing taps), and the days, with A.M.
+  and P.M. over Arrival and Departure. A time HR filled shows its HR tag and
+  the reason.
+- Above the cards: "Something wrong? Bring your signed DTR to HR. Only HR can
+  add a time or fix your schedule."
+- No + Add, for anyone: an HR account linked to an employee fills its own
+  blanks from DTR uploads, like everyone else's.
+- A job order or contract of service DTR is shown as printed, with the same
+  sentence as in HR's view. With no upload yet: "No DTR uploaded for you yet."
+
+**Their dashboard** shows the latest upload's late, undertime, absent and
+missing taps, with a link here; see the leave spec's **Screens**.
+
+**Only their own.** Uploads are looked up by the account's linked employee.
+The month the browser sends is found among those uploads only, so changing it
+cannot open anyone else's DTR. HR's DTR uploads screen stays staff-only.
+
+**Not in this.** Reporting a mistake in the app: the employee brings the signed
+DTR to HR, who fixes the schedule, an OB or a filled time.
+
+**Tests.** Their own DTR is shown, and another employee's cannot be opened by
+changing the month sent; no fill-in for anyone; a job order DTR shown as
+printed; the empty state; the page refused to an account with no current
+employee.
+
+**Left to the builder.** How the view is shared with HR's modal; the Month
+picker's control; the dashboard's wording when the latest DTR is not computed.
+
 ## Recomputation
 
 `AttendanceRecomputer` takes a set of employee-dates and recomputes them,

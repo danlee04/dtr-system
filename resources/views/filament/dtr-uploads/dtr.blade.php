@@ -1,26 +1,30 @@
 @php
     use App\Enums\DtrSlot;
 
+    // Only HR's view registers the fill-in; on My DTR there is none, for anyone.
     $fill = $getAction('fillDay');
 @endphp
 @include('filament.entry-grid')
 
 {{-- One DTR: whose it is, the month in cards, then every date as on the paper form. Everything printed here is escaped. --}}
 <div class="dtr-grid dtr-record">
-    <div class="dtr-record-head">
-        @if ($upload->employee)
-            <x-filament::avatar :src="$upload->employee->avatarUrl()" alt="" size="lg" />
-        @endif
-        <div>
+    {{-- On My DTR the page's own heading says whose and when. --}}
+    @unless ($mine)
+        <div class="dtr-record-head">
             @if ($upload->employee)
-                <p class="dtr-record-line">{{ $upload->employee->employee_number }} · {{ $upload->employee->office?->name ?? 'No office' }}</p>
+                <x-filament::avatar :src="$upload->employee->avatarUrl()" alt="" size="lg" />
             @endif
-            @if ($schedule)
-                <p class="dtr-record-sub">{{ $schedule }}</p>
-            @endif
-            <p class="dtr-record-sub">{{ $printed }}</p>
+            <div>
+                @if ($upload->employee)
+                    <p class="dtr-record-line">{{ $upload->employee->employee_number }} · {{ $upload->employee->office?->name ?? 'No office' }}</p>
+                @endif
+                @if ($schedule)
+                    <p class="dtr-record-sub">{{ $schedule }}</p>
+                @endif
+                <p class="dtr-record-sub">{{ $printed }}</p>
+            </div>
         </div>
-    </div>
+    @endunless
 
     @if ($notComputed)
         <p class="dtr-record-warning">{{ $notComputed }}</p>
@@ -40,9 +44,9 @@
     <h3 class="dtr-record-heading">Days</h3>
     <p class="dtr-record-desc">
         As the IT Unit printed it.
-        @unless ($notComputed)
+        @if ($fill && ! $notComputed)
             Click <strong>Add</strong> to copy in a time written on the DTR and signed by the supervisor.
-        @endunless
+        @endif
     </p>
 
     <div class="dtr-grid-wrap is-full">
@@ -76,9 +80,9 @@
                             <td class="dtr-record-time">
                                 @if ($cell['printed'] !== null)
                                     {{ $cell['printed'] }}
-                                @elseif ($cell['filled'] !== null || $cell['fillable'])
-                                    @php($trigger = $fill(['date' => $row['date'], 'slot' => $slot->value]))
-                                    @if ($trigger->isVisible())
+                                @else
+                                    @php($trigger = $fill && ($cell['filled'] !== null || $cell['fillable']) ? $fill(['date' => $row['date'], 'slot' => $slot->value]) : null)
+                                    @if ($trigger?->isVisible())
                                         {{ $trigger }}
                                     @elseif ($cell['filled'] !== null)
                                         {{ $cell['filled'] }} <span class="dtr-grid-hr-tag">HR</span>
@@ -107,7 +111,9 @@
 
     @unless ($notComputed)
         <div class="dtr-grid-legend dtr-record-legend">
-            <span><span class="dtr-grid-add">+ Add</span> a blank to fill from the signed DTR</span>
+            @if ($fill)
+                <span><span class="dtr-grid-add">+ Add</span> a blank to fill from the signed DTR</span>
+            @endif
             <span><span class="dtr-grid-hr-tag">HR</span> a time HR copied in</span>
             <span><span class="dtr-record-swatch" aria-hidden="true"></span> not a work date</span>
         </div>

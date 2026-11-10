@@ -403,8 +403,9 @@ Application.xlsx` in `storage/app/samples/`, git-ignored), received 23 October
 
 | Screen | Contents |
 |---|---|
-| Dashboard | Balances of VL, SL, SPL and Wellness; pending applications |
-| History | Every ledger row, newest first, one tab per type with a running balance, the way a leave card reads |
+| Dashboard | Cards in the staff dashboard's style (redesigned 2026-11-10; it was two widgets): the four balances, SPL and Wellness marked "until Dec 31"; quick actions, **File leave** the main one, then My DTR, History and Leave types; their latest DTR's late, undertime, absent and missing taps, with a link to My DTR and "Something wrong? Bring your signed DTR to HR"; leave waiting for approval, each with Print |
+| My DTR | Their own uploaded DTRs, read-only; see **An employee's own DTR** in the DTR spec (added 2026-11-10) |
+| History | Every ledger row of every type in one table, newest first: the date, the type, the entry, the days, that type's balance after it, and remarks; a Leave type filter, all or one type (2026-11-10; it had a tab per type) |
 | Applications | Own applications and their status; **File leave** with the live day count and pay split; cancel while pending; print |
 | Leave types | Each type's description and, where tracked, the balance |
 

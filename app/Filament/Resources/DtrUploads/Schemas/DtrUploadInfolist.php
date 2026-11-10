@@ -52,10 +52,16 @@ class DtrUploadInfolist
     /** "Dela Cruz, Juan S. · October 2026", or the name as printed while no employee is chosen. */
     public static function heading(DtrUpload $record): string
     {
+        return ($record->employee->full_name ?? $record->employee_name).' · '.self::month($record);
+    }
+
+    /** "October 2026" for a whole month, else the period as the form prints it. */
+    public static function month(DtrUpload $record): string
+    {
         $wholeMonth = $record->period_start->isSameDay($record->period_start->copy()->startOfMonth())
             && $record->period_end->isSameDay($record->period_start->copy()->endOfMonth());
 
-        return ($record->employee->full_name ?? $record->employee_name).' · '.($wholeMonth ? $record->period_start->format('F Y') : $record->period());
+        return $wholeMonth ? $record->period_start->format('F Y') : $record->period();
     }
 
     /** "17:13" or "17:13:00", as the database hands it back, to "5:13 PM". */
@@ -64,17 +70,24 @@ class DtrUploadInfolist
         return $time === null ? null : CarbonImmutable::createFromFormat('H:i', substr($time, 0, 5))->format('g:i A');
     }
 
-    /** @return array<string, mixed> */
-    private static function viewData(DtrUpload $record): array
+    /**
+     * What filament.dtr-uploads.dtr shows. $mine is the employee's own read
+     * of it on My DTR: no who-is-this heading, and the blanks are theirs to
+     * bring to HR, not HR's to fill.
+     *
+     * @return array<string, mixed>
+     */
+    public static function viewData(DtrUpload $record, bool $mine = false): array
     {
         $computed = $record->isComputed() ? $record->computed() : null;
         $uploaded = 'Uploaded '.$record->created_at->format('M j, Y').($record->uploadedBy ? " by {$record->uploadedBy->name}" : '');
 
         return [
             'upload' => $record,
+            'mine' => $mine,
             'printed' => "Printed as {$record->employee_name} · {$uploaded}",
             'schedule' => $computed !== null ? self::schedule($record) : null,
-            'cards' => $computed !== null ? self::cards($computed) : [],
+            'cards' => $computed !== null ? self::cards($computed, $mine) : [],
             'notComputed' => match (true) {
                 $computed !== null => null,
                 $record->employee_id === null => 'Choose the employee, and the app computes this DTR against their schedule.',
@@ -100,7 +113,7 @@ class DtrUploadInfolist
     }
 
     /** @return list<array{label: string, value: string, detail: string, icon: Heroicon, tone: ?string}> */
-    private static function cards(ComputedDtr $dtr): array
+    private static function cards(ComputedDtr $dtr, bool $mine): array
     {
         $blanks = array_sum(array_map(fn (ComputedDay $day): int => count($day->missing), $dtr->days));
 
@@ -109,7 +122,7 @@ class DtrUploadInfolist
             ['label' => 'Undertime', 'value' => "{$dtr->undertime} min", 'detail' => self::times($dtr->undertimeCount), 'icon' => Heroicon::OutlinedArrowRightStartOnRectangle, 'tone' => null],
             ['label' => 'Late + undertime', 'value' => ($dtr->late + $dtr->undertime).' min', 'detail' => "= {$dtr->dayEquivalent} day (CSC)", 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
             ['label' => 'Absent', 'value' => self::count($dtr->absent, 'day'), 'detail' => 'work days with no tap', 'icon' => Heroicon::OutlinedUserMinus, 'tone' => null],
-            ['label' => 'Blanks to fill', 'value' => (string) $blanks, 'detail' => $blanks > 0 ? 'on '.self::count($dtr->daysMissingTaps, 'date') : 'None', 'icon' => Heroicon::OutlinedPencilSquare, 'tone' => $blanks > 0 ? 'is-warning' : null],
+            ['label' => $mine ? 'Missing taps' : 'Blanks to fill', 'value' => (string) $blanks, 'detail' => $blanks > 0 ? 'on '.self::count($dtr->daysMissingTaps, 'date') : 'None', 'icon' => Heroicon::OutlinedPencilSquare, 'tone' => $blanks > 0 ? 'is-warning' : null],
         ];
 
         if ($dtr->daysWithoutSchedule > 0) {

@@ -284,8 +284,26 @@
         font-weight: var(--font-weight-medium);
     }
 
-    .dtr-record .dtr-profile-cards {
+    .dtr-record .dtr-profile-cards,
+    .dtr-dash .dtr-profile-cards {
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    }
+
+    /* A line that says what to do, above what it is about: "Something wrong? Bring your signed DTR to HR." */
+    .dtr-record-callout {
+        margin-bottom: calc(var(--spacing) * 4);
+        padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3.5);
+        border-radius: var(--radius-lg);
+        background-color: color-mix(in oklab, var(--primary-400) 12%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-500) 25%, transparent);
+        font-size: var(--text-sm);
+        color: var(--gray-950);
+    }
+
+    .dark .dtr-record-callout {
+        background-color: color-mix(in oklab, var(--primary-400) 10%, var(--gray-900));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-400) 25%, transparent);
+        color: var(--color-white);
     }
 
     .dtr-record-heading {

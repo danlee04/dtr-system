@@ -262,6 +262,12 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   time inputs, the clicked one focused), the reason as two radio choices, an
   optional note; Save, Cancel, and an outlined danger "Remove HR times" when the
   date has any.
+- **My DTR** shows the same view to the employee, read-only (`viewData(mine: true)`,
+  no fill-in action registered): a section headed with the month, the schedule
+  and printed name as its description, a Month picker in `afterHeader`, then a
+  `.dtr-record-callout` ("Something wrong? Bring your signed DTR to HR…"). The
+  who-is-this heading, the Add text and the + Add legend item drop out, and
+  Blanks to fill reads **Missing taps**.
 
 ### Badges
 
@@ -290,9 +296,17 @@ Filament notifications:
 - **Gauge:** an SVG half-circle.
 - **List rows:** an initials avatar, two lines of text, and the status on the right.
 - **Quick-action tiles:** a 44px icon box over its label. As many fit across as
-  allow 64px each; the rest wrap to the next row.
+  allow 64px each; the rest wrap to the next row. The view's one main action, if
+  it has one, is `.is-main`: an amber box with dark text (File leave, on an
+  employee's dashboard).
 - **Series colours** come from `.is-late` and `.is-undertime`; a stack of lines
   inside a card is `.dtr-dash-stack`.
+- **An employee's dashboard** (`.dtr-dash.is-mine`) uses the same cards: Leave
+  balance (the employee page's tinted cards, VL first; SPL and Wellness "until Dec
+  31") wide beside Quick actions, then Your DTR for the latest month (grey figure
+  cards, Missing taps amber when any, a link to My DTR) beside Waiting for
+  approval (list rows, each with Print). Three columns from 1280px; balances and
+  the DTR full width from 768px; one column on phones.
 
 ### An employee's page
 
@@ -310,13 +324,14 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   of the card's colour, the figure, and a grey line under it. Last month leads in
   solid `--primary-400`. Each balance is tinted (14%; dark: 16%) in its leave
   chart colour, and the schedule in grey. Six across from 1280px; below that, as
-  many as fit at 9rem.
+  many as fit at 9rem. In a DTR's view and on an employee's dashboard they fill
+  their row instead; `.is-warning` tints one amber when it needs a look.
 - **Details:** Filament sections, divided, with inline labels: one fact a row.
 - **Needs a look** (`.dtr-callout`): an amber tint and ring, a 40px amber icon
   box, "Needs a look", a 16px heading, one sentence and one button. It shows
   only when something needs a look.
 
-All in `dashboard.blade.php`.
+All in `entries.blade.php`.
 
 ## 5. States
 
@@ -389,7 +404,9 @@ All in `dashboard.blade.php`.
 | `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings |
 | `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
 | `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`); the "(optional)" mark beside a form field's label (`.dtr-field-optional`) |
-| `resources/views/filament/dashboard.blade.php` | The dashboard (`.dtr-dash-*`) |
+| `resources/views/filament/dashboard-styles.blade.php` | Both dashboards' styles (`.dtr-dash-*`, the employee layout `.dtr-dash.is-mine`) |
+| `resources/views/filament/dashboard.blade.php` | The staff dashboard's cards |
+| `resources/views/filament/employee/dashboard.blade.php` | An employee's dashboard's cards |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |
 

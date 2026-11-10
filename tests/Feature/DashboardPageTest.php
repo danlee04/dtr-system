@@ -30,12 +30,12 @@ class DashboardPageTest extends TestCase
             ->assertSee(['Late and undertime', 'Leave to approve', 'Quick actions', 'Out today', 'Recent leave', 'Dela Cruz, Juan']);
     }
 
-    public function test_employees_keep_their_own_dashboard(): void
+    public function test_employees_see_their_own_dashboard_not_the_offices(): void
     {
         $this->actingAs(User::factory()->employee()->create())
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Quick actions')
-            ->assertDontSee('Recent leave');
+            ->assertSee('Leave balance')
+            ->assertDontSee(['Leave to approve', 'Out today', 'Recent leave']);
     }
 }

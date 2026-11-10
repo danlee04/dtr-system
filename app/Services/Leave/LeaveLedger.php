@@ -53,27 +53,29 @@ final class LeaveLedger
     }
 
     /**
-     * One type's rows, newest first, each with the balance it left. The
-     * balance is run oldest first, in the order the rows were posted.
+     * The rows of one type, or of every type, newest first, each with the
+     * balance it left its own type at. Balances are run oldest first, in the
+     * order the rows were posted.
      *
-     * @return list<array{posted_on: CarbonImmutable, entry: string, days: string, balance: string, remarks: ?string}>
+     * @return list<array{posted_on: CarbonImmutable, leave_type: LeaveType, entry: string, days: string, balance: string, remarks: ?string}>
      */
-    public function history(Employee $employee, LeaveType $type): array
+    public function history(Employee $employee, ?LeaveType $type = null): array
     {
-        $balance = '0.000';
+        $balances = [];
         $history = [];
 
         $entries = $this->rows($employee, null)
-            ->where('leave_type', $type)
+            ->when($type !== null, fn (Builder $query): Builder => $query->where('leave_type', $type))
             ->orderBy('posted_on')
             ->orderBy('id')
             ->get();
 
         foreach ($entries as $entry) {
-            $balance = bcadd($balance, $entry->days, 3);
+            $balance = $balances[$entry->leave_type->value] = bcadd($balances[$entry->leave_type->value] ?? '0.000', $entry->days, 3);
 
             $history[] = [
                 'posted_on' => $entry->posted_on->toImmutable(),
+                'leave_type' => $entry->leave_type,
                 'entry' => $entry->kind->getLabel(),
                 'days' => $entry->days,
                 'balance' => $balance,

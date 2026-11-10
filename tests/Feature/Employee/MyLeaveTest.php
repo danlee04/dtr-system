@@ -6,9 +6,8 @@ use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Filament\Employee\Pages\History;
 use App\Filament\Employee\Pages\LeaveTypes;
+use App\Filament\Employee\Pages\MyDtr;
 use App\Filament\Employee\Resources\MyLeaveApplications\MyLeaveApplicationResource;
-use App\Filament\Employee\Widgets\MyLeaveBalances;
-use App\Filament\Employee\Widgets\MyPendingApplications;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
@@ -49,34 +48,32 @@ class MyLeaveTest extends TestCase
         $this->assertSame(['-1.500', '5.000'], array_column($rows, 'days'));
     }
 
-    public function test_my_leave_shows_only_my_balances(): void
+    public function test_the_history_of_every_type_runs_each_types_own_balance(): void
     {
-        Livewire::test(MyLeaveBalances::class)
-            ->assertSee('3.500')
-            ->assertSee('2.000')
-            ->assertDontSee('9.000');
+        $rows = app(LeaveLedger::class)->history($this->employee);
+
+        $this->assertSame([LeaveType::Vacation, LeaveType::Sick, LeaveType::Vacation], array_column($rows, 'leave_type'));
+        $this->assertSame(['3.500', '2.000', '5.000'], array_column($rows, 'balance'));
     }
 
-    public function test_my_pending_applications_are_mine_only(): void
+    public function test_the_history_page_lists_every_type_in_one_table_and_filters_by_one(): void
     {
-        $mine = LeaveApplication::factory()->for($this->employee)->create();
-        $theirs = LeaveApplication::factory()->create();
-
-        Livewire::test(MyPendingApplications::class)
-            ->assertCanSeeTableRecords([$mine])
-            ->assertCanNotSeeTableRecords([$theirs]);
-    }
-
-    public function test_the_history_page_switches_type(): void
-    {
-        // FL has no balance of its own, so it falls back to VL.
         Livewire::test(History::class)
-            ->assertSee('3.500')
-            ->set('type', 'SL')
+            ->assertSee(['3.500', '2.000'])
+            ->filterTable('leave_type', LeaveType::Sick->value)
             ->assertSee('2.000')
-            ->assertDontSee('3.500')
-            ->set('type', 'FL')
-            ->assertSee('3.500');
+            ->assertDontSee('3.500');
+    }
+
+    public function test_the_dashboard_shows_my_balances_and_my_leave_waiting_for_approval(): void
+    {
+        LeaveApplication::factory()->for($this->employee)->create(['date_from' => '2026-11-23', 'date_to' => '2026-11-27']);
+        LeaveApplication::factory()->create(['date_from' => '2026-12-14', 'date_to' => '2026-12-14']);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee(['3.500', '2.000', 'Nov 23–27', 'No DTR uploaded for you yet'])
+            ->assertDontSee(['9.000', 'Dec 14']);
     }
 
     public function test_every_leave_type_is_explained(): void
@@ -91,23 +88,14 @@ class MyLeaveTest extends TestCase
             ->assertSee('3.500');
     }
 
-    public function test_the_dashboard_shows_my_leave_to_employees(): void
-    {
-        // Widgets load after the page, so their gate is what the dashboard asks.
-        $this->get('/')->assertOk();
-        $this->assertTrue(MyLeaveBalances::canView());
-        $this->assertTrue(MyPendingApplications::canView());
-    }
-
     public function test_staff_without_an_employee_see_no_my_leave(): void
     {
         $this->actingAs(User::factory()->create());
 
-        $this->get('/')->assertOk();
-        $this->assertFalse(MyLeaveBalances::canView());
-        $this->assertFalse(MyPendingApplications::canView());
+        // Staff keep the office's dashboard.
+        $this->get('/')->assertOk()->assertDontSee('Leave balance');
 
-        foreach ([History::getUrl(), LeaveTypes::getUrl(), MyLeaveApplicationResource::getUrl('index')] as $url) {
+        foreach ([History::getUrl(), LeaveTypes::getUrl(), MyDtr::getUrl(), MyLeaveApplicationResource::getUrl('index')] as $url) {
             $this->get($url)->assertForbidden();
         }
     }

@@ -11,12 +11,14 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Where the signed-in employee's leave went: one tab per type with a
- * balance, every credit and deduction with the balance it left.
+ * Where the signed-in employee's leave went: every credit and deduction of
+ * every type in one table, each with the balance it left its type at, and a
+ * filter to see one type the way its leave card reads.
  */
 class History extends Page implements HasTable
 {
@@ -30,29 +32,24 @@ class History extends Page implements HasTable
 
     protected static ?int $navigationSort = 2;
 
-    /** The tab, as a type's code. Anything but a type with a balance shows VL. */
-    public string $type = 'VL';
-
     public static function canAccess(): bool
     {
         return auth()->user()?->hasCurrentEmployee() ?? false;
     }
 
-    public function currentType(): LeaveType
-    {
-        $type = LeaveType::tryFrom($this->type);
-
-        return $type?->isTracked() ? $type : LeaveType::Vacation;
-    }
-
     public function table(Table $table): Table
     {
         return $table
-            ->records(fn (): array => app(LeaveLedger::class)->history(auth()->user()->employee, $this->currentType()))
+            ->records(fn (array $filters): array => app(LeaveLedger::class)->history(
+                auth()->user()->employee,
+                LeaveType::tryFrom((string) ($filters['leave_type']['value'] ?? '')),
+            ))
             ->columns([
                 TextColumn::make('posted_on')
                     ->label('Date')
                     ->date('M j, Y'),
+                TextColumn::make('leave_type')
+                    ->label('Leave type'),
                 TextColumn::make('entry'),
                 TextColumn::make('days')
                     ->formatStateUsing(fn (string $state): string => bccomp($state, '0', 3) > 0 ? "+{$state}" : $state)
@@ -62,6 +59,11 @@ class History extends Page implements HasTable
                 TextColumn::make('remarks')
                     ->placeholder('—')
                     ->wrap(),
+            ])
+            ->filters([
+                SelectFilter::make('leave_type')
+                    ->label('Leave type')
+                    ->options(collect(LeaveType::tracked())->mapWithKeys(fn (LeaveType $type): array => [$type->value => $type->getLabel()])->all()),
             ])
             ->emptyStateHeading('Nothing recorded yet')
             ->paginated(false);

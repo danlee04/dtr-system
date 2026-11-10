@@ -1,0 +1,189 @@
+<style>
+  .em { font-family: Inter, system-ui, sans-serif; color: #09090b; font-size: 14px; line-height: 1.45; }
+  .em * { box-sizing: border-box; }
+  .em-page { background: #fafafa; padding: 20px; border-radius: 12px; }
+  .em-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .em-span2 { grid-column: span 2; }
+  .em-card { background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(9,9,11,.07), 0 1px 2px rgba(0,0,0,.04); padding: 20px; }
+  .em-title { font-size: 16px; font-weight: 600; margin: 0; }
+  .em-cap { font-size: 12px; color: #71717a; margin: 2px 0 14px; }
+  .em-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .em-tile { border-radius: 12px; padding: 14px; }
+  .em-tile .i { width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.75); display: grid; place-items: center; margin-bottom: 10px; font-size: 14px; }
+  .em-tile .l { font-size: 12px; font-weight: 500; }
+  .em-tile .v { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .em-tile .d { font-size: 12px; color: #52525b; }
+  .t-vl { background: #e3f6e9; } .t-vl .l, .t-vl .i { color: #166534; }
+  .t-sl { background: #e3edfd; } .t-sl .l, .t-sl .i { color: #1e40af; }
+  .t-spl { background: #fdf3dc; } .t-spl .l, .t-spl .i { color: #92400e; }
+  .t-wl { background: #fde6e6; } .t-wl .l, .t-wl .i { color: #991b1b; }
+  .t-gray { background: #f1f1f2; } .t-gray .l, .t-gray .i { color: #3f3f46; }
+  .t-warn { background: #fef3c7; box-shadow: inset 0 0 0 1px #fcd34d; } .t-warn .l, .t-warn .i, .t-warn .d { color: #92400e; }
+  .em-qa { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .em-qa a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(9,9,11,.1); color: #27272a; text-decoration: none; font-weight: 500; }
+  .em-qa a .b { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #f4f4f5; }
+  .em-qa a.main { background: #f59e0b; box-shadow: none; color: #09090b; }
+  .em-qa a.main .b { background: rgba(255,255,255,.55); }
+  .em-figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .em-line { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: #52525b; flex-wrap: wrap; }
+  .em-link { color: #b45309; font-weight: 500; }
+  .em-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(9,9,11,.06); }
+  .em-row:first-of-type { border-top: 0; }
+  .em-dot { width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; font-size: 12px; font-weight: 600; flex: none; }
+  .em-row .m { flex: 1; min-width: 0; }
+  .em-row .m b { display: block; font-weight: 500; }
+  .em-row .m span { font-size: 12px; color: #71717a; }
+  .em-badge { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 6px; display: inline-block; }
+  .b-warn { background: #fef3c7; color: #92400e; } .b-ok { background: #dcfce7; color: #166534; } .b-bad { background: #fee2e2; color: #991b1b; } .b-gray { background: #f4f4f5; color: #52525b; } .b-info { background: #dbeafe; color: #1e40af; }
+  .em-btn { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 500; box-shadow: inset 0 0 0 1px rgba(9,9,11,.12); background: #fff; color: #3f3f46; }
+  .em-select { display: inline-flex; align-items: center; gap: 24px; height: 36px; padding: 0 12px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(9,9,11,.15); background: #fff; font-size: 14px; }
+  .em-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+  .em-note { margin: 14px 0; padding: 10px 14px; border-radius: 10px; background: #fffbeb; box-shadow: inset 0 0 0 1px #fde68a; font-size: 13px; color: #78350f; }
+  table.em-t { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .em-t th { font-size: 12px; font-weight: 500; color: #71717a; text-align: left; padding: 6px 10px; border-bottom: 1px solid rgba(9,9,11,.08); background: #fafafa; }
+  .em-t thead tr:first-child th { text-align: center; border-bottom: 0; padding-bottom: 0; }
+  .em-t td { padding: 7px 10px; border-bottom: 1px solid rgba(9,9,11,.05); white-space: nowrap; }
+  .em-t .num { text-align: right; }
+  .em-t tr.rest td { color: #a1a1aa; background: #fafafa; }
+  .em-t tr.absent td { background: #fef2f2; }
+  .em-tag { font-size: 12px; font-weight: 600; padding: 0 6px; border-radius: 6px; background: #dbeafe; color: #1e40af; margin-left: 4px; }
+  .em-warn { color: #b45309; font-weight: 500; font-size: 12px; }
+  .em-muted { color: #71717a; font-size: 12px; }
+  .em-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 0 0 1px rgba(9,9,11,.07); background: #fff; }
+  .em-filter { display: inline-flex; gap: 8px; align-items: center; height: 36px; padding: 0 12px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(9,9,11,.12); background: #fff; font-size: 13px; font-weight: 500; color: #3f3f46; }
+  .em-filter .n { background: #f59e0b; color: #09090b; border-radius: 999px; font-size: 11px; padding: 0 6px; }
+  .em-dd { position: absolute; right: 0; top: 42px; width: 260px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.15), 0 0 0 1px rgba(9,9,11,.07); padding: 14px; }
+  .em-why { font-size: 13px; color: #52525b; margin: 10px 2px 0; }
+</style>
+
+<h2>Ang employee side: Dashboard, My DTR at History</h2>
+<p class="subtitle">Halimbawang datos lang. Ganito ang mungkahi ko; sabihin sa terminal kung ano ang babaguhin.</p>
+
+<div class="em">
+
+  <div class="mockup">
+    <div class="mockup-header">1. Dashboard ng employee</div>
+    <div class="mockup-body">
+      <div class="em-page">
+        <div class="em-grid">
+
+          <div class="em-card em-span2">
+            <p class="em-title">Leave balance</p>
+            <p class="em-cap">Days left as of Nov 10, 2026</p>
+            <div class="em-tiles">
+              <div class="em-tile t-vl"><div class="i">☀</div><div class="l">Vacation</div><div class="v">12.500</div><div class="d">days left</div></div>
+              <div class="em-tile t-sl"><div class="i">♥</div><div class="l">Sick</div><div class="v">14.250</div><div class="d">days left</div></div>
+              <div class="em-tile t-spl"><div class="i">★</div><div class="l">Special privilege</div><div class="v">3</div><div class="d">days left, until Dec 31</div></div>
+              <div class="em-tile t-wl"><div class="i">✦</div><div class="l">Wellness</div><div class="v">5</div><div class="d">days left, until Dec 31</div></div>
+            </div>
+          </div>
+
+          <div class="em-card">
+            <p class="em-title">Quick actions</p>
+            <p class="em-cap">What you came to do</p>
+            <div class="em-qa">
+              <a class="main"><span class="b">＋</span>File leave</a>
+              <a><span class="b">▤</span>My DTR</a>
+              <a><span class="b">↺</span>History</a>
+              <a><span class="b">?</span>Leave types</a>
+            </div>
+          </div>
+
+          <div class="em-card em-span2">
+            <p class="em-title">Your DTR for October</p>
+            <p class="em-cap">As the app computed it from the IT Unit's printout. Check it against your copy.</p>
+            <div class="em-figs">
+              <div class="em-tile t-gray"><div class="l">Late</div><div class="v">23 min</div><div class="d">2 times</div></div>
+              <div class="em-tile t-gray"><div class="l">Undertime</div><div class="v">25 min</div><div class="d">2 times</div></div>
+              <div class="em-tile t-gray"><div class="l">Absent</div><div class="v">1 day</div><div class="d">Oct 7</div></div>
+              <div class="em-tile t-warn"><div class="l">Missing taps</div><div class="v">3</div><div class="d">on 2 dates</div></div>
+            </div>
+            <div class="em-line">
+              <span>Late + undertime: 48 min = 0.100 day by the CSC table. Something wrong? Bring your signed DTR to HR.</span>
+              <span class="em-link">Check my DTR →</span>
+            </div>
+          </div>
+
+          <div class="em-card">
+            <p class="em-title">Waiting for approval</p>
+            <p class="em-cap">Filed, not yet approved by HR</p>
+            <div class="em-row"><div class="em-dot t-vl" style="color:#166534">VL</div><div class="m"><b>Vacation leave</b><span>Nov 23–27 · 5 days</span></div><span class="em-btn">Print</span></div>
+            <div class="em-row"><div class="em-dot t-sl" style="color:#1e40af">SL</div><div class="m"><b>Sick leave</b><span>Nov 12 · 1 day</span></div><span class="em-btn">Print</span></div>
+          </div>
+
+        </div>
+      </div>
+      <p class="em-why">Sinasagot nito ang tatlong itinatanong nila kay HR: "May leave pa ba ako?", "Tama ba ang late ko?", at "Naaprubahan na ba?". Ang File leave ang amber, kasi iyon ang pangunahing gagawin dito.</p>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:24px">
+    <div class="mockup-header">2. My DTR (bagong page, pang-tingin lang)</div>
+    <div class="mockup-body">
+      <div class="em-page">
+        <div class="em-card">
+          <div class="em-head">
+            <div>
+              <p class="em-title">October 2026</p>
+              <p class="em-cap" style="margin-bottom:0">Regular · 8:00–12:00, 1:00–5:00 · Printed as DELA CRUZ, JUAN S.</p>
+            </div>
+            <label style="display:flex;gap:8px;align-items:center;font-weight:500">Month <span class="em-select">October 2026 <span>▾</span></span></label>
+          </div>
+          <div class="em-note">Something wrong? Bring your signed DTR to HR. Only HR can add a time or fix your schedule.</div>
+          <div class="em-tiles" style="grid-template-columns:repeat(5,minmax(0,1fr))">
+            <div class="em-tile t-gray"><div class="l">Late</div><div class="v">23 min</div><div class="d">2 times</div></div>
+            <div class="em-tile t-gray"><div class="l">Undertime</div><div class="v">25 min</div><div class="d">2 times</div></div>
+            <div class="em-tile t-gray"><div class="l">Late + undertime</div><div class="v">48 min</div><div class="d">= 0.100 day (CSC)</div></div>
+            <div class="em-tile t-gray"><div class="l">Absent</div><div class="v">1 day</div><div class="d">work days with no tap</div></div>
+            <div class="em-tile t-warn"><div class="l">Missing taps</div><div class="v">3</div><div class="d">on 2 dates</div></div>
+          </div>
+          <div class="em-wrap" style="margin-top:16px">
+            <table class="em-t">
+              <thead>
+                <tr><th></th><th colspan="2">A.M.</th><th colspan="2">P.M.</th><th colspan="4"></th></tr>
+                <tr><th>Day</th><th>Arrival</th><th>Departure</th><th>Arrival</th><th>Departure</th><th class="num">Late (min)</th><th class="num">Undertime (min)</th><th>Status</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>Thu</b>, Oct 1</td><td>7:52 AM</td><td>12:01 PM</td><td>12:55 PM</td><td>5:03 PM</td><td></td><td></td><td><span class="em-badge b-ok">Present</span></td><td></td></tr>
+                <tr><td><b>Fri</b>, Oct 2</td><td>8:14 AM</td><td>12:00 PM</td><td>12:58 PM</td><td></td><td class="num">14</td><td></td><td><span class="em-badge b-ok">Present</span></td><td><span class="em-warn">No time out</span></td></tr>
+                <tr class="rest"><td><b>Sat</b>, Oct 3</td><td></td><td></td><td></td><td></td><td></td><td></td><td><span class="em-badge b-gray">Rest day</span></td><td></td></tr>
+                <tr><td><b>Tue</b>, Oct 6</td><td>7:49 AM</td><td>12:00 PM</td><td>12:57 PM</td><td>5:00 PM<span class="em-tag">HR</span></td><td></td><td></td><td><span class="em-badge b-ok">Present</span></td><td><span class="em-muted">HR: forgot to tap</span></td></tr>
+                <tr class="absent"><td><b>Wed</b>, Oct 7</td><td></td><td></td><td></td><td></td><td></td><td></td><td><span class="em-badge b-bad">Absent</span></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="em-why">Kapareho ng DTR na nakikita ni HR, pero walang "+ Add". Kapag walang na-upload na DTR para sa buwan, ganito ang lalabas: "No DTR uploaded for you yet."</p>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:24px">
+    <div class="mockup-header">3. History (isang table na lang, may filter ng uri ng leave)</div>
+    <div class="mockup-body">
+      <div class="em-page">
+        <div class="em-wrap" style="padding:0">
+          <div style="display:flex;justify-content:flex-end;padding:12px;position:relative;border-bottom:1px solid rgba(9,9,11,.06)">
+            <span class="em-filter">⚲ Filter <span class="n">1</span></span>
+            <div class="em-dd">
+              <div style="font-weight:600;margin-bottom:10px">Filters</div>
+              <div style="font-size:12px;font-weight:500;margin-bottom:6px">Leave type</div>
+              <span class="em-select" style="width:100%;justify-content:space-between">Vacation leave <span>▾</span></span>
+            </div>
+          </div>
+          <table class="em-t">
+            <thead><tr><th>Date</th><th>Leave type</th><th>Entry</th><th class="num">Days</th><th class="num">Balance</th><th>Remarks</th></tr></thead>
+            <tbody>
+              <tr><td>Nov 1, 2026</td><td><span class="em-badge b-ok">Vacation</span></td><td>Monthly credit</td><td class="num">+1.250</td><td class="num">12.500</td><td class="em-muted">—</td></tr>
+              <tr><td>Nov 1, 2026</td><td><span class="em-badge b-info">Sick</span></td><td>Monthly credit</td><td class="num">+1.250</td><td class="num">14.250</td><td class="em-muted">—</td></tr>
+              <tr><td>Oct 28, 2026</td><td><span class="em-badge b-ok">Vacation</span></td><td>Leave</td><td class="num">−2.000</td><td class="num">11.250</td><td class="em-muted">Oct 26–27</td></tr>
+              <tr><td>Oct 1, 2026</td><td><span class="em-badge b-warn">Special privilege</span></td><td>Opening balance</td><td class="num">+3.000</td><td class="num">3.000</td><td class="em-muted">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="em-why">Lahat ng uri ng leave sa iisang table, pinakabago sa itaas. Ang Balance ay ang natira sa uri ng leave na iyon pagkatapos ng entry. Sa filter, pipili ng isang uri o "All".</p>
+    </div>
+  </div>
+
+</div>
