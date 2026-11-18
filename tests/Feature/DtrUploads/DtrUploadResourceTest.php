@@ -370,7 +370,7 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => null, 'reason' => ManualTapReason::ForgotToTap->value])
-            ->assertNotified('Enter at least one time');
+            ->assertNotified('Nothing to save: enter or change a time');
 
         $this->assertDatabaseCount(ManualTap::class, 0);
     }
@@ -387,20 +387,60 @@ class DtrUploadResourceTest extends TestCase
         $this->assertDatabaseCount(ManualTap::class, 0);
     }
 
-    public function test_a_printed_time_cannot_be_overwritten(): void
+    /** The device printed 12:15 PM for the time in; the signed paper says 8:00 AM. */
+    private function uploadWithAWrongTimeIn(): DtrUpload
+    {
+        $upload = $this->uploadWithoutTimeOut();
+        $upload->days()->create(['date' => '2026-10-14', 'am_arrival' => '12:15', 'am_departure' => '12:29', 'pm_arrival' => '12:49', 'pm_departure' => '17:01']);
+
+        return $upload;
+    }
+
+    public function test_hr_corrects_a_time_the_device_printed_wrong(): void
     {
         $this->actingAs(User::factory()->create());
-        $upload = $this->uploadWithoutTimeOut();
+        $upload = $this->uploadWithAWrongTimeIn();
 
-        // P.M. arrival is printed, so the modal has no field for it; a value sent for it anyway is not saved.
         Livewire::test(ListDtrUploads::class)
-            ->callAction($this->fillIn($upload, '2026-10-02', DtrSlot::PmArrival), data: [
-                'pm_arrival' => '13:30',
-                'pm_departure' => '17:00',
-                'reason' => ManualTapReason::ForgotToTap->value,
-            ]);
+            ->mountAction($this->fillIn($upload, '2026-10-14', DtrSlot::AmArrival))
+            ->assertActionDataSet(['am_arrival' => '12:15', 'pm_departure' => '17:01', 'reason' => ManualTapReason::DeviceError])
+            ->fillForm(['am_arrival' => '08:00'])
+            ->callMountedAction()
+            ->assertHasNoFormErrors()
+            ->assertNotified('1 time saved')
+            // Back in the DTR: the 255 minutes late are gone, and the time shows as HR's.
+            ->assertMountedActionModalSee(['Change A.M. arrival, Wed, Oct 14', '8:00 AM', 'HR: biometric error'])
+            ->assertMountedActionModalDontSee('255');
 
-        $this->assertSame([DtrSlot::PmDeparture], ManualTap::query()->pluck('slot')->all());
+        // Only the time HR changed is kept; the three left as printed need none.
+        $tap = ManualTap::sole();
+        $this->assertSame([DtrSlot::AmArrival, '08:00:00', ManualTapReason::DeviceError], [$tap->slot, $tap->time, $tap->reason]);
+    }
+
+    public function test_a_printed_time_can_be_corrected_but_not_left_blank(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithAWrongTimeIn();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-14', DtrSlot::AmArrival), data: ['am_arrival' => null])
+            ->assertHasFormErrors(['am_arrival' => 'required']);
+
+        $this->assertDatabaseCount(ManualTap::class, 0);
+    }
+
+    public function test_typing_the_printed_time_back_removes_hrs(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithAWrongTimeIn();
+        $tap = ManualTap::factory()->for($upload->employee)->create(['date' => '2026-10-14', 'slot' => DtrSlot::AmArrival, 'time' => '08:00']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-14', DtrSlot::AmArrival), data: ['am_arrival' => '12:15'])
+            ->assertHasNoFormErrors()
+            ->assertNotified('HR times removed');
+
+        $this->assertModelMissing($tap);
     }
 
     public function test_dates_outside_the_dtr_or_with_nothing_to_fill_cannot_be_opened(): void

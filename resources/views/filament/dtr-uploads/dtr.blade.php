@@ -46,7 +46,7 @@
     <p class="dtr-record-desc">
         As the IT Unit printed it.
         @if ($fill && ! $notComputed)
-            Click <strong>Add</strong> to copy in a time written on the DTR and signed by the supervisor.
+            Click <strong>Add</strong>, or a time the device got wrong, to copy in the time written on the DTR and signed by the supervisor.
         @endif
     </p>
 
@@ -79,15 +79,13 @@
                         @foreach (DtrSlot::cases() as $slot)
                             @php($cell = $row['slots'][$slot->value])
                             <td class="dtr-record-time">
-                                @if ($cell['printed'] !== null)
-                                    {{ $cell['printed'] }}
+                                @php($trigger = $fill && ($cell['printed'] !== null || $cell['filled'] !== null || $cell['fillable']) ? $fill(['date' => $row['date'], 'slot' => $slot->value]) : null)
+                                @if ($trigger?->isVisible())
+                                    {{ $trigger }}
+                                @elseif ($cell['filled'] !== null)
+                                    <span @if ($cell['printed'] !== null) title="Printed {{ $cell['printed'] }}" @endif>{{ $cell['filled'] }} <span class="dtr-grid-hr-tag">HR</span></span>
                                 @else
-                                    @php($trigger = $fill && ($cell['filled'] !== null || $cell['fillable']) ? $fill(['date' => $row['date'], 'slot' => $slot->value]) : null)
-                                    @if ($trigger?->isVisible())
-                                        {{ $trigger }}
-                                    @elseif ($cell['filled'] !== null)
-                                        {{ $cell['filled'] }} <span class="dtr-grid-hr-tag">HR</span>
-                                    @endif
+                                    {{ $cell['printed'] }}
                                 @endif
                             </td>
                         @endforeach

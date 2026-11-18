@@ -599,18 +599,26 @@ that had no tap stops being absent.
 - Approval in the app. The supervisor signs on paper; HR copies.
 - A page of its own for the DTR. HR chose to keep the view in its modal.
 
-**Must never happen.** An HR time hiding a printed one; HR's times lost when IT
-uploads the month again; an HR time that looks like one IT printed.
+**Must never happen.** An HR time hiding a printed one without saying so (its
+tooltip names the printed time); HR's times lost when IT uploads the month
+again; an HR time that looks like one IT printed.
 
 **Storage.** `manual_taps`: `employee_id` (restrict on delete), `date`, `slot`
 (`am_arrival`, `am_departure`, `pm_arrival`, `pm_departure`), `time`, `reason`
-(`forgot_to_tap`, `official_business`), `remarks` (255, nullable),
+(`forgot_to_tap`, `official_business`, `device_error`), `remarks` (255, nullable),
 `filled_by_user_id` (null on delete; whoever saved the time last) and
 timestamps; one row per employee, date and slot. Logged to the activity log like the other records. A filled
 time belongs to the employee and the date, not to an upload, so it applies to
 whichever upload covers the date and survives a newer upload of the month.
-When a newer printout has a time in the same slot, the printed time wins; the
-HR time is kept but not used or shown.
+An HR time wins over the time printed in its slot, in a newer printout too, so
+HR removes it if a reprint gets the time right.
+
+**Correcting a printed time** (HR, 2026-11-18). The device sometimes prints a
+wrong time, as 12:15 PM for a time in the signed paper says was 8:00 AM. Every
+printed time opens the same modal: HR types the time from the signed paper,
+with the reason Biometric error, the default when the modal opens on a
+printed time. A printed slot cannot be left blank; typing the printed time
+back removes HR's.
 
 **Which blanks can be filled.** The slots the computation lists as missing on
 a work date it judges, and every slot of the halves not covered on a date it

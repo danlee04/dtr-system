@@ -278,16 +278,17 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([0.0, ['lunch out', 'lunch in']], [$day->absent, $day->missing]);
     }
 
-    public function test_a_printed_time_wins_over_one_hr_filled(): void
+    public function test_a_time_hr_corrected_wins_over_the_one_printed(): void
     {
         $employee = $this->regular();
-        $this->hrFills($employee, '2026-10-02', DtrSlot::PmDeparture, '16:00');
+        // The device printed 12:15 PM for a time in of 8:00 AM, signed on the paper.
+        $this->hrFills($employee, '2026-10-14', DtrSlot::AmArrival, '08:00');
 
         $day = $this->compute($employee, [
-            '2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58', 'pm_departure' => '17:05'],
-        ])->days['2026-10-02'];
+            '2026-10-14' => ['am_arrival' => '12:15', 'am_departure' => '12:29', 'pm_arrival' => '12:49', 'pm_departure' => '17:01'],
+        ])->days['2026-10-14'];
 
-        $this->assertSame(0, $day->undertime);
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($day));
     }
 
     public function test_times_hr_filled_still_count_after_the_month_is_uploaded_again(): void

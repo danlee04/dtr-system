@@ -27,11 +27,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 /**
- * HR copies into a DTR's blanks the times the employee wrote on the paper
- * and the supervisor signed. It opens from a blank ("+ Add") or from a time
- * HR filled, over the DTR's view, and shows that date's four slots: what IT
- * printed stays as printed, and only the blanks the computation needs, or the
- * times HR filled before, can be typed in.
+ * HR copies into a DTR the times the employee wrote on the paper and the
+ * supervisor signed. It opens from a blank ("+ Add"), a printed time or a
+ * time HR filled, over the DTR's view, and shows that date's four slots. A
+ * printed time can be corrected when the device got it wrong (HR,
+ * 2026-11-18), but not removed; of the blanks, only those the computation
+ * needs, or the times HR filled before, can be typed in.
  *
  * The date and slot come from the browser, so every step works the date out
  * again from the DTR on the server and acts on nothing else.
@@ -54,16 +55,19 @@ class FillDayAction extends Action
                 $tap = self::filledTap($record, $arguments);
 
                 // Both parts are built here; neither is text anyone typed.
-                return $tap === null ? 'Add' : new HtmlString(e(DtrUploadInfolist::clock($tap->time)).' <span class="dtr-grid-hr-tag">HR</span>');
+                return $tap === null
+                    ? DtrUploadInfolist::clock(self::printedTime($record, $arguments)) ?? 'Add'
+                    : new HtmlString(e(DtrUploadInfolist::clock($tap->time)).' <span class="dtr-grid-hr-tag">HR</span>');
             })
-            ->icon(fn (DtrUpload $record, array $arguments): ?Heroicon => self::filledTap($record, $arguments) === null ? Heroicon::Plus : null)
+            ->icon(fn (DtrUpload $record, array $arguments): ?Heroicon => self::filledTap($record, $arguments) === null && self::printedTime($record, $arguments) === null ? Heroicon::Plus : null)
             ->tooltip(fn (DtrUpload $record, array $arguments): ?string => ($tap = self::filledTap($record, $arguments))
-                ? "{$tap->reason->getLabel()} · ".($tap->filledBy->name ?? 'HR').", {$tap->updated_at->format('M j')}"
+                ? (($printed = self::printedTime($record, $arguments)) !== null ? 'Printed '.DtrUploadInfolist::clock($printed).' · ' : '')
+                    ."{$tap->reason->getLabel()} · ".($tap->filledBy->name ?? 'HR').", {$tap->updated_at->format('M j')}"
                 : null)
             ->extraAttributes(fn (DtrUpload $record, array $arguments): array => self::triggerAttributes($record, $arguments))
             ->authorize('update')
             ->visible(fn (DtrUpload $record, array $arguments): bool => self::day($record, $arguments) !== null)
-            ->modalHeading(fn (DtrUpload $record, array $arguments): string => 'Fill in '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'))
+            ->modalHeading(fn (DtrUpload $record, array $arguments): string => 'Times for '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'))
             ->modalDescription(fn (DtrUpload $record, array $arguments): string => self::description($record, $arguments))
             ->modalWidth(Width::TwoExtraLarge)
             ->modalSubmitActionLabel('Save')
@@ -95,12 +99,14 @@ class FillDayAction extends Action
                 $entered = [];
 
                 foreach ($day['editable'] as $slot) {
-                    $time = $data[$slot->value] ?? null;
-                    $entered[$slot->value] = filled($time) ? substr($time, 0, 5).':00' : null;
+                    $time = filled($data[$slot->value] ?? null) ? substr($data[$slot->value], 0, 5).':00' : null;
+                    $printed = $day['row']?->{$slot->value};
+                    // A printed time left as it is, or typed back, needs no HR time.
+                    $entered[$slot->value] = $printed !== null && $time === substr($printed, 0, 5).':00' ? null : $time;
                 }
 
                 if (array_filter($entered) === [] && $day['filled']->isEmpty()) {
-                    Notification::make()->title('Enter at least one time')->danger()->send();
+                    Notification::make()->title('Nothing to save: enter or change a time')->danger()->send();
 
                     $action->halt();
                 }
@@ -138,8 +144,8 @@ class FillDayAction extends Action
 
     /**
      * The date asked for, if it is on this DTR and has something HR may fill
-     * or change: the blanks the computation lists, and the times HR filled
-     * where nothing is printed.
+     * or change: the times printed, the blanks the computation lists, and the
+     * times HR filled.
      *
      * @param  array<string, mixed>  $arguments
      * @return array{date: CarbonImmutable, row: ?DtrDay, filled: Collection<string, ManualTap>, editable: list<DtrSlot>}|null
@@ -155,12 +161,11 @@ class FillDayAction extends Action
         $value = $date->toDateString();
         $row = $record->days->first(fn (DtrDay $day): bool => $day->date->toDateString() === $value);
         $filled = (new Collection(DtrSlot::cases()))
-            ->filter(fn (DtrSlot $slot): bool => $row?->{$slot->value} === null)
             ->mapWithKeys(fn (DtrSlot $slot): array => [$slot->value => $record->filledTimes()->get("{$value} {$slot->value}")])
             ->filter();
         $editable = array_values(array_filter(
             DtrSlot::cases(),
-            fn (DtrSlot $slot): bool => in_array($slot, $result->fillable, true) || $filled->has($slot->value),
+            fn (DtrSlot $slot): bool => $row?->{$slot->value} !== null || in_array($slot, $result->fillable, true) || $filled->has($slot->value),
         ));
 
         return $editable === [] ? null : ['date' => $date, 'row' => $row, 'filled' => $filled, 'editable' => $editable];
@@ -172,6 +177,14 @@ class FillDayAction extends Action
         $slot = DtrSlot::tryFrom((string) ($arguments['slot'] ?? ''));
 
         return $slot === null ? null : self::day($record, $arguments)['filled'][$slot->value] ?? null;
+    }
+
+    /** @param  array<string, mixed>  $arguments */
+    private static function printedTime(DtrUpload $record, array $arguments): ?string
+    {
+        $slot = DtrSlot::tryFrom((string) ($arguments['slot'] ?? ''));
+
+        return $slot === null ? null : (self::day($record, $arguments)['row'] ?? null)?->{$slot->value};
     }
 
     /**
@@ -188,10 +201,15 @@ class FillDayAction extends Action
         }
 
         $filled = $day['filled']->has($slot->value);
+        $printed = $day['row']?->{$slot->value} !== null;
 
         return [
-            'class' => $filled ? 'dtr-grid-hr' : 'dtr-grid-add',
-            'aria-label' => ($filled ? 'Change' : 'Add')." {$slot->getLabel()}, {$day['date']->format('D, M j')}",
+            'class' => match (true) {
+                $filled => 'dtr-grid-hr',
+                $printed => 'dtr-grid-printed',
+                default => 'dtr-grid-add',
+            },
+            'aria-label' => ($filled || $printed ? 'Change' : 'Add')." {$slot->getLabel()}, {$day['date']->format('D, M j')}",
         ];
     }
 
@@ -201,7 +219,7 @@ class FillDayAction extends Action
         $last = (self::day($record, $arguments)['filled'] ?? new Collection)->sortByDesc('updated_at')->first();
 
         return $last === null
-            ? 'Copy the time written on the DTR and signed by the supervisor.'
+            ? 'Copy the time written on the DTR and signed by the supervisor: into a blank, or over a time the device got wrong.'
             : 'Copied in by '.($last->filledBy->name ?? 'HR')." on {$last->updated_at->format('M j')} · {$last->reason->getLabel()}";
     }
 
@@ -211,12 +229,29 @@ class FillDayAction extends Action
      */
     private static function filledForm(DtrUpload $record, array $arguments): array
     {
-        $filled = self::day($record, $arguments)['filled'] ?? new Collection;
-        $first = $filled->first();
+        $day = self::day($record, $arguments);
+
+        if ($day === null) {
+            return [];
+        }
+
+        $times = [];
+
+        foreach ($day['editable'] as $slot) {
+            $time = $day['filled']->get($slot->value)?->time ?? $day['row']?->{$slot->value};
+
+            if ($time !== null) {
+                $times[$slot->value] = substr($time, 0, 5);
+            }
+        }
+
+        $first = $day['filled']->first();
+        $focus = DtrSlot::tryFrom((string) ($arguments['slot'] ?? ''));
 
         return [
-            ...$filled->map(fn (ManualTap $tap): string => substr($tap->time, 0, 5))->all(),
-            'reason' => $first->reason ?? ManualTapReason::ForgotToTap,
+            ...$times,
+            // Opened on a printed time, HR is most likely correcting what the device got wrong.
+            'reason' => $first->reason ?? ($focus !== null && $day['row']?->{$focus->value} !== null ? ManualTapReason::DeviceError : ManualTapReason::ForgotToTap),
             'remarks' => $first?->remarks,
         ];
     }
@@ -244,12 +279,19 @@ class FillDayAction extends Action
                         ->afterLabel(null)
                         ->seconds(false)
                         ->autofocus($slot === $focus)
-                        ->helperText($day['filled']->has($slot->value) ? 'By HR' : null)
+                        // A printed time can be corrected, not removed.
+                        ->required(($printed = $day['row']?->{$slot->value}) !== null)
+                        ->helperText(match (true) {
+                            $printed !== null && $day['filled']->has($slot->value) => 'Printed '.DtrUploadInfolist::clock($printed),
+                            $printed !== null => 'Printed',
+                            $day['filled']->has($slot->value) => 'By HR',
+                            default => null,
+                        })
                         ->rules([self::inOrder($slot, $day)]),
+                    // A blank the computation does not need.
                     default => TextEntry::make("shown_{$slot->value}")
                         ->label($slot->getLabel())
-                        ->state(DtrUploadInfolist::clock($day['row']?->{$slot->value}) ?? '—')
-                        ->helperText($day['row']?->{$slot->value} !== null ? 'Printed' : null),
+                        ->state('—'),
                 }, DtrSlot::cases())),
             Radio::make('reason')
                 ->options(ManualTapReason::class)
@@ -262,8 +304,8 @@ class FillDayAction extends Action
     }
 
     /**
-     * A time falls between the times before and after it on the row, printed
-     * or typed, so 5:00 AM typed for 5:00 PM is caught.
+     * A time falls between the times before and after it in the form, printed
+     * ones included, so 5:00 AM typed for 5:00 PM is caught.
      *
      * @param  array{row: ?DtrDay, editable: list<DtrSlot>}  $day
      */
@@ -277,7 +319,7 @@ class FillDayAction extends Action
             $times = [];
 
             foreach (DtrSlot::cases() as $other) {
-                $time = $day['row']?->{$other->value} ?? (in_array($other, $day['editable'], true) ? $get($other->value) : null);
+                $time = in_array($other, $day['editable'], true) ? $get($other->value) : null;
 
                 if (filled($time)) {
                     $times[$other->value] = substr($time, 0, 5);

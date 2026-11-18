@@ -214,6 +214,7 @@ decoration.
 | `.dtr-grid-add` | A blank HR may fill: a dashed amber box ("+ Add") on a Filament link action |
 | `.dtr-grid-ob` | "+ OB/TO" beside a day's status badge: the dashed box of `.dtr-grid-add`, in the info blue of the OB and travel order badges |
 | `.dtr-grid-hr` / `.dtr-grid-hr-tag` | A time HR copied in: the time as text, then a blue "HR" tag |
+| `.dtr-grid-printed` | A printed time HR may correct: plain text on a Filament link action, a dotted underline on hover or focus |
 
 - **Names:** surname first ("Dela Cruz, Juan S."). The employee number goes under
   the name in grey, with the office when every office is listed.
@@ -267,7 +268,10 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
 - **Blanks:** a blank the computation needs is a `.dtr-grid-add` link; a time HR
   filled is a link too, showing the time and the HR tag, with a tooltip saying
   who filled it, when and why. Each has an `aria-label` naming the slot and date
-  ("Add P.M. departure, Fri, Oct 2").
+  ("Add P.M. departure, Fri, Oct 2"). A printed time is a `.dtr-grid-printed`
+  link ("Change A.M. arrival, Wed, Oct 14") for a time the device got wrong;
+  once corrected it shows HR's time and tag, and the tooltip names the printed
+  time.
 - **+ OB/TO** beside the status of a day with a part that has no tap (absent, or
   a half with both taps blank), with an `aria-label` naming the date. It opens
   "OB or travel order from Fri, Oct 16": the OB & travel orders form without its

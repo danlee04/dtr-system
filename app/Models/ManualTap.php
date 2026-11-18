@@ -13,10 +13,10 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 /**
- * A time HR copied into a slot the DTR printed blank: what the employee wrote
- * on the paper and the supervisor signed. It belongs to the employee and the
- * date, not to an upload, so it outlives a reprint of the month. A time the
- * DTR prints in the same slot wins over it.
+ * A time HR copied into a slot from the paper the employee wrote on and the
+ * supervisor signed: into a blank, or over a time the device got wrong. It
+ * belongs to the employee and the date, not to an upload, so it outlives a
+ * reprint of the month. It wins over the time the DTR prints in the slot.
  */
 #[Fillable(['employee_id', 'date', 'slot', 'time', 'reason', 'remarks', 'filled_by_user_id'])]
 class ManualTap extends Model

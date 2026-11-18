@@ -148,8 +148,8 @@ class DtrUploadInfolist
             $taps = [];
 
             foreach (DtrSlot::cases() as $slot) {
-                // A printed time wins; HR's time for the slot is then kept but not shown.
-                $tap = $day?->{$slot->value} === null ? $filled->get("{$key} {$slot->value}") : null;
+                // HR's time wins: it fills a blank, or corrects a time the device got wrong.
+                $tap = $filled->get("{$key} {$slot->value}");
                 $taps = $tap !== null ? [...$taps, $tap] : $taps;
                 $slots[$slot->value] = [
                     'printed' => self::clock($day?->{$slot->value}),

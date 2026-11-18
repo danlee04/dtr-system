@@ -330,6 +330,19 @@
         color: inherit;
     }
 
+    /* A printed time HR may correct reads as printed; a dotted underline on hover or focus says it opens. */
+    .dtr-grid-printed {
+        padding-block: 0.125rem;
+        color: inherit;
+        font-weight: inherit;
+    }
+
+    .dtr-grid-printed:hover,
+    .dtr-grid-printed:focus-visible {
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+    }
+
     .dtr-grid-hr-tag {
         display: inline-block;
         padding-inline: 0.375rem;

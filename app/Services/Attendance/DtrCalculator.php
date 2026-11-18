@@ -29,8 +29,9 @@ use Illuminate\Support\Collection as SupportCollection;
  * all, and no leave, is absent.
  *
  * The DTR's columns are the slots: A.M. Arrival and Departure for the first
- * half of the day, P.M. for the second. O.T. is not read. A slot printed
- * blank takes the time HR copied in from the signed DTR, if any.
+ * half of the day, P.M. for the second. O.T. is not read. A time HR copied
+ * in from the signed DTR fills a blank, or corrects a time the device got
+ * wrong (HR, 2026-11-18).
  */
 final class DtrCalculator
 {
@@ -102,7 +103,7 @@ final class DtrCalculator
     }
 
     /**
-     * Each time column of the date: as printed, or else as HR filled it.
+     * Each time column of the date: as HR filled or corrected it, or else as printed.
      *
      * @param  ?SupportCollection<int, ManualTap>  $filled
      * @return array<string, ?string> slot => "08:14" or "08:14:00"
@@ -112,7 +113,7 @@ final class DtrCalculator
         $columns = [];
 
         foreach (DtrSlot::cases() as $slot) {
-            $columns[$slot->value] = $row?->{$slot->value} ?? $filled?->firstWhere('slot', $slot)?->time;
+            $columns[$slot->value] = $filled?->firstWhere('slot', $slot)?->time ?? $row?->{$slot->value};
         }
 
         return $columns;
