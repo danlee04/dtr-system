@@ -506,9 +506,8 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   shows the times already placed under A.M. and P.M. Arrival and Departure,
   plus O.T. and Remarks, as `hh:mm am`. The form prints no employee number,
   no biometric ID and no schedule ("Official hours" is blank). A remark that
-  is a bare number, as `-479`, is the IT software's own count of minutes
-  short, by rules the app does not share (late counted from 8:30 AM, for
-  one); it is kept but not shown, since it only confused HR (2026-11-18).
+  is a bare number, as `-479`, is kept but not shown: IT has not said what it
+  means, and it confused HR (2026-11-18).
 - **Reading.** `DtrPdfReader` (smalot/pdfparser) reads the leftmost copy by
   position: the name is the line above "(Employee Name)", the period is the
   "For the month of" line ("OCTOBER 1 - 31, 2026"), and a time belongs to the

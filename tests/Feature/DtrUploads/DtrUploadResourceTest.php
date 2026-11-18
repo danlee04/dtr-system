@@ -269,7 +269,7 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
             // October 2026 has 22 weekdays; only the 1st has taps.
-            ->assertMountedActionModalSee(['23 min', '2 times', '25 min', '48 min', '= 0.100 day (CSC)', '21 days', 'Present', 'Absent']);
+            ->assertMountedActionModalSee(['23 min', '2 times', '25 min', '0 hr 48 min', '= 0.100 day (CSC)', '21 days', 'Present', 'Absent']);
     }
 
     public function test_the_list_shows_each_dtrs_late_and_undertime(): void
@@ -307,10 +307,10 @@ class DtrUploadResourceTest extends TestCase
             ->assertMountedActionModalSee(['Thu, Oct 1', '5:13 PM', 'Seminar', 'Sat, Oct 31']);
     }
 
-    public function test_the_minutes_it_s_software_prints_beside_a_day_are_not_shown(): void
+    public function test_a_bare_number_printed_in_a_days_remarks_is_not_shown(): void
     {
         $this->actingAs(User::factory()->create());
-        // "-479": its own count of minutes short, against rules the app does not share (HR, 2026-11-18).
+        // IT has not said what "-479" means, and it confused HR (2026-11-18).
         $upload = DtrUpload::factory()
             ->has(DtrDay::factory()->state(['date' => '2026-10-14', 'am_arrival' => '12:15', 'remarks' => '-479']), 'days')
             ->create();

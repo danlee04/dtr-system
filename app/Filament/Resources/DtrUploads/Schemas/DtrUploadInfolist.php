@@ -121,7 +121,8 @@ class DtrUploadInfolist
         $cards = [
             ['label' => 'Late', 'value' => "{$dtr->late} min", 'detail' => self::times($dtr->lateCount), 'icon' => Heroicon::OutlinedClock, 'tone' => null],
             ['label' => 'Undertime', 'value' => "{$dtr->undertime} min", 'detail' => self::times($dtr->undertimeCount), 'icon' => Heroicon::OutlinedArrowRightStartOnRectangle, 'tone' => null],
-            ['label' => 'Late + undertime', 'value' => ($dtr->late + $dtr->undertime).' min', 'detail' => "= {$dtr->dayEquivalent} day (CSC)", 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
+            // In hours and minutes, as the CSC table reads them (HR, 2026-11-18).
+            ['label' => 'Late + undertime', 'value' => intdiv($dtr->late + $dtr->undertime, 60).' hr '.(($dtr->late + $dtr->undertime) % 60).' min', 'detail' => "= {$dtr->dayEquivalent} day (CSC)", 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
             ['label' => 'Absent', 'value' => self::count($dtr->absent, 'day'), 'detail' => 'work days with no tap', 'icon' => Heroicon::OutlinedUserMinus, 'tone' => null],
             ['label' => $mine ? 'Missing taps' : 'Blanks to fill', 'value' => (string) $blanks, 'detail' => $blanks > 0 ? 'on '.self::count($dtr->daysMissingTaps, 'date') : 'None', 'icon' => Heroicon::OutlinedPencilSquare, 'tone' => $blanks > 0 ? 'is-warning' : null],
         ];
@@ -175,7 +176,7 @@ class DtrUploadInfolist
                     $result?->note !== null ? [$result->note, false] : null,
                     ($result->missing ?? []) !== [] ? ['No '.implode(', ', $result->missing), true] : null,
                     $taps !== [] ? [self::filledNote($taps), false] : null,
-                    // Not a bare number like "-479": IT's own count of minutes short, by rules the app does not share (HR, 2026-11-18).
+                    // Not a bare number like "-479": IT has not said what it means, and it confused HR (2026-11-18).
                     $day?->remarks !== null && preg_match('/^-?\d+$/', $day->remarks) !== 1 ? [$day->remarks, false] : null,
                 ])),
             ];
