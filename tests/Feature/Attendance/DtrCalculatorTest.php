@@ -296,7 +296,8 @@ class DtrCalculatorTest extends TestCase
         $this->compute($employee, ['2026-10-02' => ['am_arrival' => '07:47']]);
         $this->hrFills($employee, '2026-10-02', DtrSlot::PmDeparture, '16:30');
 
-        // IT reprints the month; the newer upload replaces the older one.
+        // IT reprints the month: HR deletes the old upload, since an upload never replaces one, then uploads the reprint.
+        DtrUpload::query()->sole()->delete();
         $reprint = app(DtrImporter::class)->import(new PrintedDtr(
             $employee->full_name,
             CarbonImmutable::parse('2026-10-01'),

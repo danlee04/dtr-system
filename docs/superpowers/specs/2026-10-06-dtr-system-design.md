@@ -519,8 +519,12 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   on the list. Removed employees are not matched.
 - **Storage.** `dtr_uploads` (whose, the name as printed, the period, the file
   name, who uploaded) and `dtr_days` (each date with anything printed, in the
-  form's own columns). The PDF is deleted once read. A newer upload replaces an
-  employee's older one whose dates overlap.
+  form's own columns). The PDF is deleted once read. A DTR for someone who already has one for any
+  of its dates is skipped and named in the result, never doubled nor put in
+  place of the one there (HR, 2026-11-18); the same printed name counts, unless
+  two employees share it. To load IT's reprint, HR deletes the old upload first.
+  Choosing the employee for an upload still replaces an older one of theirs.
+  Files of up to 25 MB.
 - **Screen.** DTR uploads, first under Time & Attendance, staff only: upload up
   to 30 PDFs at a time (about 1.5 seconds each), filter the ones that need an
   employee, view a DTR as a row per date, choose the employee, delete. Since
@@ -529,7 +533,9 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   named, so a stray file cannot replace a good upload. The list opens on the
   latest month uploaded; a Month picker and a Needs an employee box sit in its
   toolbar right of the search, applied as they change, with no filter dropdown;
-  the bell's link to the DTRs needing an employee lists every month.
+  the bell's link to the DTRs needing an employee lists every month. The rows
+  run by last name, A to Z; a DTR with no employee yet goes by its printed
+  name, which leads with the surname.
 - **Computation** (added the same day). `DtrCalculator` judges each date of
   an upload against `ScheduleResolver`, every time the DTR is shown; nothing
   is stored, so fixing a schedule, a holiday or leave fixes the month without
@@ -620,8 +626,8 @@ are not trusted.
 - The date lies in the upload's period and has a blank to fill or an HR time;
   otherwise the action is hidden, and Filament neither opens nor runs a hidden
   action. Only the slots that are fillable or already HR's have inputs, and only
-  those are saved. A modal left open while IT's reprint is uploaded saves
-  nothing, since the newer upload replaced the DTR it was opened on.
+  those are saved. A modal left open while HR deletes the upload to load IT's reprint
+  saves nothing, since the DTR it was opened on is gone.
 - A reason, and at least one time ("Enter at least one time").
 - Each time falls between the times before and after it on that row, printed
   or filled, so 5:00 AM typed for 5:00 PM is caught: "5:00 AM is before the

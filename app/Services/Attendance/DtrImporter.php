@@ -16,20 +16,28 @@ use Illuminate\Support\Str;
  * is saved all the same and waits for HR to choose: guessing would put one
  * person's times on another's record.
  *
- * An employee has one DTR for a date. A newer upload replaces any older one
- * whose dates overlap, so uploading the month again after IT reprints it
- * corrects it instead of doubling it.
+ * An employee has one DTR for a date. A DTR for someone who already has one
+ * for any of its dates is skipped, neither doubled nor put in place of the
+ * one there (HR, 2026-11-18): to load IT's reprint, HR deletes the old upload
+ * first. Choosing the employee for an upload still replaces an older one.
  */
 class DtrImporter
 {
     /** @var array<string, list<int>>|null each name, as nameKey() reads it, to the employees who have it */
     private ?array $employeesByName = null;
 
-    public function import(PrintedDtr $dtr, string $fileName, ?User $uploadedBy): DtrUpload
+    /** The saved upload, or null when the person already has a DTR for its dates. */
+    public function import(PrintedDtr $dtr, string $fileName, ?User $uploadedBy): ?DtrUpload
     {
-        return DB::transaction(function () use ($dtr, $fileName, $uploadedBy): DtrUpload {
+        $employeeId = $this->employeeNamed($dtr->employeeName);
+
+        if ($this->alreadyUploaded($dtr, $employeeId)) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($dtr, $fileName, $uploadedBy, $employeeId): DtrUpload {
             $upload = DtrUpload::create([
-                'employee_id' => $this->employeeNamed($dtr->employeeName),
+                'employee_id' => $employeeId,
                 'employee_name' => $dtr->employeeName,
                 'period_start' => $dtr->periodStart,
                 'period_end' => $dtr->periodEnd,
@@ -41,10 +49,28 @@ class DtrImporter
                 $upload->days()->create(['date' => $date, ...$entries]);
             }
 
-            $this->replaceOlder($upload);
-
             return $upload;
         });
+    }
+
+    /**
+     * Whether an upload for any of the DTR's dates is already there for the
+     * employee it names, or for the same printed name. A name two employees
+     * share tells nobody apart, so it is not taken for an upload already there.
+     *
+     * shortcut: two people saving one month at the same moment can both pass; lock the employee's row if HR ever uploads from several desks at once.
+     */
+    private function alreadyUploaded(PrintedDtr $dtr, ?int $employeeId): bool
+    {
+        $nameKey = self::nameKey($dtr->employeeName);
+        $nameIsShared = count($this->employeesByName[$nameKey] ?? []) > 1;
+
+        return DtrUpload::query()
+            ->whereDate('period_start', '<=', $dtr->periodEnd)
+            ->whereDate('period_end', '>=', $dtr->periodStart)
+            ->get(['employee_id', 'employee_name'])
+            ->contains(fn (DtrUpload $upload): bool => ($employeeId !== null && $upload->employee_id === $employeeId)
+                || (! $nameIsShared && self::nameKey($upload->employee_name) === $nameKey));
     }
 
     /** HR says whose DTR an upload is. */

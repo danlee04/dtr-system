@@ -146,6 +146,48 @@ class DtrUploadResourceTest extends TestCase
         $this->assertSame(['LUCAR, DAVE A..pdf'], DtrUpload::query()->pluck('file_name')->all());
     }
 
+    public function test_a_dtr_already_uploaded_is_skipped_and_named(): void
+    {
+        $this->actingAs(User::factory()->create());
+        DtrUpload::factory()->for($this->dave())->create();
+
+        $page = Livewire::test(ListDtrUploads::class)
+            ->callAction('uploadDtrs', data: [
+                'month' => '2026-10',
+                'files' => [
+                    $this->pdf('LUCAR, DAVE A..pdf', (new DtrPdf('LUCAR, DAVE A.'))->contents()),
+                    $this->pdf('SANTOS, ANA.pdf', (new DtrPdf('SANTOS, ANA'))->contents()),
+                ],
+            ]);
+
+        $body = $this->notificationBody();
+        $page->assertNotified('Read 1 DTR');
+        $this->assertStringContainsString('LUCAR, DAVE A..pdf: LUCAR, DAVE A. already has a DTR for October 2026. Delete it first to upload this one.', $body);
+        $this->assertSame(2, DtrUpload::query()->count());
+    }
+
+    public function test_the_upload_takes_a_file_of_up_to_25_mb(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        // 20 MB: past Livewire's own 12 MB and the old 5 MB limit, within the 25 MB HR asked for.
+        Livewire::test(ListDtrUploads::class)
+            ->callAction('uploadDtrs', data: ['month' => '2026-10', 'files' => [UploadedFile::fake()->create('big.pdf', 20 * 1024, 'application/pdf')]])
+            ->assertHasNoFormErrors();
+    }
+
+    public function test_the_list_runs_by_last_name_from_a_to_z(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $cruz = DtrUpload::factory()->for(Employee::factory()->state(['last_name' => 'CRUZ']))->create();
+        // No employee yet: its printed name, surname first, takes the employee's place.
+        $abao = DtrUpload::factory()->unmatched()->create(['employee_name' => 'ABAO, LLOYD B.']);
+        $santos = DtrUpload::factory()->for(Employee::factory()->state(['last_name' => 'SANTOS']))->create();
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertCanSeeTableRecords([$abao, $cruz, $santos], inOrder: true);
+    }
+
     public function test_the_list_opens_on_the_latest_month_and_shows_another_when_chosen(): void
     {
         $this->actingAs(User::factory()->create());
@@ -378,7 +420,7 @@ class DtrUploadResourceTest extends TestCase
         $upload = $this->uploadWithoutTimeOut();
         $page = Livewire::test(ListDtrUploads::class)->mountAction($this->fillIn($upload, '2026-10-02'));
 
-        // The reprint replaces the upload the modal was opened on.
+        // HR deletes the upload the modal was opened on, to upload IT's reprint.
         $upload->delete();
 
         $page->fillForm(['pm_departure' => '17:00', 'reason' => ManualTapReason::ForgotToTap->value])->callMountedAction();

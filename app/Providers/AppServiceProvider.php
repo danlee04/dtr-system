@@ -100,6 +100,10 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // DTR PDFs of up to 25 MB (HR, 2026-11-18); Livewire refuses anything past 12 MB by default.
+        // Each field still sets its own limit, as the photo's 10 MB.
+        config(['livewire.temporary_file_upload.rules' => ['required', 'file', 'max:25600']]);
+
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );

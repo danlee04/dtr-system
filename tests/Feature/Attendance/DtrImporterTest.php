@@ -101,16 +101,35 @@ class DtrImporterTest extends TestCase
         $this->assertNull((new DtrImporter)->import($this->printed('LUCAR, DAVE A.'), 'dtr.pdf', null)->employee_id);
     }
 
-    public function test_a_newer_upload_replaces_the_older_one_for_the_same_dates(): void
+    public function test_an_employee_who_already_has_a_dtr_for_the_dates_is_skipped(): void
     {
         $dave = $this->dave();
         $older = DtrUpload::factory()->for($dave)->has(DtrDay::factory(), 'days')->create();
 
-        $newer = (new DtrImporter)->import($this->printed('LUCAR, DAVE A.'), 'dtr.pdf', null);
+        $skipped = (new DtrImporter)->import($this->printed('LUCAR, DAVE A.'), 'dtr.pdf', null);
 
-        $this->assertModelMissing($older);
-        $this->assertSame([$newer->id], DtrUpload::query()->pluck('id')->all());
-        $this->assertSame(0, DtrDay::query()->where('dtr_upload_id', $older->id)->count());
+        // Neither doubled nor replaced: the upload already there stays as it is.
+        $this->assertNull($skipped);
+        $this->assertSame([$older->id], DtrUpload::query()->pluck('id')->all());
+        $this->assertSame(1, DtrDay::query()->where('dtr_upload_id', $older->id)->count());
+    }
+
+    public function test_a_name_already_uploaded_for_the_dates_is_skipped_even_with_no_employee(): void
+    {
+        DtrUpload::factory()->unmatched()->create(['employee_name' => 'SANTOS, ANA']);
+
+        $this->assertNull((new DtrImporter)->import($this->printed('Santos, Ana'), 'dtr.pdf', null));
+        $this->assertSame(1, DtrUpload::query()->count());
+    }
+
+    public function test_a_name_two_employees_share_is_not_taken_for_an_upload_already_there(): void
+    {
+        // Two people with one name cannot be told apart by it, so the second DTR is still saved for HR to sort out.
+        Employee::factory()->count(2)->create(['last_name' => 'SANTOS', 'first_name' => 'ANA', 'middle_name' => null, 'suffix' => null]);
+        DtrUpload::factory()->unmatched()->create(['employee_name' => 'SANTOS, ANA']);
+
+        $this->assertNotNull((new DtrImporter)->import($this->printed('SANTOS, ANA'), 'dtr.pdf', null));
+        $this->assertSame(2, DtrUpload::query()->count());
     }
 
     public function test_keeps_uploads_for_other_months_and_other_employees(): void
@@ -137,13 +156,15 @@ class DtrImporterTest extends TestCase
         $this->assertModelMissing($older);
     }
 
-    public function test_the_upload_and_the_one_it_replaced_are_in_the_activity_log(): void
+    public function test_the_upload_and_the_one_choosing_the_employee_replaced_are_in_the_activity_log(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
-        $older = DtrUpload::factory()->for($this->dave())->create();
+        $dave = $this->dave();
+        $older = DtrUpload::factory()->for($dave)->create();
 
-        $newer = (new DtrImporter)->import($this->printed('LUCAR, DAVE A.'), 'dtr.pdf', $user);
+        $newer = (new DtrImporter)->import($this->printed('LUCAR, DAVID A.'), 'dtr.pdf', $user);
+        (new DtrImporter)->assign($newer, $dave);
 
         $logged = ['subject_type' => $newer->getMorphClass(), 'causer_id' => $user->id];
         $this->assertDatabaseHas(Activity::class, [...$logged, 'subject_id' => $newer->id, 'event' => 'created']);

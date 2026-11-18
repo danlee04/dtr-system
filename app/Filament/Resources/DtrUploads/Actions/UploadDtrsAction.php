@@ -40,7 +40,7 @@ class UploadDtrsAction extends Action
             ->icon(Heroicon::OutlinedArrowUpTray)
             ->authorize('create', DtrUpload::class)
             ->modalHeading('Upload DTRs')
-            ->modalDescription('The PDFs the IT Unit prints, up to '.self::MAX_FILES.' files at a time. Each DTR goes to the employee whose name it prints, and replaces an older upload of theirs for the same dates.')
+            ->modalDescription('The PDFs the IT Unit prints, up to '.self::MAX_FILES.' files of 25 MB at a time. Each DTR goes to the employee whose name it prints. One already uploaded for the month is skipped: to load a reprint, delete the old upload first.')
             ->modalSubmitActionLabel('Upload')
             ->schema([
                 // A file printed for another month is refused, so a stray one cannot replace a good upload.
@@ -57,7 +57,8 @@ class UploadDtrsAction extends Action
                     ->disk('local')
                     ->directory('dtr-uploads')
                     ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(5120)
+                    // 25 MB, as HR asked; Livewire's own limit is raised to match in AppServiceProvider.
+                    ->maxSize(25600)
                     ->storeFileNamesIn('file_names')
                     // The state is in the browser: without this, a path typed
                     // into it would be read, then deleted, like an upload.
@@ -69,6 +70,7 @@ class UploadDtrsAction extends Action
                 $read = 0;
                 $unmatched = 0;
                 $errors = [];
+                $skipped = [];
 
                 try {
                     foreach ($data['files'] as $path) {
@@ -82,9 +84,17 @@ class UploadDtrsAction extends Action
                                     continue;
                                 }
 
+                                $upload = $importer->import($dtr, $fileName, auth()->user());
+
+                                if ($upload === null) {
+                                    $skipped[] = "{$fileName}: {$dtr->employeeName} already has a DTR for {$dtr->periodStart->format('F Y')}. Delete it first to upload this one.";
+
+                                    continue;
+                                }
+
                                 $read++;
 
-                                if ($importer->import($dtr, $fileName, auth()->user())->employee_id === null) {
+                                if ($upload->employee_id === null) {
                                     $unmatched++;
                                 }
                             }
@@ -96,7 +106,7 @@ class UploadDtrsAction extends Action
                     $disk->delete($data['files']);
                 }
 
-                $this->report($read, $unmatched, $errors);
+                $this->report($read, $unmatched, $errors, $skipped);
             });
     }
 
@@ -116,13 +126,21 @@ class UploadDtrsAction extends Action
         return $months;
     }
 
-    /** @param  list<string>  $errors */
-    private function report(int $read, int $unmatched, array $errors): void
+    /**
+     * @param  list<string>  $errors
+     * @param  list<string>  $skipped
+     */
+    private function report(int $read, int $unmatched, array $errors, array $skipped): void
     {
         $lines = [];
 
         if ($unmatched > 0) {
             $lines[] = "{$unmatched} ".($unmatched === 1 ? 'needs' : 'need').' an employee: no one on the list, or more than one, has the name printed. Choose one on the list.';
+        }
+
+        if ($skipped !== []) {
+            $lines[] = 'Already uploaded, skipped:';
+            array_push($lines, ...$skipped);
         }
 
         if ($errors !== []) {
@@ -132,16 +150,20 @@ class UploadDtrsAction extends Action
 
         $notification = Notification::make()
             ->status(match (true) {
-                $read === 0 => 'danger',
-                $errors !== [] || $unmatched > 0 => 'warning',
+                $read === 0 && $errors !== [] => 'danger',
+                $errors !== [] || $skipped !== [] || $unmatched > 0 => 'warning',
                 default => 'success',
             })
             // Not Str::plural(): it keeps the capitals and writes "DTRS".
-            ->title($read === 0 ? 'Nothing was read' : "Read {$read} ".($read === 1 ? 'DTR' : 'DTRs'))
+            ->title(match (true) {
+                $read > 0 => "Read {$read} ".($read === 1 ? 'DTR' : 'DTRs'),
+                $errors === [] && $skipped !== [] => 'Nothing new: every DTR was already uploaded',
+                default => 'Nothing was read',
+            })
             ->body($lines === [] ? null : $this->listOf($lines));
 
-        // A list of files to fix stays until HR closes it.
-        if ($errors !== []) {
+        // A list of files to fix, or skipped, stays until HR closes it.
+        if ($errors !== [] || $skipped !== []) {
             $notification->persistent();
         }
 

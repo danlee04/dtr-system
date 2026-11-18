@@ -75,7 +75,11 @@ class DtrUploadsTable
                     ->description(fn (DtrUpload $record): ?string => $record->uploadedBy?->name)
                     ->sortable(),
             ])
-            ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('created_at')->orderByDesc('id'))
+            // By last name A–Z (HR, 2026-11-18); a DTR with no employee yet by its printed name, which leads with the surname.
+            ->defaultSort(fn (Builder $query): Builder => $query
+                ->orderByRaw('coalesce((select last_name from employees where employees.id = dtr_uploads.employee_id), dtr_uploads.employee_name)')
+                ->orderBy('employee_name')
+                ->orderBy('id'))
             ->filters([
                 // The month being worked on, the latest uploaded, so it does not sink under older months.
                 SelectFilter::make('month')
