@@ -17,6 +17,7 @@ class SchedulesTable
         return $table
             ->columns([
                 TextColumn::make('code')
+                    ->wrap(false)
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('name')
@@ -27,7 +28,9 @@ class SchedulesTable
                     ->formatStateUsing(fn (int $state): string => Schedule::WEEKDAYS[$state])
                     ->placeholder('Roster only'),
                 TextColumn::make('leave_days')
-                    ->label('Leave day'),
+                    ->label('Leave day')
+                    // Steps aside on a laptop or tablet, so the table fits.
+                    ->visibleFrom('xl'),
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean(),

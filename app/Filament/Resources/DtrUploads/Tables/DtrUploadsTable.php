@@ -44,20 +44,27 @@ class DtrUploadsTable
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
                     ->placeholder('Needs an employee')
+                    // The printed name says whose it may be; on a laptop its own column is hidden.
+                    ->description(fn (DtrUpload $record): ?string => $record->employee_id === null ? $record->employee_name : null)
+                    ->wrap(false)
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
                         'employee',
                         fn (Builder $employee): Builder => $employee->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"),
                     )),
+                // The least-used columns step aside on a laptop or tablet; the search still covers the name.
                 TextColumn::make('employee_name')
                     ->label('Name on the DTR')
-                    ->searchable(),
+                    ->searchable()
+                    ->visibleFrom('2xl'),
                 TextColumn::make('period_start')
                     ->label('Month')
                     ->state(fn (DtrUpload $record): string => $record->period())
-                    ->sortable(),
+                    ->sortable()
+                    ->visibleFrom('xl'),
                 TextColumn::make('days_count')
                     ->label('Days with entries')
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->visibleFrom('2xl'),
                 TextColumn::make('late_and_undertime')
                     ->label('Late + undertime')
                     ->state(fn (DtrUpload $record): ?string => $record->isComputed() ? ($record->computed()->late + $record->computed()->undertime).' min' : null)
@@ -73,7 +80,8 @@ class DtrUploadsTable
                     ->label('Uploaded')
                     ->dateTime('M j, Y g:i A')
                     ->description(fn (DtrUpload $record): ?string => $record->uploadedBy?->name)
-                    ->sortable(),
+                    ->sortable()
+                    ->visibleFrom('xl'),
             ])
             // By last name A–Z (HR, 2026-11-18); a DTR with no employee yet by its printed name, which leads with the surname.
             ->defaultSort(fn (Builder $query): Builder => $query

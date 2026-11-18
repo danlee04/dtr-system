@@ -146,7 +146,19 @@ decoration.
   2. Breadcrumbs, with header actions on the right.
   3. One section or table per job. A section's filters sit in its header
      (`afterHeader`), each with a visible label.
-- **Wide tables** scroll sideways inside their frame, with the name column fixed.
+- **Every screen fits a laptop or a tablet** (HR, 2026-11-18): no sideways
+  scroll at 1536, 1366, 1280, 1024 or 768px. The content is narrowest at
+  1024px, about 700px, since the sidebar is still there.
+  - Table text and headings wrap (`configureTables()` in `AppServiceProvider`);
+    names and dates keep to one line (`->wrap(false)`).
+  - A table still too wide hides its least-used columns with `->visibleFrom('xl')`
+    or `'2xl'`; the search still covers a hidden column.
+  - Our grids are tighter below 1280px (smaller padding, inputs and type; a long
+    name may take two lines) and roomier from 1280px up (`min-width: 80rem`).
+  - A DTR's day grid shows O.T. only when the month has some, lets a date break
+    after its weekday ("Thu," over "Oct 1"), and keeps its Day column fixed.
+- **Wide tables** that still cannot fit, Duty Roster's 31 days, scroll sideways
+  inside their frame, with the name column fixed.
 - **Long lists** come a page at a time: 25 rows by default (10, 25, 50, 100) on
   our grids. Filament tables keep Filament's pagination.
 
@@ -469,7 +481,7 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 ### Before shipping a screen
 
 - Light and dark.
-- 1024px, 1400px and a phone.
+- 1536, 1366, 1280, 1024 and 768px with no sideways scroll, and a phone.
 - A keyboard-only pass.
 - Contrast of any new colour pair.
 
@@ -479,6 +491,10 @@ None open: on 2026-11-04 every screen was brought in line with this guide. List 
 new deviation here, with the page, when one is found and not fixed at once.
 
 Intentional exceptions:
+
+- **Duty Roster** scrolls sideways at every width up to 1536px: 31 day boxes
+  cannot shrink below a usable size. The names stay fixed. A half-month view
+  would fit, if the page stays.
 
 - **Paper documents** (the HRM-07 leave form) use raw hex and Arial: they are
   printed forms, not screens.

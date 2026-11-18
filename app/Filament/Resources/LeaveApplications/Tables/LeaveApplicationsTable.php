@@ -25,9 +25,12 @@ class LeaveApplicationsTable
                 TextColumn::make('created_at')
                     ->label('Filed')
                     ->date('M j, Y')
-                    ->sortable(),
+                    ->sortable()
+                    // Filed and without pay step aside on a laptop or tablet, so the table fits.
+                    ->visibleFrom('xl'),
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
+                    ->wrap(false)
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
                         'employee',
                         fn (Builder $employee): Builder => $employee->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"),
@@ -37,13 +40,15 @@ class LeaveApplicationsTable
                     ->formatStateUsing(fn (LeaveType $state): string => $state->value),
                 TextColumn::make('dates')
                     ->label('Dates')
-                    ->state(fn (LeaveApplication $record): string => $record->dates()),
+                    ->state(fn (LeaveApplication $record): string => $record->dates())
+                    ->wrap(false),
                 TextColumn::make('days')
                     ->label('Days')
                     ->alignEnd(),
                 TextColumn::make('days_without_pay')
                     ->label('Without pay')
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->visibleFrom('xl'),
                 TextColumn::make('status')
                     ->badge(),
             ])

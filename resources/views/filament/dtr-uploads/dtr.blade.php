@@ -57,7 +57,7 @@
                     <th></th>
                     <th colspan="2" scope="colgroup">A.M.</th>
                     <th colspan="2" scope="colgroup">P.M.</th>
-                    <th colspan="5"></th>
+                    <th colspan="{{ $hasOvertime ? 5 : 4 }}"></th>
                 </tr>
                 <tr>
                     <th scope="col" class="dtr-grid-start">Day</th>
@@ -65,9 +65,12 @@
                     <th scope="col" class="dtr-grid-start">Departure</th>
                     <th scope="col" class="dtr-grid-start">Arrival</th>
                     <th scope="col" class="dtr-grid-start">Departure</th>
-                    <th scope="col" class="dtr-grid-start">O.T.</th>
+                    @if ($hasOvertime)
+                        <th scope="col" class="dtr-grid-start">O.T.</th>
+                    @endif
                     <th scope="col">Late (min)</th>
-                    <th scope="col">Undertime (min)</th>
+                    {{-- The soft hyphen lets a narrow column break the word as "Under-time". --}}
+                    <th scope="col">Under&shy;time (min)</th>
                     <th scope="col" class="dtr-grid-start">Status</th>
                     <th scope="col" class="dtr-grid-start">Notes</th>
                 </tr>
@@ -83,13 +86,15 @@
                                 @if ($trigger?->isVisible())
                                     {{ $trigger }}
                                 @elseif ($cell['filled'] !== null)
-                                    <span @if ($cell['printed'] !== null) title="Printed {{ $cell['printed'] }}" @endif>{{ $cell['filled'] }} <span class="dtr-grid-hr-tag">HR</span></span>
+                                    <span class="dtr-grid-hr" @if ($cell['printed'] !== null) title="Printed {{ $cell['printed'] }}" @endif><span class="dtr-grid-time">{{ $cell['filled'] }}</span> <span class="dtr-grid-hr-tag">HR</span></span>
                                 @else
                                     {{ $cell['printed'] }}
                                 @endif
                             </td>
                         @endforeach
-                        <td class="dtr-record-time">{{ $row['ot'] }}</td>
+                        @if ($hasOvertime)
+                            <td class="dtr-record-time">{{ $row['ot'] }}</td>
+                        @endif
                         <td class="dtr-grid-value">{{ $row['late'] }}</td>
                         <td class="dtr-grid-value">{{ $row['undertime'] }}</td>
                         <td>

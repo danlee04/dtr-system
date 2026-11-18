@@ -28,6 +28,7 @@ class EmployeesTable
                 TextColumn::make('last_name')
                     ->label('Name')
                     ->formatStateUsing(fn (Employee $record): string => $record->full_name)
+                    ->wrap(false)
                     ->searchable(['last_name', 'first_name'])
                     // Not sortable(['last_name', 'first_name']): Filament 5.9 sorts by the array's last column first.
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query
@@ -38,13 +39,16 @@ class EmployeesTable
                 TextColumn::make('employment_status')
                     ->label('Status')
                     ->badge(),
+                // The least-used columns step aside on a laptop or tablet; the search still covers them.
                 TextColumn::make('biometric_id')
                     ->label('Biometric ID')
                     ->placeholder('—')
-                    ->searchable(),
+                    ->searchable()
+                    ->visibleFrom('2xl'),
                 IconColumn::make('is_active')
                     ->label('Active')
-                    ->boolean(),
+                    ->boolean()
+                    ->visibleFrom('xl'),
             ])
             ->defaultSort('last_name')
             ->filters([

@@ -186,11 +186,18 @@
     }
 
     /* The dashboard's figure size. */
+    /* A size smaller below 1280px, so "12 hrs 27 min" stays on one line in a card on a laptop or a tablet. */
     .dtr-profile-card-value {
-        font-size: 1.75rem;
+        font-size: 1.375rem;
         line-height: 1.15;
         font-weight: var(--font-weight-semibold);
         font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-profile-card-value {
+            font-size: 1.75rem;
+        }
     }
 
     .dtr-profile-card-detail {
@@ -307,9 +314,10 @@
         font-weight: var(--font-weight-medium);
     }
 
+    /* At least 11rem a card: three to a row on a tablet rather than four squeezed. */
     .dtr-record .dtr-profile-cards,
     .dtr-dash .dtr-profile-cards {
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
     }
 
     /* A line that says what to do, above what it is about: "Something wrong? Bring your signed DTR to HR." */
@@ -361,9 +369,76 @@
         gap: calc(var(--spacing) * 2);
     }
 
-    .dtr-record-days td.dtr-record-notes {
-        min-width: 12rem;
+    /* A time HR may click reads at the grid's size, not the link's own, so its column is no wider than a printed one. */
+    .dtr-record-days .fi-link {
+        font-size: inherit;
+    }
+
+    /* In a narrow column the "HR" tag drops under its time; the time itself never breaks. */
+    .dtr-record-days .dtr-grid-hr {
         white-space: normal;
+    }
+
+    .dtr-record-days .dtr-grid-time {
+        white-space: nowrap;
+    }
+
+    /* A narrow column wraps the badges onto lines; it never cuts "Official business" short. */
+    .dtr-record-days .dtr-grid-badges > * {
+        flex: none;
+    }
+
+    /* Where the grid still scrolls sideways, as in the DTR modal on a portrait tablet, the dates stay in view. */
+    .dtr-record-days tr > :first-child {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 1;
+        box-shadow: inset -1px 0 0 var(--grid-line);
+    }
+
+    /* So the grid fits a laptop or a tablet: headings, notes, and the hours after a day's minutes may take a second line. */
+    .dtr-record-days thead th,
+    .dtr-record-days td.dtr-grid-value {
+        white-space: normal;
+    }
+
+    /* Below 1280px the cells tighten, the text is a size smaller, and a date may take two lines, "Thu," over "Oct 1". */
+    .dtr-grid-table.dtr-record-days {
+        font-size: 0.8125rem;
+    }
+
+    .dtr-record-days th,
+    .dtr-record-days td {
+        padding-inline: 0.375rem;
+    }
+
+    .dtr-record-days tbody th.dtr-record-date {
+        min-width: 4rem;
+        white-space: normal;
+    }
+
+    .dtr-record-days td.dtr-record-notes {
+        min-width: 5.5rem;
+        white-space: normal;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-grid-table.dtr-record-days {
+            font-size: 0.875rem;
+        }
+
+        .dtr-record-days th,
+        .dtr-record-days td {
+            padding-inline: 0.75rem;
+        }
+
+        .dtr-record-days tbody th.dtr-record-date {
+            white-space: nowrap;
+        }
+
+        .dtr-record-days td.dtr-record-notes {
+            min-width: 10rem;
+        }
     }
 
     .dtr-record-legend {

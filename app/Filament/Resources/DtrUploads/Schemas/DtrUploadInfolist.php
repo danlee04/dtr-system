@@ -82,6 +82,7 @@ class DtrUploadInfolist
     {
         $computed = $record->isComputed() ? $record->computed() : null;
         $uploaded = 'Uploaded '.$record->created_at->format('M j, Y').($record->uploadedBy ? " by {$record->uploadedBy->name}" : '');
+        $rows = self::rows($record, $computed);
 
         return [
             'upload' => $record,
@@ -94,7 +95,9 @@ class DtrUploadInfolist
                 $record->employee_id === null => 'Choose the employee, and the app computes this DTR against their schedule.',
                 default => 'Job order and contract of service staff earn no leave credits, so their DTR is shown as printed and not computed.',
             },
-            'rows' => self::rows($record, $computed),
+            'rows' => $rows,
+            // Most months have no O.T.; its empty column would only push the grid past a laptop's screen.
+            'hasOvertime' => array_any($rows, fn (array $row): bool => $row['ot'] !== null),
         ];
     }
 
@@ -161,7 +164,8 @@ class DtrUploadInfolist
 
             $rows[] = [
                 'date' => $key,
-                'label' => $date->format('D, M j'),
+                // "Oct 1" holds together by a no-break space, so a narrow column breaks the date only after the weekday.
+                'label' => $date->format('D, M')."\u{00A0}".$date->format('j'),
                 'off' => in_array($result?->status, self::OFF, true),
                 'absent' => $result?->status === AttendanceStatus::Absent,
                 'slots' => $slots,
@@ -206,12 +210,15 @@ class DtrUploadInfolist
         return $hours.($hours === 1 ? ' hr' : ' hrs').($minutes % 60 > 0 ? ' '.($minutes % 60).' min' : '');
     }
 
-    /** A day's minutes, with the hours beside them from an hour up: "240 (4 hrs)" (HR, 2026-11-18). None is blank. */
+    /**
+     * A day's minutes, with the hours beside them from an hour up: "240 (4 hrs)" (HR, 2026-11-18). None is blank.
+     * Each number keeps its unit by a no-break space, so a narrow column breaks "(3 hrs 15 min)" only between the two.
+     */
     private static function minutes(?int $minutes): ?string
     {
         return match (true) {
             ! $minutes => null,
-            $minutes >= 60 => "{$minutes} (".self::hours($minutes).')',
+            $minutes >= 60 => "{$minutes} (".preg_replace('/(\d) /', "\$1\u{00A0}", self::hours($minutes)).')',
             default => (string) $minutes,
         };
     }

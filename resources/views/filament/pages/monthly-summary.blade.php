@@ -43,23 +43,12 @@
 
             <div class="dtr-grid-wrap is-full">
                 <table class="dtr-grid-table">
+                    {{-- The office under the name and the times under the hours, as on Duty Roster, so the report fits a laptop or a tablet. --}}
                     <thead>
-                        <tr class="dtr-grid-group">
-                            <th scope="col" class="dtr-grid-name"></th>
-                            <th scope="col"></th>
-                            <th scope="colgroup" colspan="2" class="dtr-grid-divider">Late</th>
-                            <th scope="colgroup" colspan="2" class="dtr-grid-divider">Undertime</th>
-                            <th scope="col" class="dtr-grid-divider"></th>
-                            <th scope="col"></th>
-                            <th scope="col" class="dtr-grid-divider"></th>
-                        </tr>
                         <tr>
                             <th scope="col" class="dtr-grid-name">Employee</th>
-                            <th scope="col" class="dtr-grid-start">Office</th>
-                            <th scope="col" class="dtr-grid-divider">Times</th>
-                            <th scope="col">Hours</th>
-                            <th scope="col" class="dtr-grid-divider">Times</th>
-                            <th scope="col">Hours</th>
+                            <th scope="col" class="dtr-grid-divider">Late</th>
+                            <th scope="col" class="dtr-grid-divider">Undertime</th>
                             <th scope="col" class="dtr-grid-divider">Absent<span class="dtr-grid-sub">days</span>
                             </th>
                             <th scope="col">Equivalent<span class="dtr-grid-sub">days of leave</span></th>
@@ -71,13 +60,18 @@
                             <tr wire:key="summary-{{ $employee->id }}" @class(['is-muted' => $dtr === null])>
                                 <th scope="row" class="dtr-grid-name">
                                     {{ $employee->full_name }}
-                                    <span class="dtr-grid-sub">{{ $employee->employee_number }}</span>
+                                    <span class="dtr-grid-sub">{{ $employee->employee_number }} · {{ $employee->office->name }}</span>
                                 </th>
-                                <td>{{ $employee->office->name }}</td>
-                                <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->lateCount ?? '—' }}</td>
-                                <td class="dtr-grid-value">{{ $dtr !== null ? DtrUploadInfolist::hours($dtr->late) : '—' }}</td>
-                                <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->undertimeCount ?? '—' }}</td>
-                                <td class="dtr-grid-value">{{ $dtr !== null ? DtrUploadInfolist::hours($dtr->undertime) : '—' }}</td>
+                                @foreach ([[$dtr?->late, $dtr?->lateCount], [$dtr?->undertime, $dtr?->undertimeCount]] as [$minutes, $times])
+                                    <td class="dtr-grid-value dtr-grid-divider">
+                                        @if ($dtr === null)
+                                            —
+                                        @else
+                                            {{ DtrUploadInfolist::hours($minutes) }}
+                                            <span class="dtr-grid-sub">{{ $times }} {{ str('time')->plural($times) }}</span>
+                                        @endif
+                                    </td>
+                                @endforeach
                                 <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->absent ?? '—' }}</td>
                                 <td class="dtr-grid-value">{{ $dtr?->dayEquivalent ?? '—' }}</td>
                                 <td class="dtr-grid-divider">

@@ -57,7 +57,7 @@ class FillDayAction extends Action
                 // Both parts are built here; neither is text anyone typed.
                 return $tap === null
                     ? DtrUploadInfolist::clock(self::printedTime($record, $arguments)) ?? 'Add'
-                    : new HtmlString(e(DtrUploadInfolist::clock($tap->time)).' <span class="dtr-grid-hr-tag">HR</span>');
+                    : new HtmlString('<span class="dtr-grid-time">'.e(DtrUploadInfolist::clock($tap->time)).'</span> <span class="dtr-grid-hr-tag">HR</span>');
             })
             ->icon(fn (DtrUpload $record, array $arguments): ?Heroicon => self::filledTap($record, $arguments) === null && self::printedTime($record, $arguments) === null ? Heroicon::Plus : null)
             ->tooltip(fn (DtrUpload $record, array $arguments): ?string => ($tap = self::filledTap($record, $arguments))

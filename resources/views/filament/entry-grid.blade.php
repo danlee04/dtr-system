@@ -110,10 +110,18 @@
         font-size: 0.875rem;
     }
 
+    /* Small screens first: tighter cells so a grid fits a laptop or a tablet (HR, 2026-11-18); roomier from 1280px. */
     .dtr-grid-table th,
     .dtr-grid-table td {
-        padding: 0.375rem 0.75rem;
+        padding: 0.375rem 0.5rem;
         background-color: var(--grid-bg);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-grid-table th,
+        .dtr-grid-table td {
+            padding-inline: 0.75rem;
+        }
     }
 
     /* Many narrow columns, as a month of days, with 8px between neighbouring inputs so a click lands on the right day. */
@@ -173,11 +181,23 @@
         position: sticky;
         left: 0;
         z-index: 1;
-        min-width: 14rem;
+        min-width: 9rem;
         padding-inline: 0.75rem;
         text-align: start;
-        white-space: nowrap;
         box-shadow: inset -1px 0 0 var(--grid-line);
+    }
+
+    /* A long name may take two lines on a small screen; from 1280px it keeps to one. */
+    @media (min-width: 80rem) {
+        .dtr-grid-table .dtr-grid-name {
+            min-width: 12rem;
+            white-space: nowrap;
+        }
+    }
+
+    /* A long office under the name wraps, so it does not widen the grid past a laptop's screen. */
+    .dtr-grid-table .dtr-grid-name .dtr-grid-sub {
+        white-space: normal;
     }
 
     /* Small grey text under a name or a heading: an employee number, a limit, a weekday. */
@@ -212,10 +232,17 @@
         border-inline-start: 1px solid var(--grid-line);
     }
 
+    /* Room for "123.456"; a little more from 1280px. */
     .dtr-grid-input {
-        width: 5.5rem;
+        width: 4.5rem;
         text-align: end;
         font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-grid-input {
+            width: 5.5rem;
+        }
     }
 
     /* Fills its day's column, so a wide screen gives bigger boxes; never narrower than a code. */
@@ -230,8 +257,6 @@
     .dtr-grid-value {
         text-align: end;
         font-variant-numeric: tabular-nums;
-        /* "240 (4 hrs)" stays on one line. */
-        white-space: nowrap;
     }
 
     .dtr-grid-changed {

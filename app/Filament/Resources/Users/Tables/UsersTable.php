@@ -17,6 +17,7 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->wrap(false)
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('email')
@@ -25,7 +26,9 @@ class UsersTable
                     ->badge(),
                 TextColumn::make('employee.full_name')
                     ->label('Linked employee')
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    // Steps aside on a laptop or tablet, so the table fits.
+                    ->visibleFrom('xl'),
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean(),

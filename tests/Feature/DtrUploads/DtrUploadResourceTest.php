@@ -269,7 +269,7 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
             // October 2026 has 22 weekdays; only the 1st has taps. Each of the 21 absent days is 8 hours undertime too.
-            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', '480 (8 hrs)', 'Present', 'Absent']);
+            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', "480 (8\u{00A0}hrs)", 'Present', 'Absent']);
     }
 
     public function test_a_days_minutes_from_an_hour_up_show_the_hours_beside_them(): void
@@ -282,7 +282,8 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($upload))
-            ->assertMountedActionModalSee(['73 (1 hr 13 min)', '240 (4 hrs)']);
+            // Each number keeps its unit (a no-break space), so a narrow column breaks only between them.
+            ->assertMountedActionModalSee(["73 (1\u{00A0}hr 13\u{00A0}min)", "240 (4\u{00A0}hrs)"]);
     }
 
     public function test_the_list_shows_each_dtrs_late_and_undertime(): void
@@ -317,7 +318,7 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($upload))
             // Oct 31 printed nothing, and still has its row, as on paper.
-            ->assertMountedActionModalSee(['Thu, Oct 1', '5:13 PM', 'Seminar', 'Sat, Oct 31']);
+            ->assertMountedActionModalSee(["Thu, Oct\u{00A0}1", '5:13 PM', 'Seminar', "Sat, Oct\u{00A0}31"]);
     }
 
     public function test_a_bare_number_printed_in_a_days_remarks_is_not_shown(): void

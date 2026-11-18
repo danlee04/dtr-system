@@ -20,6 +20,7 @@ class DayExceptionsTable
             ->columns([
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
+                    ->wrap(false)
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
                         'employee',
                         fn (Builder $employee): Builder => $employee->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"),
@@ -29,14 +30,18 @@ class DayExceptionsTable
                 TextColumn::make('date_from')
                     ->label('Dates')
                     ->state(fn (DayException $record): string => $record->dates())
+                    ->wrap(false)
                     ->sortable(),
                 TextColumn::make('reference_no')
                     ->label('Reference no.')
                     ->placeholder('—')
-                    ->searchable(),
+                    ->searchable()
+                    // These two step aside on a laptop or tablet, so the table fits; the search still covers the reference.
+                    ->visibleFrom('xl'),
                 TextColumn::make('remarks')
                     ->placeholder('—')
-                    ->limit(40),
+                    ->limit(40)
+                    ->visibleFrom('xl'),
             ])
             ->defaultSort('date_from', 'desc')
             ->filters([

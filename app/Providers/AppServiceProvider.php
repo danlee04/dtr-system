@@ -12,6 +12,8 @@ use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Text;
+use Filament\Tables\Columns\Column;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -37,6 +39,19 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureModals();
         $this->configureFields();
+        $this->configureTables();
+    }
+
+    /**
+     * Every table fits a laptop or a tablet (HR, 2026-11-18): a long name or
+     * heading wraps onto a second line instead of pushing the table wider than
+     * the screen. A table still too wide hides its least-used columns on small
+     * screens, column by column.
+     */
+    protected function configureTables(): void
+    {
+        Column::configureUsing(fn (Column $column) => $column->wrapHeader());
+        TextColumn::configureUsing(fn (TextColumn $column) => $column->wrap());
     }
 
     /**
