@@ -523,7 +523,13 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   employee's older one whose dates overlap.
 - **Screen.** DTR uploads, first under Time & Attendance, staff only: upload up
   to 30 PDFs at a time (about 1.5 seconds each), filter the ones that need an
-  employee, view a DTR as a row per date, choose the employee, delete.
+  employee, view a DTR as a row per date, choose the employee, delete. Since
+  2026-11-18 an upload names its month (this month and the eleven before it;
+  last month by default), and a DTR printed for another month is refused and
+  named, so a stray file cannot replace a good upload. The list opens on the
+  latest month uploaded; a Month picker and a Needs an employee box sit in its
+  toolbar right of the search, applied as they change, with no filter dropdown;
+  the bell's link to the DTRs needing an employee lists every month.
 - **Computation** (added the same day). `DtrCalculator` judges each date of
   an upload against `ScheduleResolver`, every time the DTR is shown; nothing
   is stored, so fixing a schedule, a holiday or leave fixes the month without

@@ -7,6 +7,7 @@ use App\Enums\EmploymentStatus;
 use App\Enums\ExceptionType;
 use App\Enums\LeaveCoverage;
 use App\Enums\ManualTapReason;
+use App\Filament\Resources\DtrUploads\DtrUploadResource;
 use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
 use App\Models\DayException;
 use App\Models\DtrDay;
@@ -33,6 +34,8 @@ class DtrUploadResourceTest extends TestCase
         parent::setUp();
 
         Storage::fake('local');
+        // October's DTRs are out, so the upload's month starts on October.
+        $this->travelTo('2026-11-03 09:00');
     }
 
     private function pdf(string $fileName, string $contents): UploadedFile
@@ -122,6 +125,54 @@ class DtrUploadResourceTest extends TestCase
         $this->assertStringContainsString('&lt;script&gt;payslip.pdf: It has no &quot;(Employee Name)&quot; line', $body);
         $this->assertStringNotContainsString('<script>', $body);
         $this->assertSame(['dtr.pdf'], DtrUpload::query()->pluck('file_name')->all());
+    }
+
+    public function test_a_dtr_printed_for_another_month_than_the_one_chosen_is_refused(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $page = Livewire::test(ListDtrUploads::class)
+            ->callAction('uploadDtrs', data: [
+                'month' => '2026-10',
+                'files' => [
+                    $this->pdf('LUCAR, DAVE A..pdf', (new DtrPdf('LUCAR, DAVE A.'))->contents()),
+                    $this->pdf('SANTOS, ANA.pdf', (new DtrPdf('SANTOS, ANA', 'SEPTEMBER 1 - 30, 2026'))->contents()),
+                ],
+            ]);
+
+        $body = $this->notificationBody();
+        $page->assertNotified('Read 1 DTR');
+        $this->assertStringContainsString('SANTOS, ANA.pdf: It prints September 2026, not October 2026.', $body);
+        $this->assertSame(['LUCAR, DAVE A..pdf'], DtrUpload::query()->pluck('file_name')->all());
+    }
+
+    public function test_the_list_opens_on_the_latest_month_and_shows_another_when_chosen(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $october = DtrUpload::factory()->create();
+        $september = DtrUpload::factory()->create(['period_start' => '2026-09-01', 'period_end' => '2026-09-30']);
+
+        // The month picker sits in the toolbar and applies as it changes, with no Apply button.
+        $this->get(DtrUploadResource::getUrl('index'))
+            ->assertSee(['wire:model.live="tableFilters.month.value"', 'wire:model.live="tableFilters.needs_employee.isActive"', 'September 2026'], false);
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertCanSeeTableRecords([$october])
+            ->assertCanNotSeeTableRecords([$september])
+            ->set('tableFilters.month.value', '2026-09')
+            ->assertCanSeeTableRecords([$september])
+            ->assertCanNotSeeTableRecords([$october]);
+    }
+
+    public function test_the_bells_link_lists_the_dtrs_needing_an_employee_from_every_month(): void
+    {
+        $this->actingAs(User::factory()->create());
+        DtrUpload::factory()->create();
+        $september = DtrUpload::factory()->unmatched()->create(['period_start' => '2026-09-01', 'period_end' => '2026-09-30']);
+
+        Livewire::withQueryParams(['filters' => ['needs_employee' => ['isActive' => true]]])
+            ->test(ListDtrUploads::class)
+            ->assertCanSeeTableRecords([$september]);
     }
 
     public function test_hr_chooses_the_employee_for_a_dtr_whose_name_matched_nobody(): void

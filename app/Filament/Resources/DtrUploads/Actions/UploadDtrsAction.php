@@ -6,8 +6,10 @@ use App\Models\DtrUpload;
 use App\Services\Attendance\DtrImporter;
 use App\Services\Attendance\DtrPdfReader;
 use App\Services\Attendance\UnreadableDtr;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +43,13 @@ class UploadDtrsAction extends Action
             ->modalDescription('The PDFs the IT Unit prints, up to '.self::MAX_FILES.' files at a time. Each DTR goes to the employee whose name it prints, and replaces an older upload of theirs for the same dates.')
             ->modalSubmitActionLabel('Upload')
             ->schema([
+                // A file printed for another month is refused, so a stray one cannot replace a good upload.
+                Select::make('month')
+                    ->options(fn (): array => self::months())
+                    ->default(fn (): string => CarbonImmutable::today()->subMonthNoOverflow()->format('Y-m'))
+                    ->selectablePlaceholder(false)
+                    ->helperText('Each DTR must be printed for this month.')
+                    ->required(),
                 FileUpload::make('files')
                     ->label('DTR files (PDF)')
                     ->multiple()
@@ -67,6 +76,12 @@ class UploadDtrsAction extends Action
 
                         try {
                             foreach ($reader->read($disk->path($path)) as $dtr) {
+                                if ($dtr->periodStart->format('Y-m') !== $data['month']) {
+                                    $errors[] = "{$fileName}: It prints {$dtr->periodStart->format('F Y')}, not ".self::months()[$data['month']].'.';
+
+                                    continue;
+                                }
+
                                 $read++;
 
                                 if ($importer->import($dtr, $fileName, auth()->user())->employee_id === null) {
@@ -83,6 +98,22 @@ class UploadDtrsAction extends Action
 
                 $this->report($read, $unmatched, $errors);
             });
+    }
+
+    /**
+     * This month and the eleven before it, newest first: "2026-10" => "October 2026".
+     *
+     * @return array<string, string>
+     */
+    private static function months(): array
+    {
+        $months = [];
+
+        for ($month = CarbonImmutable::today()->startOfMonth(), $i = 0; $i < 12; $month = $month->subMonth(), $i++) {
+            $months[$month->format('Y-m')] = $month->format('F Y');
+        }
+
+        return $months;
     }
 
     /** @param  list<string>  $errors */

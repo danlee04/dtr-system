@@ -6,6 +6,7 @@ use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
 use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Services\Attendance\DtrImporter;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
@@ -13,12 +14,28 @@ use Filament\Forms\Components\Select;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class DtrUploadsTable
 {
+    /**
+     * The months with an upload, latest first: "2026-10" => "October 2026".
+     *
+     * @return array<string, string>
+     */
+    public static function months(): array
+    {
+        return DtrUpload::query()
+            ->orderByDesc('period_start')
+            ->get(['period_start'])
+            ->mapWithKeys(fn (DtrUpload $upload): array => [$upload->period_start->format('Y-m') => $upload->period_start->format('F Y')])
+            ->all();
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -60,10 +77,25 @@ class DtrUploadsTable
             ])
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('created_at')->orderByDesc('id'))
             ->filters([
+                // The month being worked on, the latest uploaded, so it does not sink under older months.
+                SelectFilter::make('month')
+                    ->options(fn (): array => self::months())
+                    ->default(fn (): ?string => array_key_first(self::months()))
+                    // The value comes from the browser: anything but "2026-10" filters nothing.
+                    ->query(fn (Builder $query, array $data): Builder => preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', (string) ($data['value'] ?? '')) !== 1
+                        ? $query
+                        : $query
+                            ->whereDate('period_start', '>=', CarbonImmutable::parse("{$data['value']}-01"))
+                            ->whereDate('period_start', '<=', CarbonImmutable::parse("{$data['value']}-01")->endOfMonth())),
                 Filter::make('needs_employee')
                     ->label('Needs an employee')
                     ->query(fn (Builder $query): Builder => $query->whereNull('employee_id')),
             ])
+            // Shown in the toolbar at the right (filament.dtr-uploads.toolbar-filters), applied as they change.
+            ->filtersLayout(FiltersLayout::Hidden)
+            ->deferFilters(false)
+            // The toolbar already shows them; a row of the same filters under it would say it twice.
+            ->hiddenFilterIndicators()
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading(fn (DtrUpload $record): string => DtrUploadInfolist::heading($record))

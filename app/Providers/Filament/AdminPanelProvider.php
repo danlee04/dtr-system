@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\NavigationGroup;
 use App\Filament\Pages\Auth\ChangePassword;
+use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
 use App\Models\DtrUpload;
 use App\Models\LeaveApplication;
 use Filament\Http\Middleware\Authenticate;
@@ -15,6 +16,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\Tables\View\TablesRenderHook;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -43,6 +45,8 @@ class AdminPanelProvider extends PanelProvider
             ->userMenu(false)
             ->renderHook(PanelsRenderHook::SIDEBAR_LOGO_AFTER, fn (): View => view('filament.theme-toggle'))
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): View => view('filament.sidebar-user'))
+            // The DTR list's Month and Needs an employee filters, in its toolbar right of the search.
+            ->renderHook(TablesRenderHook::TOOLBAR_SEARCH_AFTER, fn (): View => view('filament.dtr-uploads.toolbar-filters'), scopes: ListDtrUploads::class)
             // The topbar's right side, for staff: what is waiting for HR, and the month's main job.
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, fn (): View|string => auth()->user()?->isStaff() ? view('filament.topbar-actions', [
                 'pendingLeave' => LeaveApplication::query()->where('status', LeaveApplicationStatus::Pending)->count(),

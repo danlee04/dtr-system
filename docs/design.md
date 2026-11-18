@@ -184,7 +184,9 @@ decoration.
   tables, with their search, filters, sorting, pagination and row actions. The
   search sits at the left of a table's toolbar, lined up with its first column;
   the filter and column buttons stay at the right; bulk actions, once rows are
-  picked, come before the search.
+  picked, come before the search. A list with a few filters may show them in its
+  toolbar right of the search, applied as they change, in place of Filament's
+  filter dropdown (DTR uploads: `filament.dtr-uploads.toolbar-filters`).
 - **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
 
 | Class | Use |

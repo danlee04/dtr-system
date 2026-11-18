@@ -69,6 +69,23 @@
         margin-inline-end: auto;
     }
 
+    /* A list's own filters in its toolbar, right of the search (filament.dtr-uploads.toolbar-filters). */
+    .dtr-toolbar-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(var(--spacing) * 4);
+    }
+
+    .dtr-toolbar-filter {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2);
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        white-space: nowrap;
+    }
+
     /*
         No toolbar action showing (none, or bulk actions hidden until rows are picked):
         no empty slot, and no gap, before the search, so it lines up with the table.
