@@ -119,10 +119,10 @@ class DtrUploadInfolist
         $blanks = array_sum(array_map(fn (ComputedDay $day): int => count($day->missing), $dtr->days));
 
         $cards = [
-            ['label' => 'Late', 'value' => "{$dtr->late} min", 'detail' => self::times($dtr->lateCount), 'icon' => Heroicon::OutlinedClock, 'tone' => null],
-            ['label' => 'Undertime', 'value' => "{$dtr->undertime} min", 'detail' => self::times($dtr->undertimeCount), 'icon' => Heroicon::OutlinedArrowRightStartOnRectangle, 'tone' => null],
-            // In hours and minutes, as the CSC table reads them (HR, 2026-11-18).
-            ['label' => 'Late + undertime', 'value' => self::hours($dtr->late + $dtr->undertime), 'detail' => "= {$dtr->dayEquivalent} day (CSC)", 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
+            ['label' => 'Late', 'value' => self::hours($dtr->late), 'detail' => self::times($dtr->lateCount), 'icon' => Heroicon::OutlinedClock, 'tone' => null],
+            ['label' => 'Undertime', 'value' => self::hours($dtr->undertime), 'detail' => self::times($dtr->undertimeCount), 'icon' => Heroicon::OutlinedArrowRightStartOnRectangle, 'tone' => null],
+            // The days of leave first, by the CSC table, then the hours they come from (HR, 2026-11-18).
+            ['label' => 'Late + undertime · '.self::hours($dtr->late + $dtr->undertime), 'value' => $dtr->dayEquivalent.' '.Str::plural('day', (float) $dtr->dayEquivalent === 1.0 ? 1 : 2), 'detail' => 'equivalent to leave credits', 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
             ['label' => 'Absent', 'value' => self::count($dtr->absent, 'day'), 'detail' => 'work days with no tap', 'icon' => Heroicon::OutlinedUserMinus, 'tone' => null],
             ['label' => $mine ? 'Missing taps' : 'Blanks to fill', 'value' => (string) $blanks, 'detail' => $blanks > 0 ? 'on '.self::count($dtr->daysMissingTaps, 'date') : 'None', 'icon' => Heroicon::OutlinedPencilSquare, 'tone' => $blanks > 0 ? 'is-warning' : null],
         ];
@@ -198,8 +198,8 @@ class DtrUploadInfolist
         return "HR: {$reasons}".($remarks !== '' ? " ({$remarks})" : '');
     }
 
-    /** "0 hrs 48 min", "1 hr 13 min", "4 hrs". */
-    private static function hours(int $minutes): string
+    /** "0 hrs 48 min", "1 hr 13 min", "4 hrs": the month's minutes as HR reads them, here and on the Monthly Summary (HR, 2026-11-18). */
+    public static function hours(int $minutes): string
     {
         $hours = intdiv($minutes, 60);
 

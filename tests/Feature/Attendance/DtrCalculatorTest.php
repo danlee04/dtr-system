@@ -110,11 +110,18 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([AttendanceStatus::Present, 0, 0, 360, 1], $this->figures($days['2026-10-06']));
     }
 
-    public function test_a_work_day_without_a_tap_is_absent(): void
+    public function test_a_work_day_without_a_tap_is_absent_and_undertime_for_all_its_hours(): void
     {
         $day = $this->compute($this->regular())->days['2026-10-16'];
 
-        $this->assertSame([AttendanceStatus::Absent, 1.0], [$day->status, $day->absent]);
+        $this->assertSame([AttendanceStatus::Absent, 0, 0, 480, 1], $this->figures($day));
+        $this->assertSame(1.0, $day->absent);
+
+        // The four-day week: 8:00–12:00 and 1:00–7:00 PM, 10 hours.
+        $employee = Employee::factory()->create();
+        ScheduleAssignment::factory()->for($employee)->for(Schedule::factory()->create(['work_days' => [1, 2, 3, 4], 'block2_out' => '19:00']))->create(['effective_from' => '2026-10-01']);
+
+        $this->assertSame(600, $this->compute($employee)->days['2026-10-15']->undertime);
     }
 
     public function test_rest_days_holidays_and_days_without_a_schedule_are_not_judged(): void
@@ -157,7 +164,8 @@ class DtrCalculatorTest extends TestCase
         // The afternoon is on leave: no lunch in or time out to miss.
         $this->assertSame([AttendanceStatus::Present, 5, 1, 0, 0], $this->figures($days['2026-10-13']));
         $this->assertSame([], $days['2026-10-13']->missing);
-        $this->assertSame([AttendanceStatus::Absent, 0.5], [$days['2026-10-14']->status, $days['2026-10-14']->absent]);
+        // The morning is on leave and the afternoon has no tap: half absent, 4 hours undertime.
+        $this->assertSame([AttendanceStatus::Absent, 0.5, 240], [$days['2026-10-14']->status, $days['2026-10-14']->absent, $days['2026-10-14']->undertime]);
     }
 
     public function test_official_business_and_travel_orders_are_not_absent(): void
@@ -235,8 +243,9 @@ class DtrCalculatorTest extends TestCase
             '2026-10-21' => ['am_arrival' => '08:12'],
         ]);
 
-        // October 2026 has 22 weekdays; two have taps. The 21st's afternoon has none: 4 hours undertime, so 4 hr 29 min in all.
-        $this->assertSame([29, 2, 240, 1, 20.0, 1, '0.560'], [
+        // October 2026 has 22 weekdays; two have taps. The 21st's afternoon has none: 4 hours undertime.
+        // The 20 absent days are 8 hours each: 164 hr 29 min in all.
+        $this->assertSame([29, 2, 240 + 20 * 480, 21, 20.0, 1, '20.560'], [
             $dtr->late, $dtr->lateCount, $dtr->undertime, $dtr->undertimeCount, $dtr->absent, $dtr->daysMissingTaps, $dtr->dayEquivalent,
         ]);
     }

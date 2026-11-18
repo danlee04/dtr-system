@@ -1,3 +1,4 @@
+@use('App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist')
 <x-filament-panels::page>
     @include('filament.entry-grid')
 
@@ -56,9 +57,9 @@
                             <th scope="col" class="dtr-grid-name">Employee</th>
                             <th scope="col" class="dtr-grid-start">Office</th>
                             <th scope="col" class="dtr-grid-divider">Times</th>
-                            <th scope="col">Minutes</th>
+                            <th scope="col">Hours</th>
                             <th scope="col" class="dtr-grid-divider">Times</th>
-                            <th scope="col">Minutes</th>
+                            <th scope="col">Hours</th>
                             <th scope="col" class="dtr-grid-divider">Absent<span class="dtr-grid-sub">days</span>
                             </th>
                             <th scope="col">Equivalent<span class="dtr-grid-sub">days of leave</span></th>
@@ -74,9 +75,9 @@
                                 </th>
                                 <td>{{ $employee->office->name }}</td>
                                 <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->lateCount ?? '—' }}</td>
-                                <td class="dtr-grid-value">{{ $dtr?->late ?? '—' }}</td>
+                                <td class="dtr-grid-value">{{ $dtr !== null ? DtrUploadInfolist::hours($dtr->late) : '—' }}</td>
                                 <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->undertimeCount ?? '—' }}</td>
-                                <td class="dtr-grid-value">{{ $dtr?->undertime ?? '—' }}</td>
+                                <td class="dtr-grid-value">{{ $dtr !== null ? DtrUploadInfolist::hours($dtr->undertime) : '—' }}</td>
                                 <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->absent ?? '—' }}</td>
                                 <td class="dtr-grid-value">{{ $dtr?->dayEquivalent ?? '—' }}</td>
                                 <td class="dtr-grid-divider">

@@ -550,7 +550,11 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   for all its scheduled hours: 4 hours for either half of the regular
   schedule; 4 for the morning and 6 for the afternoon of the four-day week.
   A blank HR fills, or an OB or travel order for that half, takes it back.
-  Leave that is not
+  An absent day is undertime for all its hours not covered as well: 8 on the
+  regular schedule, 10 on the four-day week, so the month's Late + undertime
+  and its CSC day charge it (10 hours is 1.250 day); the Absent card and
+  column stay a count of days, not a second charge (HR chose this,
+  2026-11-18). Leave that is not
   cancelled (pending or approved) covers its dates or its half day; a timed
   suspension ends the day at its time; dates after today are not judged.
   The month's late and undertime convert to days with the CSC table. Only

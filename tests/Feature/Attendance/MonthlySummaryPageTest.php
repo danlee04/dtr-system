@@ -44,9 +44,9 @@ class MonthlySummaryPageTest extends TestCase
         Employee::factory()->for(Office::factory()->create(['name' => 'Pharmacy']))
             ->create(['last_name' => 'Santos', 'first_name' => 'Maria', 'middle_name' => null]);
 
-        // 14 minutes late and 10 under: 24 minutes, 0.050 of a day.
+        // 14 minutes late and 10 under, in hours: 24 minutes, 0.050 of a day.
         Livewire::test(MonthlySummary::class)
-            ->assertSeeHtmlInOrder(['Dela Cruz, Juan', 'Nursing Service', '0.050', 'Santos, Maria', 'Pharmacy', 'No DTR uploaded'])
+            ->assertSeeHtmlInOrder(['Dela Cruz, Juan', 'Nursing Service', '0 hrs 14 min', '0 hrs 10 min', '0.050', 'Santos, Maria', 'Pharmacy', 'No DTR uploaded'])
             ->set('officeId', $this->nursing->id)
             ->assertSee('Dela Cruz, Juan')
             ->assertDontSee('Santos, Maria');
