@@ -88,10 +88,26 @@ class DtrCalculatorTest extends TestCase
 
         $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-02']));
         $this->assertSame(['lunch in'], $days['2026-10-02']->missing);
-        // A morning tap alone is still a day at work: late, but not half absent.
-        $this->assertSame([AttendanceStatus::Present, 12, 1, 0, 0], $this->figures($days['2026-10-21']));
+        // A morning tap alone is still a day at work: late, and the afternoon with no tap is undertime.
+        $this->assertSame([AttendanceStatus::Present, 12, 1, 240, 1], $this->figures($days['2026-10-21']));
         $this->assertSame(['lunch out', 'lunch in', 'time out'], $days['2026-10-21']->missing);
         $this->assertSame(0.0, $days['2026-10-21']->absent);
+    }
+
+    public function test_a_half_of_the_day_with_no_tap_is_undertime_for_all_its_hours(): void
+    {
+        // The four-day week: 8:00–12:00 is 4 hours, 1:00–7:00 PM is 6.
+        $employee = Employee::factory()->create();
+        $fourDay = Schedule::factory()->create(['work_days' => [1, 2, 3, 4], 'block2_out' => '19:00']);
+        ScheduleAssignment::factory()->for($employee)->for($fourDay)->create(['effective_from' => '2026-10-01']);
+
+        $days = $this->compute($employee, [
+            '2026-10-05' => ['pm_arrival' => '12:55', 'pm_departure' => '19:02'],
+            '2026-10-06' => ['am_arrival' => '07:49'],
+        ])->days;
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 240, 1], $this->figures($days['2026-10-05']));
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 360, 1], $this->figures($days['2026-10-06']));
     }
 
     public function test_a_work_day_without_a_tap_is_absent(): void
@@ -219,8 +235,8 @@ class DtrCalculatorTest extends TestCase
             '2026-10-21' => ['am_arrival' => '08:12'],
         ]);
 
-        // October 2026 has 22 weekdays; two have taps.
-        $this->assertSame([29, 2, 0, 0, 20.0, 1, '0.060'], [
+        // October 2026 has 22 weekdays; two have taps. The 21st's afternoon has none: 4 hours undertime, so 4 hr 29 min in all.
+        $this->assertSame([29, 2, 240, 1, 20.0, 1, '0.560'], [
             $dtr->late, $dtr->lateCount, $dtr->undertime, $dtr->undertimeCount, $dtr->absent, $dtr->daysMissingTaps, $dtr->dayEquivalent,
         ]);
     }

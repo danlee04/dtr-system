@@ -259,7 +259,7 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   and office, the schedule the month was measured against, and the printed name
   with who uploaded it (`.dtr-record-head`, `.dtr-record-line`, `.dtr-record-sub`).
 - **Cards:** the employee page's cards (`.dtr-profile-card`), grey, filling the
-  row: Late, Undertime, Late + undertime (in hours and minutes, "0 hr 48 min"),
+  row: Late, Undertime, Late + undertime (in hours and minutes, "0 hrs 48 min"),
   Absent, and Blanks to fill, which turns
   `is-warning` (amber tint) while any blank is left. A DTR that is not computed
   shows one warning sentence instead (`.dtr-record-warning`).

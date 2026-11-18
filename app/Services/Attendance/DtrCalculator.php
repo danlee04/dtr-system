@@ -25,8 +25,9 @@ use Illuminate\Support\Collection as SupportCollection;
  *
  * HR's rule for now: a day with any tap is a day at work. A missing tap costs
  * nothing and is listed for HR to look at; late is read from the arrivals
- * there are, and undertime from the departures. A work day with no tap at
- * all, and no leave, is absent.
+ * there are, and undertime from the departures. A half of the day with no
+ * tap at all, while the other half has one, is undertime for all its hours
+ * (HR, 2026-11-18). A work day with no tap at all, and no leave, is absent.
  *
  * The DTR's columns are the slots: A.M. Arrival and Departure for the first
  * half of the day, P.M. for the second. O.T. is not read. A time HR copied
@@ -187,6 +188,12 @@ final class DtrCalculator
             [$arrived, $left] = $taps[$index];
             [$arrivedName, $leftName] = self::TAPS[$scheduledHalves][$index];
             [$arrivedSlot, $leftSlot] = self::SLOTS[$scheduledHalves][$index];
+
+            // A half with no tap at all, while the other has one, is undertime for all its hours (HR, 2026-11-18).
+            if ($arrived === null && $left === null) {
+                $undertime += $half['out'] - $half['in'];
+                $undertimeCount++;
+            }
 
             if ($arrived === null) {
                 $missing[] = $arrivedName;

@@ -230,6 +230,8 @@
     .dtr-grid-value {
         text-align: end;
         font-variant-numeric: tabular-nums;
+        /* "240 (4 hrs)" stays on one line. */
+        white-space: nowrap;
     }
 
     .dtr-grid-changed {

@@ -269,7 +269,20 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
             // October 2026 has 22 weekdays; only the 1st has taps.
-            ->assertMountedActionModalSee(['23 min', '2 times', '25 min', '0 hr 48 min', '= 0.100 day (CSC)', '21 days', 'Present', 'Absent']);
+            ->assertMountedActionModalSee(['23 min', '2 times', '25 min', '0 hrs 48 min', '= 0.100 day (CSC)', '21 days', 'Present', 'Absent']);
+    }
+
+    public function test_a_days_minutes_from_an_hour_up_show_the_hours_beside_them(): void
+    {
+        $this->travelTo('2026-11-03 09:00');
+        $this->actingAs(User::factory()->create());
+        $upload = $this->computableUpload();
+        // In at 9:13 and no tap after: 73 minutes late, and the afternoon with no tap is 240 minutes undertime.
+        $upload->days()->create(['date' => '2026-10-16', 'am_arrival' => '09:13']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee(['73 (1 hr 13 min)', '240 (4 hrs)']);
     }
 
     public function test_the_list_shows_each_dtrs_late_and_undertime(): void

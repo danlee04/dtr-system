@@ -545,7 +545,12 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   columns the second; late and undertime are counted per half as in
   **Computing a day**, with no grace and no offset. HR's rule for now: a day
   with any tap is a day at work, a missing tap costs nothing and is listed,
-  and a work day with no tap and no leave is absent. Leave that is not
+  and a work day with no tap and no leave is absent. Since 2026-11-18 a half
+  of the day with no tap at all, while the other half has one, is undertime
+  for all its scheduled hours: 4 hours for either half of the regular
+  schedule; 4 for the morning and 6 for the afternoon of the four-day week.
+  A blank HR fills, or an OB or travel order for that half, takes it back.
+  Leave that is not
   cancelled (pending or approved) covers its dates or its half day; a timed
   suspension ends the day at its time; dates after today are not judged.
   The month's late and undertime convert to days with the CSC table. Only
@@ -597,7 +602,7 @@ that had no tap stops being absent.
   them would change nothing; and a DTR whose employee is not chosen yet, since
   the times belong to the employee.
 - The missing-tap rule: a blank no one filled still costs nothing and is
-  listed.
+  listed, unless its whole half has no tap (undertime, above).
 - Approval in the app. The supervisor signs on paper; HR copies.
 - A page of its own for the DTR. HR chose to keep the view in its modal.
 

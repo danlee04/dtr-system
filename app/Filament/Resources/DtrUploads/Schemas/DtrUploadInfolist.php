@@ -122,7 +122,7 @@ class DtrUploadInfolist
             ['label' => 'Late', 'value' => "{$dtr->late} min", 'detail' => self::times($dtr->lateCount), 'icon' => Heroicon::OutlinedClock, 'tone' => null],
             ['label' => 'Undertime', 'value' => "{$dtr->undertime} min", 'detail' => self::times($dtr->undertimeCount), 'icon' => Heroicon::OutlinedArrowRightStartOnRectangle, 'tone' => null],
             // In hours and minutes, as the CSC table reads them (HR, 2026-11-18).
-            ['label' => 'Late + undertime', 'value' => intdiv($dtr->late + $dtr->undertime, 60).' hr '.(($dtr->late + $dtr->undertime) % 60).' min', 'detail' => "= {$dtr->dayEquivalent} day (CSC)", 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
+            ['label' => 'Late + undertime', 'value' => self::hours($dtr->late + $dtr->undertime), 'detail' => "= {$dtr->dayEquivalent} day (CSC)", 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
             ['label' => 'Absent', 'value' => self::count($dtr->absent, 'day'), 'detail' => 'work days with no tap', 'icon' => Heroicon::OutlinedUserMinus, 'tone' => null],
             ['label' => $mine ? 'Missing taps' : 'Blanks to fill', 'value' => (string) $blanks, 'detail' => $blanks > 0 ? 'on '.self::count($dtr->daysMissingTaps, 'date') : 'None', 'icon' => Heroicon::OutlinedPencilSquare, 'tone' => $blanks > 0 ? 'is-warning' : null],
         ];
@@ -166,8 +166,8 @@ class DtrUploadInfolist
                 'absent' => $result?->status === AttendanceStatus::Absent,
                 'slots' => $slots,
                 'ot' => implode('–', array_filter([self::clock($day?->ot_arrival), self::clock($day?->ot_departure)])) ?: null,
-                'late' => $result?->late ?: null,
-                'undertime' => $result?->undertime ?: null,
+                'late' => self::minutes($result?->late),
+                'undertime' => self::minutes($result?->undertime),
                 'status' => $result?->status,
                 // A part of the day with no tap, which an OB or travel order could cover.
                 'untapped' => $result?->untappedCoverage() !== null,
@@ -196,6 +196,24 @@ class DtrUploadInfolist
         $remarks = collect($taps)->pluck('remarks')->filter()->unique()->implode('; ');
 
         return "HR: {$reasons}".($remarks !== '' ? " ({$remarks})" : '');
+    }
+
+    /** "0 hrs 48 min", "1 hr 13 min", "4 hrs". */
+    private static function hours(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+
+        return $hours.($hours === 1 ? ' hr' : ' hrs').($minutes % 60 > 0 ? ' '.($minutes % 60).' min' : '');
+    }
+
+    /** A day's minutes, with the hours beside them from an hour up: "240 (4 hrs)" (HR, 2026-11-18). None is blank. */
+    private static function minutes(?int $minutes): ?string
+    {
+        return match (true) {
+            ! $minutes => null,
+            $minutes >= 60 => "{$minutes} (".self::hours($minutes).')',
+            default => (string) $minutes,
+        };
     }
 
     /** "2 times", or "None". */
