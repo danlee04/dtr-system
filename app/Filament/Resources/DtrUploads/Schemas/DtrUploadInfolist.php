@@ -175,7 +175,8 @@ class DtrUploadInfolist
                     $result?->note !== null ? [$result->note, false] : null,
                     ($result->missing ?? []) !== [] ? ['No '.implode(', ', $result->missing), true] : null,
                     $taps !== [] ? [self::filledNote($taps), false] : null,
-                    $day?->remarks !== null ? [$day->remarks, false] : null,
+                    // Not a bare number like "-479": IT's own count of minutes short, by rules the app does not share (HR, 2026-11-18).
+                    $day?->remarks !== null && preg_match('/^-?\d+$/', $day->remarks) !== 1 ? [$day->remarks, false] : null,
                 ])),
             ];
         }

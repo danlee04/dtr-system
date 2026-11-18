@@ -307,6 +307,20 @@ class DtrUploadResourceTest extends TestCase
             ->assertMountedActionModalSee(['Thu, Oct 1', '5:13 PM', 'Seminar', 'Sat, Oct 31']);
     }
 
+    public function test_the_minutes_it_s_software_prints_beside_a_day_are_not_shown(): void
+    {
+        $this->actingAs(User::factory()->create());
+        // "-479": its own count of minutes short, against rules the app does not share (HR, 2026-11-18).
+        $upload = DtrUpload::factory()
+            ->has(DtrDay::factory()->state(['date' => '2026-10-14', 'am_arrival' => '12:15', 'remarks' => '-479']), 'days')
+            ->create();
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee('12:15 PM')
+            ->assertMountedActionModalDontSee('-479');
+    }
+
     /** October 2 on 8–12 and 1–5, printed without its time out. */
     private function uploadWithoutTimeOut(EmploymentStatus $status = EmploymentStatus::Permanent): DtrUpload
     {
