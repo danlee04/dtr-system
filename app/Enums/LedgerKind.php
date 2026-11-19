@@ -6,7 +6,8 @@ use Filament\Support\Contracts\HasLabel;
 
 /**
  * What a leave ledger row records. The system posts credits, grants, lapses
- * and forced leave; HR enters opening balances and adjustments.
+ * and forced leave; HR enters opening balances and adjustments, and marking
+ * a DTR final deducts its late and undertime.
  */
 enum LedgerKind: string implements HasLabel
 {
@@ -19,6 +20,8 @@ enum LedgerKind: string implements HasLabel
     case Application = 'application';
     case Cancellation = 'cancellation';
     case CreditCorrection = 'credit_correction';
+    case DtrDeduction = 'dtr_deduction';
+    case DtrReopened = 'dtr_reopened';
 
     public function getLabel(): string
     {
@@ -32,6 +35,8 @@ enum LedgerKind: string implements HasLabel
             self::Lapse => 'Lapsed',
             self::ForcedLeave => 'Forced leave not taken',
             self::Adjustment => 'Adjustment',
+            self::DtrDeduction => 'Late & undertime',
+            self::DtrReopened => 'DTR reopened',
         };
     }
 }

@@ -26,6 +26,9 @@ final readonly class ComputedDtr
     /** Late and undertime as days of leave, by the CSC table. */
     public string $dayEquivalent;
 
+    /** The leave days the absent days take, SL first, then VL. */
+    public string $absentCharge;
+
     /** @param  array<string, ComputedDay>  $days  Y-m-d → day */
     public function __construct(public array $days)
     {
@@ -37,5 +40,6 @@ final readonly class ComputedDtr
         $this->daysMissingTaps = count(array_filter($days, fn (ComputedDay $day): bool => $day->missing !== []));
         $this->daysWithoutSchedule = count(array_filter($days, fn (ComputedDay $day): bool => $day->status === AttendanceStatus::NoSchedule));
         $this->dayEquivalent = CscConversion::days($this->late + $this->undertime);
+        $this->absentCharge = array_reduce($days, fn (string $sum, ComputedDay $day): string => bcadd($sum, $day->absentCharge, 3), '0.000');
     }
 }

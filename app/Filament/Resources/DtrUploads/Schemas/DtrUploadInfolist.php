@@ -14,6 +14,7 @@ use App\Services\Attendance\ComputedDay;
 use App\Services\Attendance\ComputedDtr;
 use App\Services\Attendance\ResolvedDay;
 use App\Services\Attendance\ScheduleResolver;
+use App\Services\Leave\DtrDeduction;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Filament\Schemas\Components\View;
@@ -95,9 +96,37 @@ class DtrUploadInfolist
                 $record->employee_id === null => 'Choose the employee, and the app computes this DTR against their schedule.',
                 default => 'Job order and contract of service staff earn no leave credits, so their DTR is shown as printed and not computed.',
             },
+            'final' => self::final($record, $mine),
             'rows' => $rows,
             // Most months have no O.T.; its empty column would only push the grid past a laptop's screen.
             'hasOvertime' => array_any($rows, fn (array $row): bool => $row['ot'] !== null),
+        ];
+    }
+
+    /**
+     * When HR marked it final, by whom, and what it took off VL; for HR, also
+     * whether the figures moved since, so HR knows to reopen it and mark it
+     * final again. Null while it is open.
+     *
+     * @return array{line: string, changed: ?string}|null
+     */
+    private static function final(DtrUpload $record, bool $mine): ?array
+    {
+        if (! $record->isFinal()) {
+            return null;
+        }
+
+        $deduction = app(DtrDeduction::class);
+        $deducted = $deduction->deducted($record);
+        $due = $deduction->due($record);
+
+        return [
+            'line' => 'Final · '.$record->finalized_at->format('M j, Y')
+                .($record->finalizedBy ? " by {$record->finalizedBy->name}" : '')
+                .' · '.(self::deductions($deduction->deductedByType($record)) ?? 'nothing deducted'),
+            'changed' => ! $mine && bccomp($due, $deducted, 3) !== 0
+                ? "Changed since Final: deducted {$deducted}, now {$due}. Reopen and mark it final again."
+                : null,
         ];
     }
 
@@ -126,7 +155,7 @@ class DtrUploadInfolist
             ['label' => 'Undertime', 'value' => self::hours($dtr->undertime), 'detail' => self::times($dtr->undertimeCount), 'icon' => Heroicon::OutlinedArrowRightStartOnRectangle, 'tone' => null],
             // The days of leave first, by the CSC table, then the hours they come from (HR, 2026-11-18).
             ['label' => 'Late + undertime · '.self::hours($dtr->late + $dtr->undertime), 'value' => $dtr->dayEquivalent.' '.Str::plural('day', (float) $dtr->dayEquivalent === 1.0 ? 1 : 2), 'detail' => 'equivalent to leave credits', 'icon' => Heroicon::OutlinedCalculator, 'tone' => null],
-            ['label' => 'Absent', 'value' => self::count($dtr->absent, 'day'), 'detail' => 'work days with no tap', 'icon' => Heroicon::OutlinedUserMinus, 'tone' => null],
+            ['label' => 'Absent', 'value' => self::count($dtr->absent, 'day'), 'detail' => bccomp($dtr->absentCharge, '0', 3) > 0 ? self::count((float) $dtr->absentCharge, 'day', $dtr->absentCharge).' from SL, then VL' : 'None', 'icon' => Heroicon::OutlinedUserMinus, 'tone' => null],
             ['label' => $mine ? 'Missing taps' : 'Blanks to fill', 'value' => (string) $blanks, 'detail' => $blanks > 0 ? 'on '.self::count($dtr->daysMissingTaps, 'date') : 'None', 'icon' => Heroicon::OutlinedPencilSquare, 'tone' => $blanks > 0 ? 'is-warning' : null],
         ];
 
@@ -236,8 +265,19 @@ class DtrUploadInfolist
         return $times === 0 ? 'None' : self::count($times, 'time');
     }
 
-    private static function count(int|float $number, string $unit): string
+    /** "2 days"; $shown prints the number another way, as "2.000 days". */
+    private static function count(int|float $number, string $unit, ?string $shown = null): string
     {
-        return $number.' '.Str::plural($unit, (float) $number === 1.0 ? 1 : 2);
+        return ($shown ?? $number).' '.Str::plural($unit, (float) $number === 1.0 ? 1 : 2);
+    }
+
+    /**
+     * "SL −1.250 · VL −0.100", with a real minus sign, or null when nothing was taken.
+     *
+     * @param  array<string, string>  $byType  leave type code → positive days
+     */
+    public static function deductions(array $byType): ?string
+    {
+        return $byType === [] ? null : collect($byType)->map(fn (string $days, string $type): string => "{$type} \u{2212}{$days}")->implode(' · ');
     }
 }

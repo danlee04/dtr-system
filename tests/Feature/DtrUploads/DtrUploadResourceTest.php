@@ -6,6 +6,7 @@ use App\Enums\DtrSlot;
 use App\Enums\EmploymentStatus;
 use App\Enums\ExceptionType;
 use App\Enums\LeaveCoverage;
+use App\Enums\LedgerKind;
 use App\Enums\ManualTapReason;
 use App\Filament\Resources\DtrUploads\DtrUploadResource;
 use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
@@ -19,6 +20,8 @@ use App\Models\ManualTap;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
+use App\Services\Leave\DtrDeduction;
+use Carbon\CarbonPeriod;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -263,6 +266,20 @@ class DtrUploadResourceTest extends TestCase
             ->create();
     }
 
+    /** The same October 1, and every other work day of October on time: no absent day to charge. */
+    private function checkedUpload(): DtrUpload
+    {
+        $upload = $this->computableUpload();
+
+        foreach (CarbonPeriod::create('2026-10-02', '2026-10-31') as $date) {
+            if (! $date->isWeekend()) {
+                $upload->days()->create(['date' => $date->toDateString(), 'am_arrival' => '08:00', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00']);
+            }
+        }
+
+        return $upload;
+    }
+
     public function test_the_view_shows_the_late_and_undertime_of_each_day_and_the_month(): void
     {
         $this->travelTo('2026-11-03 09:00');
@@ -270,8 +287,9 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
-            // October 2026 has 22 weekdays; only the 1st has taps. Each of the 21 absent days is 8 hours undertime too.
-            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', "480 (8\u{00A0}hrs)", 'Present', 'Absent']);
+            // October 2026 has 22 weekdays; only the 1st has taps. The 21 absent days are charged as leave days, not undertime.
+            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '0 hrs 25 min', '0.100 days', 'Late + undertime · 0 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', 'Present', 'Absent'])
+            ->assertMountedActionModalDontSee("480 (8\u{00A0}hrs)");
     }
 
     public function test_a_days_minutes_from_an_hour_up_show_the_hours_beside_them(): void
@@ -295,7 +313,7 @@ class DtrUploadResourceTest extends TestCase
         $this->computableUpload();
 
         Livewire::test(ListDtrUploads::class)
-            ->assertSeeText(['10128 min', '21.100 day']);
+            ->assertSeeText(['48 min', '0.100 day']);
     }
 
     public function test_a_job_order_dtr_is_shown_but_not_computed(): void
@@ -372,8 +390,8 @@ class DtrUploadResourceTest extends TestCase
             ])
             ->assertHasNoFormErrors()
             ->assertNotified('1 time saved')
-            // Back in the DTR: the time out it now has is 30 minutes early, on top of the 21 absent days' 8 hours each.
-            ->assertMountedActionModalSee(['168 hrs 30 min', '22 times', 'HR: forgot to tap']);
+            // Back in the DTR: the time out it now has is 30 minutes early; the 21 absent days are leave days, not undertime.
+            ->assertMountedActionModalSee(['0 hrs 30 min', '1 time', 'HR: forgot to tap']);
 
         $tap = ManualTap::sole();
         $this->assertSame(
@@ -669,5 +687,161 @@ class DtrUploadResourceTest extends TestCase
             ->assertMountedActionModalSee('Blanks to fill');
 
         $this->assertModelMissing($tap);
+    }
+
+    private function final(DtrUpload $upload): DtrUpload
+    {
+        app(DtrDeduction::class)->finalize($upload, User::factory()->create());
+
+        return $upload;
+    }
+
+    /** @return list<TestAction> the DTR's view, then a button in its footer */
+    private function footer(DtrUpload $upload, string $action): array
+    {
+        return [TestAction::make('view')->table($upload), TestAction::make($action)];
+    }
+
+    public function test_hr_marks_a_checked_dtr_final_and_vl_is_deducted(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $upload = $this->checkedUpload();
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->footer($upload, 'finalize'))
+            ->assertMountedActionModalSee('Deduct 0.100 days from VL for late and undertime.')
+            ->callMountedAction()
+            ->assertNotified('DTR marked final');
+
+        $this->assertSame([['-0.100', LedgerKind::DtrDeduction]], LeaveLedgerEntry::all()->map(fn (LeaveLedgerEntry $row): array => [$row->days, $row->kind])->all());
+        $this->assertTrue($upload->refresh()->isFinal());
+    }
+
+    public function test_the_final_confirmation_names_the_absent_days_it_takes_from_sl_then_vl(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->footer($this->computableUpload(), 'finalize'))
+            ->assertMountedActionModalSee('Deduct 0.100 days from VL for late and undertime, and 21.000 days for 21 absent days from SL, then VL.');
+    }
+
+    public function test_the_final_confirmation_counts_the_blanks_still_empty(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->footer($this->uploadWithoutTimeOut(), 'finalize'))
+            ->assertMountedActionModalSee('1 blank still empty.');
+    }
+
+    public function test_a_final_dtr_is_locked(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $locked = [$this->fillIn($upload, '2026-10-02'), $this->addException($upload, '2026-10-29'), TestAction::make('delete')->table($upload), $this->footer($upload, 'finalize')];
+
+        $open = Livewire::test(ListDtrUploads::class)->assertActionHidden($this->footer($upload, 'reopen'));
+        foreach ($locked as $action) {
+            $open->assertActionVisible($action);
+        }
+
+        $this->final($upload);
+
+        $final = Livewire::test(ListDtrUploads::class)->assertActionVisible($this->footer($upload, 'reopen'));
+        foreach ($locked as $action) {
+            $final->assertActionHidden($action);
+        }
+    }
+
+    public function test_hr_reopens_a_final_dtr_with_a_reason(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $upload = $this->final($this->checkedUpload());
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->footer($upload, 'reopen'), data: ['reopen_reason' => ''])
+            ->assertHasActionErrors(['reopen_reason' => 'required']);
+        $this->assertTrue($upload->refresh()->isFinal());
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->footer($upload, 'reopen'), data: ['reopen_reason' => 'Leave filed late'])
+            ->assertHasNoActionErrors()
+            ->assertNotified('DTR reopened');
+
+        $this->assertFalse($upload->refresh()->isFinal());
+        $this->assertSame(['-0.100', '0.100'], LeaveLedgerEntry::query()->orderBy('id')->pluck('days')->all());
+    }
+
+    public function test_final_is_not_offered_on_a_job_order_dtr(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertActionHidden($this->footer($this->computableUpload(EmploymentStatus::JobOrder), 'finalize'));
+    }
+
+    public function test_choosing_an_employee_does_not_replace_a_final_dtr(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $dave = $this->dave();
+        ScheduleAssignment::factory()->for($dave)->for(Schedule::factory())->create(['effective_from' => '2026-10-01']);
+        $final = $this->final(DtrUpload::factory()->for($dave)->create());
+        $unassigned = DtrUpload::factory()->create(['employee_id' => null, 'employee_name' => 'LUCAR, D.']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction(TestAction::make('chooseEmployee')->table($unassigned), data: ['employee_id' => $dave->id])
+            ->assertHasActionErrors(['employee_id']);
+
+        $this->assertModelExists($final);
+        $this->assertNull($unassigned->refresh()->employee_id);
+    }
+
+    public function test_a_final_dtr_shows_when_and_by_whom_and_what_it_deducted(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $hr = User::factory()->create(['name' => 'Ana Reyes']);
+        $this->actingAs($hr);
+        $upload = $this->computableUpload();
+        app(DtrDeduction::class)->finalize($upload, $hr);
+
+        // The 21 absent days take October's 1.250 SL and 19.750 VL; VL also loses the 0.100 for late and undertime.
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee("Final · Nov 3, 2026 by Ana Reyes · SL \u{2212}1.250 · VL \u{2212}19.850")
+            ->assertMountedActionModalDontSee('Changed since Final');
+    }
+
+    public function test_a_final_dtr_says_when_its_figures_changed_since(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $upload = $this->final($this->checkedUpload());
+        // Read after Final: in at 9:13 and nothing after, 73 minutes late and 240 under; 361 minutes in all is 0.752 day.
+        $upload->days()->whereDate('date', '2026-10-16')->update(['am_arrival' => '09:13', 'am_departure' => null, 'pm_arrival' => null, 'pm_departure' => null]);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee('Changed since Final: deducted 0.100, now 0.752. Reopen and mark it final again.');
+    }
+
+    public function test_the_list_marks_final_dtrs_and_filters_the_rest(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $final = $this->final($this->computableUpload());
+        $open = $this->computableUpload();
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertSeeText('0.100 day · Final')
+            ->filterTable('not_final')
+            ->assertCanSeeTableRecords([$open])
+            ->assertCanNotSeeTableRecords([$final]);
     }
 }

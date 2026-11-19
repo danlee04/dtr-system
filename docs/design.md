@@ -198,7 +198,10 @@ decoration.
   the filter and column buttons stay at the right; bulk actions, once rows are
   picked, come before the search. A list with a few filters may show them in its
   toolbar right of the search, applied as they change, in place of Filament's
-  filter dropdown (DTR uploads: `filament.dtr-uploads.toolbar-filters`).
+  filter dropdown (DTR uploads: `filament.dtr-uploads.toolbar-filters`, with
+  Month, Needs an employee and Not final yet). The DTR list marks a final DTR
+  in its Late + undertime cell ("0.100 day · Final") rather than in a column
+  of its own, which would not fit a tablet.
 - **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
 
 | Class | Use |
@@ -272,9 +275,17 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   with who uploaded it (`.dtr-record-head`, `.dtr-record-line`, `.dtr-record-sub`).
 - **Cards:** the employee page's cards (`.dtr-profile-card`), grey, filling the
   row: Late and Undertime in hours and minutes ("0 hrs 48 min", as the Monthly Summary shows them); Late + undertime leads with the CSC days ("2.158 days", "equivalent to leave credits"), its hours in the label,
-  Absent, and Blanks to fill, which turns
+  Absent (the days, with "2.000 days from SL, then VL" under them), and Blanks to fill, which turns
   `is-warning` (amber tint) while any blank is left. A DTR that is not computed
   shows one warning sentence instead (`.dtr-record-warning`).
+- **Final:** once HR marks it final, a `.dtr-record-sub` line under the cards,
+  "Final · Nov 3, 2026 by Ana Reyes · SL −1.250 · VL −0.100" (real minus signs,
+  SL before VL), or "nothing deducted". When the figures move after Final, HR sees a `.dtr-record-warning`
+  under it: "Changed since Final: deducted 0.100, now 0.752. Reopen and mark it
+  final again." The modal footer holds **Mark final** (a confirmation saying
+  what it deducts, or why nothing, and how many blanks are still empty) or
+  **Reopen** (asks for the reason). While final, + Add, the printed-time links,
+  + OB/Leave and Delete are gone.
 - **Days:** a grid with A.M. and P.M. as group headings over Arrival and
   Departure, as on the paper form. Grey rows are not work dates, red-tinted rows
   are absent, and Notes say what is missing in amber.

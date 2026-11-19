@@ -42,7 +42,8 @@ class AddDayExceptionAction extends Action
                 'class' => 'dtr-grid-ob',
                 'aria-label' => 'Add an OB, travel order, leave or gate pass, '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'),
             ])
-            ->authorize(fn (): bool => auth()->user()?->can('create', DayException::class) ?? false)
+            // A final DTR is locked: what it deducted must keep matching it.
+            ->authorize(fn (DtrUpload $record): bool => (auth()->user()?->can('create', DayException::class) ?? false) && auth()->user()->can('update', $record))
             ->visible(fn (DtrUpload $record, array $arguments): bool => self::day($record, $arguments) !== null)
             ->modalHeading(fn (DtrUpload $record, array $arguments): string => 'OB, TO, leave or gate pass from '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'))
             ->modalDescription('From the signed paper. Leave marked here takes no credits. It is kept on the OB, TO, leave & gate pass screen too, where it can be changed or removed.')

@@ -49,8 +49,9 @@ HR no longer keeps balances by hand.
 
 - **Monetization**, and the salary it needs. HR deferred it on 23 October.
 - **Deducting tardiness and undertime from VL.** HR confirmed it will be
-  deducted, but it needs the DTR computation, which now comes later. Until
-  then HR can enter it as an adjustment.
+  deducted, but it needs the DTR computation, which now comes later. Built
+  on 2026-11-19: marking a DTR final deducts it; see
+  `2026-11-19-dtr-final-and-vl-deduction-design.md`.
 - Importing the attendance file from the IT Unit.
 - Enforcing filing deadlines (e.g. VL filed in advance). HR judges these on
   the signed form.
@@ -305,7 +306,9 @@ anything owed for those periods as an adjustment.
 HR adds a positive or negative number of days to an employee's VL, SL, SPL or
 Wellness, with a required reason. Adjustments cover corrections, leave HR
 recorded on paper, and, until the DTR computation exists, tardiness deducted
-from VL.
+from VL. A negative adjustment that would leave the balance below zero is
+refused. Since 2026-11-19 a DTR's Final may take VL below zero, so an
+adjustment that adds days is accepted even when the balance stays negative.
 
 ## Leave applications
 
@@ -456,9 +459,12 @@ leave_ledger_entries      id, employee_id, leave_type, posted_on (date),
                           days decimal(7,3) (signed),
                           kind (opening|monthly_credit|credit_correction|
                                 yearly_grant|lapse|forced_leave|application|
-                                cancellation|adjustment),
+                                cancellation|adjustment|dtr_deduction|
+                                dtr_reopened),
                           period (nullable), posting_key (nullable, unique),
-                          leave_application_id (nullable), remarks (nullable),
+                          leave_application_id (nullable),
+                          dtr_upload_id (nullable, null on delete),
+                          remarks (nullable),
                           created_by_user_id (nullable = system), timestamps
                           index (employee_id, leave_type, posted_on)
 ```

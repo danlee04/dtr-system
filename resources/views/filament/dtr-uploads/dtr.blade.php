@@ -42,6 +42,13 @@
         </dl>
     @endif
 
+    @if ($final)
+        <p class="dtr-record-sub">{{ $final['line'] }}</p>
+        @if ($final['changed'])
+            <p class="dtr-record-warning">{{ $final['changed'] }}</p>
+        @endif
+    @endif
+
     <h3 class="dtr-record-heading">Days</h3>
     <p class="dtr-record-desc">
         As the IT Unit printed it.

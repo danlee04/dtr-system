@@ -21,7 +21,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * keeps the name as printed, because that is how HR tells which employee a
  * DTR belongs to when the name matched nobody.
  */
-#[Fillable(['employee_id', 'employee_name', 'period_start', 'period_end', 'file_name', 'uploaded_by_user_id'])]
+#[Fillable(['employee_id', 'employee_name', 'period_start', 'period_end', 'file_name', 'uploaded_by_user_id', 'finalized_at', 'finalized_by_user_id'])]
 class DtrUpload extends Model
 {
     /** @use HasFactory<DtrUploadFactory> */
@@ -90,6 +90,24 @@ class DtrUpload extends Model
         return $this->employee?->employment_status->earnsLeaveCredits() ?? false;
     }
 
+    /** Whether HR marked it final after checking it: its VL is deducted and it is locked until reopened. */
+    public function isFinal(): bool
+    {
+        return $this->finalized_at !== null;
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function finalizedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'finalized_by_user_id');
+    }
+
+    /** @return HasMany<LeaveLedgerEntry, $this> the VL its Final deducted and its Reopen gave back */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LeaveLedgerEntry::class);
+    }
+
     /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {
@@ -131,6 +149,7 @@ class DtrUpload extends Model
         return [
             'period_start' => 'date',
             'period_end' => 'date',
+            'finalized_at' => 'datetime',
         ];
     }
 }

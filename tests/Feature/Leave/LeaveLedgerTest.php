@@ -74,6 +74,16 @@ class LeaveLedgerTest extends TestCase
         $this->assertSame('1.000', app(LeaveLedger::class)->balance($this->employee, LeaveType::Vacation));
     }
 
+    public function test_an_adjustment_that_adds_days_is_saved_on_a_negative_balance(): void
+    {
+        // A DTR's Final may take VL below zero (HR, 2026-11-19); a correction that adds days still goes in.
+        $this->row('VL', '-0.300', '2026-11-03');
+
+        app(LeaveLedger::class)->adjust($this->employee, LeaveType::Vacation, '0.100', 'Wrong time on the DTR');
+
+        $this->assertSame('-0.200', app(LeaveLedger::class)->balance($this->employee, LeaveType::Vacation));
+    }
+
     public function test_an_adjustment_checks_the_balance_after_posting_what_is_due(): void
     {
         config(['leave.start_date' => '2026-11-01']);

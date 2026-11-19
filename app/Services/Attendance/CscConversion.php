@@ -13,7 +13,7 @@ final class CscConversion
      * them rather than minutes ÷ 480, which rounds some differently: 6
      * minutes is 0.012, not 0.013.
      *
-     * shortcut: copied from the spec's table; check it against HR's printed copy before the VL deduction uses it.
+     * HR checked these values against their copy (2026-11-19).
      */
     private const MINUTES = [
         '0.000', '0.002', '0.004', '0.006', '0.008', '0.010', '0.012', '0.015', '0.017', '0.019',

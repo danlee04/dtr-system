@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Saves what DtrPdfReader read, and says whose DTR it is.
@@ -88,15 +89,21 @@ class DtrImporter
             return;
         }
 
-        // One by one, so each removal reaches the activity log.
-        // shortcut: two uploads of one employee's month saved at the same moment can both survive; lock the employee's row if HR ever uploads from several desks at once.
-        DtrUpload::query()
+        $older = DtrUpload::query()
             ->where('employee_id', $upload->employee_id)
             ->whereKeyNot($upload->getKey())
             ->whereDate('period_start', '<=', $upload->period_end)
             ->whereDate('period_end', '>=', $upload->period_start)
-            ->get()
-            ->each->delete();
+            ->get();
+
+        // A final DTR's VL deduction belongs to it; HR reopens it before anything replaces it.
+        if ($older->contains(fn (DtrUpload $dtr): bool => $dtr->isFinal())) {
+            throw ValidationException::withMessages(['employee_id' => "This employee's DTR for these dates is final. Reopen it first."]);
+        }
+
+        // One by one, so each removal reaches the activity log.
+        // shortcut: two uploads of one employee's month saved at the same moment can both survive; lock the employee's row if HR ever uploads from several desks at once.
+        $older->each->delete();
     }
 
     private function employeeNamed(string $name): ?int

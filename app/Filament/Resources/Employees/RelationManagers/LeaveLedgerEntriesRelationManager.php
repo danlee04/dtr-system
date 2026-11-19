@@ -113,7 +113,8 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
                                         app(LeavePosting::class)->catchUp();
                                         $result = bcadd(app(LeaveLedger::class)->balance($this->employee(), $type), (string) $value, 3);
 
-                                        if (bccomp($result, '0', 3) < 0) {
+                                        // Only a deduction is refused; adding days to a VL a DTR's Final took below zero goes in.
+                                        if (bccomp((string) $value, '0', 3) < 0 && bccomp($result, '0', 3) < 0) {
                                             $fail("That would leave {$type->value} at {$result}.");
                                         }
                                     }

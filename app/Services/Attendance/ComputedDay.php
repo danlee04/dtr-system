@@ -18,6 +18,7 @@ final readonly class ComputedDay
      * @param  ?string  $note  what covers part of the day, e.g. "Official business (afternoon)"
      * @param  list<DtrSlot>  $fillable  the blanks HR may fill from the signed DTR: the missing taps, or every slot of a half with none
      * @param  array<string, array{time: string, status: AttendanceStatus}>  $awayTimes  slot => the schedule's time, "08:00", for each part of the day on an OB or travel order, which the DTR shows in its blanks (HR, 2026-11-19)
+     * @param  string  $absentCharge  the leave days an absent day takes, SL first, then VL: its schedule's leave_days, half of it for half a day (HR, 2026-11-19)
      */
     public function __construct(
         public AttendanceStatus $status,
@@ -30,6 +31,7 @@ final readonly class ComputedDay
         public ?string $note = null,
         public array $fillable = [],
         public array $awayTimes = [],
+        public string $absentCharge = '0.000',
     ) {}
 
     /**

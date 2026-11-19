@@ -114,7 +114,8 @@ final class LeaveLedger
 
             $result = bcadd($this->balance($employee, $type), $days, 3);
 
-            if (bccomp($result, '0', 3) < 0) {
+            // Only a deduction is refused: a DTR's Final may already have taken VL below zero (HR, 2026-11-19), and adding days must still go in.
+            if (bccomp($days, '0', 3) < 0 && bccomp($result, '0', 3) < 0) {
                 throw ValidationException::withMessages(['days' => "That would leave {$type->value} at {$result}."]);
             }
 

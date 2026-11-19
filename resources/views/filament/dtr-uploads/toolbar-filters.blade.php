@@ -23,4 +23,9 @@
         <x-filament::input.checkbox wire:model.live="tableFilters.needs_employee.isActive" />
         Needs an employee
     </label>
+
+    <label class="dtr-toolbar-filter">
+        <x-filament::input.checkbox wire:model.live="tableFilters.not_final.isActive" />
+        Not final yet
+    </label>
 </div>

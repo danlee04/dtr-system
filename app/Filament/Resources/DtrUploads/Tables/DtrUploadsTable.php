@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\DtrUploads\Tables;
 
+use App\Filament\Resources\DtrUploads\Actions\FinalizeDtrAction;
+use App\Filament\Resources\DtrUploads\Actions\ReopenDtrAction;
 use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
 use App\Models\DtrUpload;
 use App\Models\Employee;
@@ -19,6 +21,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
 
 class DtrUploadsTable
 {
@@ -68,7 +71,8 @@ class DtrUploadsTable
                 TextColumn::make('late_and_undertime')
                     ->label('Late + undertime')
                     ->state(fn (DtrUpload $record): ?string => $record->isComputed() ? ($record->computed()->late + $record->computed()->undertime).' min' : null)
-                    ->description(fn (DtrUpload $record): ?string => $record->isComputed() ? "{$record->computed()->dayEquivalent} day" : null)
+                    // "· Final" once HR has checked it and its VL is deducted; a new column would not fit a tablet.
+                    ->description(fn (DtrUpload $record): ?string => $record->isComputed() ? "{$record->computed()->dayEquivalent} day".($record->isFinal() ? ' · Final' : '') : null)
                     ->placeholder('—')
                     ->alignEnd(),
                 TextColumn::make('absent')
@@ -102,6 +106,10 @@ class DtrUploadsTable
                 Filter::make('needs_employee')
                     ->label('Needs an employee')
                     ->query(fn (Builder $query): Builder => $query->whereNull('employee_id')),
+                // The DTRs HR has still to check and mark final.
+                Filter::make('not_final')
+                    ->label('Not final yet')
+                    ->query(fn (Builder $query): Builder => $query->whereNull('finalized_at')),
             ])
             // Shown in the toolbar at the right (filament.dtr-uploads.toolbar-filters), applied as they change.
             ->filtersLayout(FiltersLayout::Hidden)
@@ -111,7 +119,8 @@ class DtrUploadsTable
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading(fn (DtrUpload $record): string => DtrUploadInfolist::heading($record))
-                    ->modalWidth(Width::SevenExtraLarge),
+                    ->modalWidth(Width::SevenExtraLarge)
+                    ->extraModalFooterActions([FinalizeDtrAction::make(), ReopenDtrAction::make()]),
                 Action::make('chooseEmployee')
                     ->label('Choose employee')
                     ->icon(Heroicon::OutlinedUserPlus)
@@ -126,7 +135,18 @@ class DtrUploadsTable
                             ->searchable()
                             ->required(),
                     ])
-                    ->action(fn (DtrUpload $record, array $data, DtrImporter $importer) => $importer->assign($record, Employee::findOrFail($data['employee_id']))),
+                    ->action(function (DtrUpload $record, array $data, DtrImporter $importer, Action $action): void {
+                        try {
+                            $importer->assign($record, Employee::findOrFail($data['employee_id']));
+                        } catch (ValidationException $exception) {
+                            // The importer names the field; the modal's fields live under its own state path.
+                            throw ValidationException::withMessages(
+                                collect($exception->errors())
+                                    ->mapWithKeys(fn (array $messages, string $key): array => ["mountedActions.{$action->getNestingIndex()}.data.{$key}" => $messages])
+                                    ->all(),
+                            );
+                        }
+                    }),
                 DeleteAction::make(),
             ]);
     }

@@ -12,6 +12,7 @@ use App\Models\ManualTap;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
+use App\Services\Leave\DtrDeduction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -125,5 +126,18 @@ class MyDtrTest extends TestCase
 
         Livewire::test(MyDtr::class)
             ->assertSee('No DTR uploaded for you yet');
+    }
+
+    public function test_an_employee_sees_that_their_dtr_is_final(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $employee = $this->signedInEmployee();
+        $upload = $this->upload($employee, '2026-10', '2026-10-01', ['am_arrival' => '08:14', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00']);
+        app(DtrDeduction::class)->finalize($upload, User::factory()->create(['name' => 'Ana Reyes']));
+
+        // 14 minutes late is 0.029; the other 21 work days are absent: October's 1.250 SL, then 19.750 VL.
+        Livewire::test(MyDtr::class)
+            ->assertSee(["Final · Nov 3, 2026 by Ana Reyes · SL \u{2212}1.250 · VL \u{2212}19.779"])
+            ->assertDontSee(['Mark final', 'Reopen']);
     }
 }

@@ -93,6 +93,17 @@ class LeaveLedgerEntriesRelationManagerTest extends TestCase
         $this->assertSame(0, LeaveLedgerEntry::count());
     }
 
+    public function test_an_adjustment_that_adds_days_is_saved_on_a_negative_balance(): void
+    {
+        LeaveLedgerEntry::factory()->for($this->employee)->create(['leave_type' => 'VL', 'days' => '-0.300']);
+
+        $this->manager()
+            ->callAction(TestAction::make('adjust')->table(), ['leave_type' => 'VL', 'days' => '0.1', 'remarks' => 'Wrong time on the DTR'])
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('0.100', $this->employee->leaveLedgerEntries()->where('kind', LedgerKind::Adjustment)->latest('id')->first()->days);
+    }
+
     public function test_days_that_are_not_a_number_are_refused_on_the_form(): void
     {
         foreach (['abc', '1.5 ', '1,5'] as $typed) {

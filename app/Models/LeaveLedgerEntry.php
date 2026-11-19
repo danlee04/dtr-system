@@ -26,6 +26,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'period',
     'posting_key',
     'leave_application_id',
+    'dtr_upload_id',
     'remarks',
     'created_by_user_id',
 ])]
@@ -44,6 +45,12 @@ class LeaveLedgerEntry extends Model
     public function application(): BelongsTo
     {
         return $this->belongsTo(LeaveApplication::class, 'leave_application_id');
+    }
+
+    /** @return BelongsTo<DtrUpload, $this> */
+    public function dtrUpload(): BelongsTo
+    {
+        return $this->belongsTo(DtrUpload::class);
     }
 
     /** @return BelongsTo<User, $this> */
