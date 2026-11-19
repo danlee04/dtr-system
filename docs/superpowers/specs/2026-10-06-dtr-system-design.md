@@ -623,7 +623,7 @@ again; an HR time that looks like one IT printed.
 
 **Storage.** `manual_taps`: `employee_id` (restrict on delete), `date`, `slot`
 (`am_arrival`, `am_departure`, `pm_arrival`, `pm_departure`), `time`, `reason`
-(`forgot_to_tap`, `official_business`, `device_error`), `remarks` (255, nullable),
+(`forgot_to_tap`, `official_business`, `device_error`, `gate_pass`), `remarks` (255, nullable),
 `filled_by_user_id` (null on delete; whoever saved the time last) and
 timestamps; one row per employee, date and slot. Logged to the activity log like the other records. A filled
 time belongs to the employee and the date, not to an upload, so it applies to

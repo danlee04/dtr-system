@@ -13,6 +13,7 @@ enum ManualTapReason: string implements HasLabel
     case ForgotToTap = 'forgot_to_tap';
     case OfficialBusiness = 'official_business';
     case DeviceError = 'device_error';
+    case GatePass = 'gate_pass';
 
     public function getLabel(): string
     {
@@ -20,6 +21,7 @@ enum ManualTapReason: string implements HasLabel
             self::ForgotToTap => 'Forgot to tap',
             self::OfficialBusiness => 'Out on official business',
             self::DeviceError => 'Biometric error',
+            self::GatePass => 'Gate pass',
         };
     }
 }

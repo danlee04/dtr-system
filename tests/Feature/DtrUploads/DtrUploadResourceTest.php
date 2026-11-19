@@ -382,6 +382,19 @@ class DtrUploadResourceTest extends TestCase
         );
     }
 
+    public function test_a_time_hr_copies_in_may_be_from_a_gate_pass(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => '17:00', 'reason' => ManualTapReason::GatePass->value])
+            ->assertHasNoFormErrors()
+            ->assertMountedActionModalSee('HR: gate pass');
+
+        $this->assertSame(ManualTapReason::GatePass, ManualTap::sole()->reason);
+    }
+
     public function test_the_view_marks_the_blanks_to_fill_and_the_times_hr_filled(): void
     {
         $this->actingAs(User::factory()->create());
