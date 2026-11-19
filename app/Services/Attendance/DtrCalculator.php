@@ -156,9 +156,10 @@ final class DtrCalculator
             : [[$columns['am_arrival'] ?? $columns['pm_arrival'], $columns['pm_departure'] ?? $columns['am_departure']]];
 
         $covered = $this->covered(count($halves), $date, $covers);
+        $away = $this->awayTimes($halves, $covered);
 
         if (count($covered) === count($halves)) {
-            return new ComputedDay($covered[0]);
+            return new ComputedDay($covered[0], awayTimes: $away);
         }
 
         $halves = array_diff_key($halves, $covered);
@@ -171,7 +172,7 @@ final class DtrCalculator
         $halves = $this->cutBySuspension($halves, $suspendedAt);
 
         if ($halves === []) {
-            return new ComputedDay(AttendanceStatus::Suspended);
+            return new ComputedDay(AttendanceStatus::Suspended, awayTimes: $away);
         }
 
         $scheduledHalves = count($taps);
@@ -182,7 +183,7 @@ final class DtrCalculator
             // Absent is undertime for all the hours not covered: 8 on the regular schedule, 10 on the four-day week (HR, 2026-11-18).
             $hours = array_sum(array_map(fn (array $half): int => $half['out'] - $half['in'], $halves));
 
-            return new ComputedDay(AttendanceStatus::Absent, undertime: $hours, undertimeCount: 1, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable);
+            return new ComputedDay(AttendanceStatus::Absent, undertime: $hours, undertimeCount: 1, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable, awayTimes: $away);
         }
 
         [$late, $lateCount, $undertime, $undertimeCount, $missing, $fillable] = [0, 0, 0, 0, [], []];
@@ -215,7 +216,39 @@ final class DtrCalculator
             }
         }
 
-        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note, fillable: $fillable);
+        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note, fillable: $fillable, awayTimes: $away);
+    }
+
+    /**
+     * The schedule's times for each part of the day on an OB or travel order,
+     * which the DTR shows in its blanks, as the paper form does (HR,
+     * 2026-11-19). Leave and a gate pass get none: the employee was not at work.
+     *
+     * @param  array<int, array{in: int, out: int}>  $halves
+     * @param  array<int, AttendanceStatus>  $covered
+     * @return array<string, array{time: string, status: AttendanceStatus}>
+     */
+    private function awayTimes(array $halves, array $covered): array
+    {
+        $away = [];
+
+        foreach ($covered as $index => $status) {
+            if (! in_array($status, [AttendanceStatus::OfficialBusiness, AttendanceStatus::TravelOrder], true)) {
+                continue;
+            }
+
+            [$inSlot, $outSlot] = self::SLOTS[count($halves)][$index];
+            $away[$inSlot->value] = ['time' => self::time($halves[$index]['in']), 'status' => $status];
+            $away[$outSlot->value] = ['time' => self::time($halves[$index]['out']), 'status' => $status];
+        }
+
+        return $away;
+    }
+
+    /** Minutes since midnight as "08:00". */
+    private static function time(int $minutes): string
+    {
+        return sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
     }
 
     /**

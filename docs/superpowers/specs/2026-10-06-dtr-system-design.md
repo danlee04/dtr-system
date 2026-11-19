@@ -583,6 +583,11 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   use: the day shows Leave and is excused, but it takes no credits and needs no
   application; HR adjusts the balance on the employee's Leave tab, or the
   employee files later.
+  **Times on an OB or travel order** (added 2026-11-19): the DTR shows the
+  schedule's times in the blanks of a covered day or half (8:00 AM, 12:00 PM,
+  1:00 PM, 5:00 PM on the regular schedule), tagged OB or TO. They are worked
+  out from the schedule each time, not stored, and change nothing in the
+  computation, which already excuses that part.
 - **Not yet.** Deducting the total from VL; how a missing tap counts for good
   (HR assumed complete for now); shifts past midnight and 16-hour duty, set
   aside until a nurse's DTR is in hand. The CSC table in code is the one above

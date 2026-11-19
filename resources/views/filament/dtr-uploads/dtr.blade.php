@@ -87,6 +87,8 @@
                                     {{ $trigger }}
                                 @elseif ($cell['filled'] !== null)
                                     <span class="dtr-grid-hr" @if ($cell['printed'] !== null) title="Printed {{ $cell['printed'] }}" @endif><span class="dtr-grid-time">{{ $cell['filled'] }}</span> <span class="dtr-grid-hr-tag">HR</span></span>
+                                @elseif ($cell['printed'] === null && $cell['away'] !== null)
+                                    <span class="dtr-grid-hr" title="{{ $cell['away']['label'] }}: the schedule's time"><span class="dtr-grid-time">{{ $cell['away']['time'] }}</span> <span class="dtr-grid-hr-tag">{{ $cell['away']['tag'] }}</span></span>
                                 @else
                                     {{ $cell['printed'] }}
                                 @endif
@@ -128,6 +130,7 @@
                 <span><span class="dtr-grid-ob">+ OB/Leave</span> an OB, travel order, leave or gate pass for a day with no tap</span>
             @endif
             <span><span class="dtr-grid-hr-tag">HR</span> a time HR copied in</span>
+            <span><span class="dtr-grid-hr-tag">OB</span> <span class="dtr-grid-hr-tag">TO</span> the schedule's time on an OB or travel order</span>
             <span><span class="dtr-record-swatch" aria-hidden="true"></span> not a work date</span>
         </div>
     @endunless

@@ -155,10 +155,17 @@ class DtrUploadInfolist
                 // HR's time wins: it fills a blank, or corrects a time the device got wrong.
                 $tap = $filled->get("{$key} {$slot->value}");
                 $taps = $tap !== null ? [...$taps, $tap] : $taps;
+                $away = $result->awayTimes[$slot->value] ?? null;
                 $slots[$slot->value] = [
                     'printed' => self::clock($day?->{$slot->value}),
                     'filled' => self::clock($tap?->time),
                     'fillable' => in_array($slot, $result->fillable ?? [], true),
+                    // On an OB or travel order, a blank shows the schedule's time, tagged OB or TO.
+                    'away' => $away === null ? null : [
+                        'time' => self::clock($away['time']),
+                        'tag' => $away['status'] === AttendanceStatus::TravelOrder ? 'TO' : 'OB',
+                        'label' => $away['status']->getLabel(),
+                    ],
                 ];
             }
 

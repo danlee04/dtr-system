@@ -585,6 +585,17 @@ class DtrUploadResourceTest extends TestCase
         );
     }
 
+    public function test_a_day_on_an_ob_shows_the_schedules_times_marked_ob(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        DayException::factory()->for($upload->employee)->create(['date_from' => '2026-10-29', 'date_to' => '2026-10-29']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSeeHtml('<span class="dtr-grid-time">8:00 AM</span> <span class="dtr-grid-hr-tag">OB</span>');
+    }
+
     public function test_hr_marks_leave_for_an_absent_day_from_the_dtr_without_an_application(): void
     {
         $this->actingAs(User::factory()->create());

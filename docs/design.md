@@ -289,7 +289,11 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   or a half with both taps blank), with an `aria-label` naming the date. It opens
   "OB, TO, leave or gate pass from Fri, Oct 16": the OB, Leave & Gate Pass form
   without its employee, three across, the date and the untapped part filled in.
-- **Legend** under the grid for + Add, HR and the grey rows.
+- **On an OB or travel order** a blank of the covered day or half shows the
+  schedule's time with an "OB" or "TO" tag, as the paper form does; it is shown,
+  not stored, so removing the entry removes the times. Leave and a gate pass
+  show none.
+- **Legend** under the grid for + Add, HR, OB and TO, and the grey rows.
 - **Fill-in modal:** "Fill in Fri, Oct 2", the date's four slots in a row
   (printed times as read-only text marked Printed, the blanks and HR's times as
   time inputs, the clicked one focused), the reason as two radio choices, an

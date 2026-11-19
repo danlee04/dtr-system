@@ -194,6 +194,31 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([[], 'Official business (afternoon)'], [$day->missing, $day->note]);
     }
 
+    public function test_the_parts_of_a_day_on_an_ob_or_travel_order_take_the_schedules_times(): void
+    {
+        $employee = $this->regular();
+        DayException::factory()->for($employee)->create(['type' => ExceptionType::TravelOrder, 'date_from' => '2026-10-14', 'date_to' => '2026-10-14']);
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-13', 'date_to' => '2026-10-13', 'coverage' => LeaveCoverage::SecondHalf]);
+        // Leave and a gate pass are excused too, but the employee was not at work: no times.
+        DayException::factory()->for($employee)->create(['type' => ExceptionType::Leave, 'date_from' => '2026-10-15', 'date_to' => '2026-10-15']);
+
+        $days = $this->compute($employee, ['2026-10-13' => ['am_arrival' => '08:05', 'am_departure' => '12:00']])->days;
+
+        $away = fn (string $date): array => array_map(fn (array $slot): array => [$slot['time'], $slot['status']], $days[$date]->awayTimes);
+        $this->assertSame([
+            'am_arrival' => ['08:00', AttendanceStatus::TravelOrder],
+            'am_departure' => ['12:00', AttendanceStatus::TravelOrder],
+            'pm_arrival' => ['13:00', AttendanceStatus::TravelOrder],
+            'pm_departure' => ['17:00', AttendanceStatus::TravelOrder],
+        ], $away('2026-10-14'));
+        // Only the afternoon is on the OB; the morning's taps are the DTR's own.
+        $this->assertSame([
+            'pm_arrival' => ['13:00', AttendanceStatus::OfficialBusiness],
+            'pm_departure' => ['17:00', AttendanceStatus::OfficialBusiness],
+        ], $away('2026-10-13'));
+        $this->assertSame([], $days['2026-10-15']->awayTimes);
+    }
+
     public function test_leave_or_a_gate_pass_hr_marks_covers_its_part_of_the_day_like_an_ob(): void
     {
         $employee = $this->regular();
