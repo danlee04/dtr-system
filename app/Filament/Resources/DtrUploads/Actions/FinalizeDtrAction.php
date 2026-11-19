@@ -62,7 +62,7 @@ class FinalizeDtrAction extends Action
         $computed = $record->computed();
         $blanks = array_sum(array_map(fn (ComputedDay $day): int => count($day->missing), $computed->days));
         $parts = array_filter([
-            bccomp($computed->dayEquivalent, '0', 3) > 0 ? "{$computed->dayEquivalent} days from VL for late and undertime" : null,
+            bccomp(DtrDeduction::lateAndUndertime($record), '0', 3) > 0 ? DtrDeduction::lateAndUndertime($record).' days from VL for late and undertime' : null,
             bccomp($computed->absentCharge, '0', 3) > 0
                 ? "{$computed->absentCharge} days for {$computed->absent} absent ".Str::plural('day', $computed->absent === 1.0 ? 1 : 2).' from SL, then VL'
                 : null,

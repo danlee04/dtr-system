@@ -288,7 +288,8 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   + OB/Leave and Delete are gone.
 - **Days:** a grid with A.M. and P.M. as group headings over Arrival and
   Departure, as on the paper form. Grey rows are not work dates, red-tinted rows
-  are absent, and Notes say what is missing in amber.
+  are absent, and Notes say what is missing in amber. An absent day shows its
+  hours in the Undertime column ("480 (8 hrs)") and nothing more in Notes.
 - **Blanks:** a blank the computation needs is a `.dtr-grid-add` link; a time HR
   filled is a link too, showing the time and the HR tag, with a tooltip saying
   who filled it, when and why. Each has an `aria-label` naming the slot and date

@@ -28,8 +28,9 @@ use Illuminate\Support\Collection as SupportCollection;
  * there are, and undertime from the departures. A half of the day with no
  * tap at all, while the other half has one, is undertime for all its hours
  * (HR, 2026-11-18). A work day with no tap at all, and no leave filed, is
- * absent: its hours are not undertime; it takes its schedule's leave days
- * instead, SL first, then VL, when HR marks the DTR final (HR, 2026-11-19).
+ * absent, and undertime for all its hours too, so the CSC conversion charges
+ * it (HR, 2026-11-18); when HR marks the DTR final, that part comes off SL
+ * first, then VL (HR, 2026-11-19).
  *
  * The DTR's columns are the slots: A.M. Arrival and Departure for the first
  * half of the day, P.M. for the second. O.T. is not read. A time HR copied
@@ -182,10 +183,10 @@ final class DtrCalculator
         if ($tapped === []) {
             $fillable = array_merge(...array_map(fn (int $index): array => self::SLOTS[$scheduledHalves][$index], array_keys($halves)));
 
-            // Not undertime: the day takes its schedule's leave days, as a leave application would, half of it for half a day (HR, 2026-11-19).
-            $absent = count($halves) / $scheduledHalves;
+            // Undertime for all the hours not covered, 8 on 8–5, 10 on the four-day week (HR, 2026-11-18); that part of the CSC days comes off SL first, then VL (HR, 2026-11-19).
+            $minutes = array_sum(array_map(fn (array $half): int => $half['out'] - $half['in'], $halves));
 
-            return new ComputedDay(AttendanceStatus::Absent, absent: $absent, note: $note, fillable: $fillable, awayTimes: $away, absentCharge: bcmul($resolved->schedule->leave_days, (string) $absent, 3));
+            return new ComputedDay(AttendanceStatus::Absent, undertime: $minutes, undertimeCount: 1, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable, awayTimes: $away, absentMinutes: $minutes);
         }
 
         [$late, $lateCount, $undertime, $undertimeCount, $missing, $fillable] = [0, 0, 0, 0, [], []];

@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Takes a DTR's late and undertime off VL, by the CSC table, and its absent
- * days off SL, then VL, by the schedule's leave days, when HR marks it final;
- * gives them back when HR reopens it (HR, 2026-11-19).
+ * Takes a DTR's late and undertime, as days by the CSC table, off leave when
+ * HR marks it final: the part its absent days stand for off SL, then VL; the
+ * rest off VL. Gives them back when HR reopens it (HR, 2026-11-19).
  *
  * Final waits for HR, not the upload: the total changes while HR fills blanks
  * from the signed DTR. SL never goes below zero, but VL takes the rest even
@@ -35,7 +35,7 @@ final class DtrDeduction
             return '0.000';
         }
 
-        return bcadd($upload->computed()->dayEquivalent, $upload->computed()->absentCharge, 3);
+        return $upload->computed()->dayEquivalent;
     }
 
     /** Why Final takes nothing, or null when it takes something. */
@@ -135,14 +135,15 @@ final class DtrDeduction
         return $upload->isComputed() && $start !== null && ! $upload->period_start->lessThan($start);
     }
 
-    /** Late and undertime off VL; the absent days off SL as far as it goes, then VL. */
+    /** The CSC days of late and undertime: the absent days' part off SL as far as it goes, then VL; the rest off VL. */
     private function post(DtrUpload $upload, User $by): void
     {
         $computed = $upload->computed();
         $month = DtrUploadInfolist::month($upload);
+        $lateAndUndertime = self::lateAndUndertime($upload);
 
-        if (bccomp($computed->dayEquivalent, '0', 3) > 0) {
-            $this->row($upload, LeaveType::Vacation, bcsub('0', $computed->dayEquivalent, 3), LedgerKind::DtrDeduction, "{$month} DTR: ".DtrUploadInfolist::hours($computed->late + $computed->undertime).' late and undertime', $by);
+        if (bccomp($lateAndUndertime, '0', 3) > 0) {
+            $this->row($upload, LeaveType::Vacation, bcsub('0', $lateAndUndertime, 3), LedgerKind::DtrDeduction, "{$month} DTR: ".DtrUploadInfolist::hours($computed->late + $computed->undertime - $computed->absentMinutes).' late and undertime', $by);
         }
 
         if (bccomp($computed->absentCharge, '0', 3) <= 0) {
@@ -165,6 +166,12 @@ final class DtrDeduction
         if (bccomp($fromVacation, '0', 3) > 0) {
             $this->row($upload, LeaveType::Vacation, bcsub('0', $fromVacation, 3), LedgerKind::DtrDeduction, $remarks, $by);
         }
+    }
+
+    /** The days off VL for late and undertime alone: the month's CSC days less the absent days' part, so the two add up to the total shown. */
+    public static function lateAndUndertime(DtrUpload $upload): string
+    {
+        return bcsub($upload->computed()->dayEquivalent, $upload->computed()->absentCharge, 3);
     }
 
     /** @return Collection<string, string> leave type code → the signed sum of the DTR's rows */

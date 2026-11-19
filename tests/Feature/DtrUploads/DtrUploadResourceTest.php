@@ -287,9 +287,10 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
-            // October 2026 has 22 weekdays; only the 1st has taps. The 21 absent days are charged as leave days, not undertime.
-            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '0 hrs 25 min', '0.100 days', 'Late + undertime · 0 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', 'Present', 'Absent'])
-            ->assertMountedActionModalDontSee("480 (8\u{00A0}hrs)");
+            // October 2026 has 22 weekdays; only the 1st has taps. Each of the 21 absent days is 8 hours undertime too, and that part comes off SL first.
+            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', "480 (8\u{00A0}hrs)", 'Present', 'Absent'])
+            // The Undertime column already says it; a note repeating it was clutter (HR, 2026-11-19).
+            ->assertMountedActionModalDontSee('hrs absent');
     }
 
     public function test_a_days_minutes_from_an_hour_up_show_the_hours_beside_them(): void
@@ -313,7 +314,7 @@ class DtrUploadResourceTest extends TestCase
         $this->computableUpload();
 
         Livewire::test(ListDtrUploads::class)
-            ->assertSeeText(['48 min', '0.100 day']);
+            ->assertSeeText(['10128 min', '21.100 day']);
     }
 
     public function test_a_job_order_dtr_is_shown_but_not_computed(): void
@@ -390,8 +391,8 @@ class DtrUploadResourceTest extends TestCase
             ])
             ->assertHasNoFormErrors()
             ->assertNotified('1 time saved')
-            // Back in the DTR: the time out it now has is 30 minutes early; the 21 absent days are leave days, not undertime.
-            ->assertMountedActionModalSee(['0 hrs 30 min', '1 time', 'HR: forgot to tap']);
+            // Back in the DTR: the time out it now has is 30 minutes early, on top of the 21 absent days' 8 hours each.
+            ->assertMountedActionModalSee(['168 hrs 30 min', '22 times', 'HR: forgot to tap']);
 
         $tap = ManualTap::sole();
         $this->assertSame(
@@ -839,7 +840,7 @@ class DtrUploadResourceTest extends TestCase
         $open = $this->computableUpload();
 
         Livewire::test(ListDtrUploads::class)
-            ->assertSeeText('0.100 day · Final')
+            ->assertSeeText('21.100 day · Final')
             ->filterTable('not_final')
             ->assertCanSeeTableRecords([$open])
             ->assertCanNotSeeTableRecords([$final]);

@@ -18,17 +18,20 @@ every month.
 2. **A short VL balance goes negative.** The whole deduction is posted even
    when VL is not enough ("without pay na iyan"). The next month's 1.25
    credit fills the negative first.
-3. **An absent day comes off SL, then VL** (HR, 2026-11-19, replacing an
-   earlier "without pay" reading the same day). A day covered by a filed
+3. **An absent day is undertime for all its hours, and that part comes off
+   SL, then VL** (HR, 2026-11-19, after an earlier "without pay" reading and
+   a "separate leave days" design the same day). A day covered by a filed
    leave application is already shown as Leave by the calculator. A work
-   day with no tap and no leave filed takes its schedule's `leave_days`, as
-   a leave application would (1.000 on 8–5, 1.250 on 8–7), half of it for
-   half a day absent. SL first; once SL is used up, VL, which may go
-   negative like the late and undertime deduction: negative is HR's mark of
-   without pay. SL never goes below zero. The absent hours stay out of the
-   undertime total and its CSC equivalent: this is a separate deduction.
-   This also replaces the 2026-11-18 choice to count an absent day as 8
-   hours (10 on the four-day week) of undertime.
+   day with no tap and no leave filed is undertime for all its scheduled
+   hours, as on 2026-11-18 (8 on 8–5, 10 on the four-day week), shown in its
+   Undertime column and in every total, with no extra note (HR had one
+   removed, 2026-11-19). At Final, the CSC days of the absent minutes
+   come off SL first; once SL is used up, VL, which may go negative like the
+   late and undertime deduction: negative is HR's mark of without pay. SL
+   never goes below zero. The rest of the month's CSC days come off VL. The
+   amount follows the hours, not the schedule's `leave_days`: a 7-hour day
+   (11:00–7:00 or 4:00–12:00 with an hour's break) is 0.875 day. The 8:00 AM
+   – 4:00 PM schedule has no break, so it is 8 hours (HR, 2026-11-19).
 4. **A half day with no in and no out stays undertime, taken from VL**, as
    now: 4 hours, or 4 (morning) and 6 (afternoon) on the four-day week.
 5. **An absent day does not lower the monthly credit.** 1.25 VL and
@@ -91,13 +94,14 @@ from the ledger.
 
 ### Computation
 
-- `DtrCalculator`, absent branch: `undertime` and `undertimeCount` back to 0.
-  `absent` (1, or 0.5 when the other half is covered) is unchanged.
+- `DtrCalculator`, absent branch: undertime for all the uncovered minutes,
+  as on 2026-11-18, also kept as `absentMinutes`; `absent` (1, or 0.5 when
+  the other half is covered) is unchanged.
 - The deduction is `ComputedDtr::dayEquivalent`, `CscConversion::days(late +
-  undertime)`, unchanged as a formula and the same for every schedule; it no
-  longer includes absent hours.
-- `ComputedDay::$absentCharge`: the schedule's `leave_days` × `absent`
-  (half of it for half a day); `ComputedDtr::$absentCharge` sums it.
+  undertime)`, unchanged as a formula and the same for every schedule.
+- `ComputedDtr::$absentCharge`: `CscConversion::days(absentMinutes)`, the part
+  of `dayEquivalent` that comes off SL first. `DtrDeduction::lateAndUndertime()`
+  is the rest, so the two always add up to the total shown.
 - The Absent card shows the days, with "2.000 days from SL, then VL" under
   them. The Monthly Summary and its Excel keep "Absent (days)".
 
@@ -109,8 +113,8 @@ re-checks its state, so a second click posts nothing.
 - **Final:** refuse when already final or not computed (no employee, job
   order, contract of service). Set `finalized_at` and `finalized_by_user_id`.
   When `LeavePosting::configuredStart()` is set, the DTR's `period_start` is
-  on or after it, and `dayEquivalent` is above zero, insert one VL row:
-  `days` = −dayEquivalent, `posted_on` = today, `period` = the DTR's month
+  on or after it, and `lateAndUndertime()` is above zero, insert one VL row:
+  `days` = −lateAndUndertime(), `posted_on` = today, `period` = the DTR's month
   (`Y-m`), `kind` = DtrDeduction, `dtr_upload_id`, `created_by_user_id`, and
   remarks naming the month and the hours, e.g. "December 2026 DTR: 9 hrs 48
   min late and undertime".
@@ -123,8 +127,8 @@ re-checks its state, so a second click posts nothing.
   does. Sum the upload's ledger rows per leave type; for each type not at
   zero, insert the opposite as a DtrReopened row with the reason in its
   remarks. Clear `finalized_at` and `finalized_by_user_id`.
-- What Final would deduct now (`due`) is `dayEquivalent` + `absentCharge`;
-  the changed-since-Final notice compares it with the total the rows took.
+- What Final would deduct now (`due`) is `dayEquivalent`; the
+  changed-since-Final notice compares it with the total the rows took.
 
 ### What Final locks
 

@@ -110,19 +110,26 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([AttendanceStatus::Present, 0, 0, 360, 1], $this->figures($days['2026-10-06']));
     }
 
-    public function test_a_work_day_without_a_tap_is_absent_and_charges_its_schedules_leave_days_not_undertime(): void
+    public function test_a_work_day_without_a_tap_is_absent_and_undertime_for_all_its_hours(): void
     {
         $day = $this->compute($this->regular())->days['2026-10-16'];
 
-        $this->assertSame([AttendanceStatus::Absent, 0, 0, 0, 0], $this->figures($day));
-        $this->assertSame([1.0, '1.000'], [$day->absent, $day->absentCharge]);
+        $this->assertSame([AttendanceStatus::Absent, 0, 0, 480, 1], $this->figures($day));
+        $this->assertSame([1.0, 480], [$day->absent, $day->absentMinutes]);
 
-        // The four-day week: 8:00–12:00 and 1:00–7:00 PM, a leave day worth 1.250, as a leave application counts it.
+        // The four-day week: 8:00–12:00 and 1:00–7:00 PM, 10 hours.
         $employee = Employee::factory()->create();
         ScheduleAssignment::factory()->for($employee)->for(Schedule::factory()->create(['work_days' => [1, 2, 3, 4], 'block2_out' => '19:00', 'leave_days' => '1.250']))->create(['effective_from' => '2026-10-01']);
         $fourDay = $this->compute($employee)->days['2026-10-15'];
 
-        $this->assertSame([0, '1.250'], [$fourDay->undertime, $fourDay->absentCharge]);
+        $this->assertSame([600, 600], [$fourDay->undertime, $fourDay->absentMinutes]);
+
+        // 11:00–12:00 and 1:00–7:00 PM is 7 hours: the 22 absent work days of October are 154 hours, 19.250 days by the hours, whatever its leave days say.
+        $late = Employee::factory()->create();
+        ScheduleAssignment::factory()->for($late)->for(Schedule::factory()->create(['block1_in' => '11:00', 'block1_out' => '12:00', 'block2_in' => '13:00', 'block2_out' => '19:00']))->create(['effective_from' => '2026-10-01']);
+        $lateDtr = $this->compute($late);
+
+        $this->assertSame([420, '19.250'], [$lateDtr->days['2026-10-16']->absentMinutes, $lateDtr->absentCharge]);
     }
 
     public function test_rest_days_holidays_and_days_without_a_schedule_are_not_judged(): void
@@ -165,8 +172,8 @@ class DtrCalculatorTest extends TestCase
         // The afternoon is on leave: no lunch in or time out to miss.
         $this->assertSame([AttendanceStatus::Present, 5, 1, 0, 0], $this->figures($days['2026-10-13']));
         $this->assertSame([], $days['2026-10-13']->missing);
-        // The morning is on leave and the afternoon has no tap: half absent, half a leave day charged, no undertime.
-        $this->assertSame([AttendanceStatus::Absent, 0.5, 0, '0.500'], [$days['2026-10-14']->status, $days['2026-10-14']->absent, $days['2026-10-14']->undertime, $days['2026-10-14']->absentCharge]);
+        // The morning is on leave and the afternoon has no tap: half absent, 4 hours undertime, which comes off SL first at Final.
+        $this->assertSame([AttendanceStatus::Absent, 0.5, 240, 240], [$days['2026-10-14']->status, $days['2026-10-14']->absent, $days['2026-10-14']->undertime, $days['2026-10-14']->absentMinutes]);
     }
 
     public function test_official_business_and_travel_orders_are_not_absent(): void
@@ -286,8 +293,8 @@ class DtrCalculatorTest extends TestCase
         ]);
 
         // October 2026 has 22 weekdays; two have taps. The 21st's afternoon has none: 4 hours undertime.
-        // The 20 absent days are charged as leave days, apart from the 269 minutes late and under.
-        $this->assertSame([29, 2, 240, 1, 20.0, 1, '0.560', '20.000'], [
+        // The 20 absent days are 8 hours undertime each, 20.000 of the 20.560 days, and that part comes off SL first.
+        $this->assertSame([29, 2, 240 + 20 * 480, 21, 20.0, 1, '20.560', '20.000'], [
             $dtr->late, $dtr->lateCount, $dtr->undertime, $dtr->undertimeCount, $dtr->absent, $dtr->daysMissingTaps, $dtr->dayEquivalent, $dtr->absentCharge,
         ]);
     }
