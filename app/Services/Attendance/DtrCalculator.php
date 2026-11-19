@@ -11,9 +11,11 @@ use App\Enums\LeaveCoverage;
 use App\Models\DayException;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
+use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\ManualTap;
+use App\Models\Schedule;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection as SupportCollection;
 
@@ -31,6 +33,11 @@ use Illuminate\Support\Collection as SupportCollection;
  * absent, and undertime for all its hours too, so the CSC conversion charges
  * it (HR, 2026-11-18); when HR marks the DTR final, that part comes off SL
  * first, then VL (HR, 2026-11-19).
+ *
+ * Flexitime, for an employee HR checked, on an 8–5 day: late only after 9:00,
+ * and the time out due is 9 hours after the time in, counted from 7:00 to
+ * 9:00 (8:00 when there is none), so 4:00 to 6:00. The break stays 12–1, and
+ * an untapped half or an absent day keeps its 8–5 hours (HR, 2026-11-19).
  *
  * The DTR's columns are the slots: A.M. Arrival and Departure for the first
  * half of the day, P.M. for the second. O.T. is not read. A time HR copied
@@ -100,7 +107,7 @@ final class DtrCalculator
 
         foreach ($this->resolver->days($employee, $from, $to) as $date => $resolved) {
             $columns = self::columns($rows->get($date), $filled->get($date));
-            $days[$date] = $this->day(CarbonImmutable::parse($date), $resolved, $columns, $covers, $suspensions->get($date));
+            $days[$date] = $this->day($employee, CarbonImmutable::parse($date), $resolved, $columns, $covers, $suspensions->get($date));
         }
 
         return new ComputedDtr($days);
@@ -127,7 +134,7 @@ final class DtrCalculator
      * @param  array<string, ?string>  $columns  slot => time
      * @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers
      */
-    private function day(CarbonImmutable $date, ResolvedDay $resolved, array $columns, SupportCollection $covers, ?int $suspendedAt): ComputedDay
+    private function day(Employee $employee, CarbonImmutable $date, ResolvedDay $resolved, array $columns, SupportCollection $covers, ?int $suspendedAt): ComputedDay
     {
         if ($resolved->kind !== DayKind::WorkDay) {
             return new ComputedDay(AttendanceStatus::from($resolved->kind->value));
@@ -162,6 +169,14 @@ final class DtrCalculator
 
         if (count($covered) === count($halves)) {
             return new ComputedDay($covered[0], awayTimes: $away);
+        }
+
+        // Flexitime: late only after 9:00, and out 9 hours after a time in counted from 7:00 to 9:00;
+        // 8:00 when there is none, or the morning is on an OB or leave (HR, 2026-11-19).
+        if (self::isFlexiDay($employee, $resolved->schedule)) {
+            $arrived = isset($covered[0]) || $taps[0][0] === null ? 480 : self::minute($taps[0][0]);
+            $halves[0]['lateAfter'] = 540;
+            $halves[1]['dueOut'] = min(540, max(420, $arrived)) + 540;
         }
 
         $halves = array_diff_key($halves, $covered);
@@ -205,7 +220,7 @@ final class DtrCalculator
             if ($arrived === null) {
                 $missing[] = $arrivedName;
                 $fillable[] = $arrivedSlot;
-            } elseif (($minutes = self::minute($arrived) - $half['in']) > 0) {
+            } elseif (($minutes = self::minute($arrived) - ($half['lateAfter'] ?? $half['in'])) > 0) {
                 $late += $minutes;
                 $lateCount++;
             }
@@ -213,7 +228,7 @@ final class DtrCalculator
             if ($left === null) {
                 $missing[] = $leftName;
                 $fillable[] = $leftSlot;
-            } elseif (($minutes = $half['out'] - self::minute($left)) > 0) {
+            } elseif (($minutes = ($half['dueOut'] ?? $half['out']) - self::minute($left)) > 0) {
                 $undertime += $minutes;
                 $undertimeCount++;
             }
@@ -302,11 +317,27 @@ final class DtrCalculator
 
         foreach ($halves as $index => $half) {
             if ($half['in'] < $suspendedAt) {
-                $cut[$index] = ['in' => $half['in'], 'out' => min($half['out'], $suspendedAt)];
+                // Flexitime's time out due ends at the suspension too.
+                $cut[$index] = [
+                    ...$half,
+                    'out' => min($half['out'], $suspendedAt),
+                    ...(isset($half['dueOut']) ? ['dueOut' => min($half['dueOut'], $suspendedAt)] : []),
+                ];
             }
         }
 
         return $cut;
+    }
+
+    /**
+     * Whether flexitime applies: HR checked the employee, and the day's
+     * schedule is 8:00–12:00 and 1:00–5:00, the only one it is granted on.
+     */
+    public static function isFlexiDay(Employee $employee, Schedule $schedule): bool
+    {
+        $times = $schedule->times();
+
+        return $employee->flexitime && self::minute($times[0]) === 480 && ScheduleTimes::offsets($times) === [0, 240, 300, 540];
     }
 
     /** "08:14" or "08:14:00" as minutes since midnight. */

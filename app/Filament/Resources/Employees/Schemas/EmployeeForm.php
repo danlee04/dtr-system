@@ -79,6 +79,11 @@ class EmployeeForm
                             ->label('Active')
                             ->default(true)
                             ->inline(false),
+                        // HR alone knows whose flexitime request was granted (HR, 2026-11-19).
+                        Toggle::make('flexitime')
+                            ->label('Flexitime')
+                            ->helperText('8 AM – 5 PM only: in from 7:00 to 9:00, out 9 hours later.')
+                            ->inline(false),
                     ]),
             ]);
     }

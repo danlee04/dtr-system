@@ -31,6 +31,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'date_hired',
     'date_separated',
     'is_active',
+    'flexitime',
 ])]
 class Employee extends Model
 {
@@ -45,6 +46,7 @@ class Employee extends Model
     /** @var array<string, mixed> */
     protected $attributes = [
         'is_active' => true,
+        'flexitime' => false,
     ];
 
     protected static function booted(): void
@@ -168,6 +170,7 @@ class Employee extends Model
             'date_hired' => 'date',
             'date_separated' => 'date',
             'is_active' => 'boolean',
+            'flexitime' => 'boolean',
         ];
     }
 }

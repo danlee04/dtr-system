@@ -271,7 +271,8 @@ The modal over the DTR uploads list, headed with the employee's name and the
 month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
 
 - **Who:** the photo or initials (`x-filament::avatar`), then the employee number
-  and office, the schedule the month was measured against, and the printed name
+  and office, the schedule the month was measured against (ending "· Flexi"
+  for an employee on flexitime), and the printed name
   with who uploaded it (`.dtr-record-head`, `.dtr-record-line`, `.dtr-record-sub`).
 - **Cards:** the employee page's cards (`.dtr-profile-card`), grey, filling the
   row: Late and Undertime in hours and minutes ("0 hrs 48 min", as the Monthly Summary shows them); Late + undertime leads with the CSC days ("2.158 days", "equivalent to leave credits"), its hours in the label,

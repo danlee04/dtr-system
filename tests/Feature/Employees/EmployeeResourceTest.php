@@ -209,4 +209,15 @@ class EmployeeResourceTest extends TestCase
         $this->assertSame('Dela Cruz', $activity->attribute_changes['old']['last_name']);
         $this->assertSame('Dela Cruz-Reyes', $activity->attribute_changes['attributes']['last_name']);
     }
+
+    public function test_hr_marks_an_employee_flexitime(): void
+    {
+        $employee = Employee::factory()->create();
+
+        Livewire::test(ViewEmployee::class, ['record' => $employee->getRouteKey()])
+            ->callAction('edit', ['flexitime' => true])
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue($employee->fresh()->flexitime);
+    }
 }

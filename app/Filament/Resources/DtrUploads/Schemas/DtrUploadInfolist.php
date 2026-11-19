@@ -12,6 +12,7 @@ use App\Models\DtrUpload;
 use App\Models\ManualTap;
 use App\Services\Attendance\ComputedDay;
 use App\Services\Attendance\ComputedDtr;
+use App\Services\Attendance\DtrCalculator;
 use App\Services\Attendance\ResolvedDay;
 use App\Services\Attendance\ScheduleResolver;
 use App\Services\Leave\DtrDeduction;
@@ -140,7 +141,8 @@ class DtrUploadInfolist
 
         return match ($schedules->count()) {
             0 => 'No schedule for this month',
-            1 => "{$schedules->first()->name} · {$schedules->first()->hours}",
+            // "· Flexi" when flexitime changes how the month was judged (HR, 2026-11-19).
+            1 => "{$schedules->first()->name} · {$schedules->first()->hours}".(DtrCalculator::isFlexiDay($record->employee, $schedules->first()) ? ' · Flexi' : ''),
             default => 'Schedules '.$schedules->pluck('code')->implode(', '),
         };
     }

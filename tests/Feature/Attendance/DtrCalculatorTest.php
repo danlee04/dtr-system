@@ -443,4 +443,82 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([DtrSlot::AmArrival], $days['2026-10-05']->fillable);
         $this->assertSame([DtrSlot::AmArrival, DtrSlot::PmDeparture], $days['2026-10-06']->fillable);
     }
+
+    /** A day's four taps, lunch at 12:00 and 1:00 unless given. */
+    private static function taps(?string $in, ?string $out, string $lunchOut = '12:00', string $lunchIn = '13:00'): array
+    {
+        return ['am_arrival' => $in, 'am_departure' => $lunchOut, 'pm_arrival' => $lunchIn, 'pm_departure' => $out];
+    }
+
+    public function test_flexi_counts_eight_hours_from_a_time_in_between_seven_and_nine(): void
+    {
+        $days = $this->compute($this->regular(['flexitime' => true]), [
+            '2026-10-05' => self::taps('06:30', '15:30'),
+            '2026-10-06' => self::taps('07:15', '16:15'),
+            '2026-10-07' => self::taps('08:30', '17:30'),
+            '2026-10-08' => self::taps('09:10', '18:10'),
+        ])->days;
+
+        // In before 7:00 counts as 7:00, so 4:00 is due; after 9:00 is late, and 6:00 is the latest due.
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 30, 1], $this->figures($days['2026-10-05']));
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-06']));
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-07']));
+        $this->assertSame([AttendanceStatus::Present, 10, 1, 0, 0], $this->figures($days['2026-10-08']));
+    }
+
+    public function test_flexi_keeps_the_break_at_twelve_to_one(): void
+    {
+        $day = $this->compute($this->regular(['flexitime' => true]), ['2026-10-09' => self::taps('08:00', '17:00', lunchIn: '13:10')])->days['2026-10-09'];
+
+        $this->assertSame([AttendanceStatus::Present, 10, 1, 0, 0], $this->figures($day));
+    }
+
+    public function test_flexi_with_no_time_in_owes_five_oclock(): void
+    {
+        $day = $this->compute($this->regular(['flexitime' => true]), ['2026-10-12' => self::taps(null, '16:30')])->days['2026-10-12'];
+
+        $this->assertSame(30, $day->undertime);
+        $this->assertContains('time in', $day->missing);
+    }
+
+    public function test_flexi_still_counts_an_untapped_afternoon_as_four_hours(): void
+    {
+        $day = $this->compute($this->regular(['flexitime' => true]), [
+            '2026-10-13' => ['am_arrival' => '07:00', 'am_departure' => '12:00'],
+        ])->days['2026-10-13'];
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 240, 1], $this->figures($day));
+    }
+
+    public function test_a_suspension_cuts_the_flexi_time_out_due(): void
+    {
+        Holiday::factory()->create(['date' => '2026-10-14', 'type' => HolidayType::Suspension, 'suspension_starts_at' => '15:00:00']);
+
+        // In at 9:00 would owe 6:00, but work ended at the suspension's 3:00.
+        $day = $this->compute($this->regular(['flexitime' => true]), ['2026-10-14' => self::taps('09:00', '15:00')])->days['2026-10-14'];
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($day));
+    }
+
+    public function test_flexi_does_not_apply_unchecked_or_on_another_schedule(): void
+    {
+        $unchecked = $this->compute($this->regular(), ['2026-10-07' => self::taps('08:30', '17:30')])->days['2026-10-07'];
+
+        $fourDay = Employee::factory()->create(['flexitime' => true]);
+        ScheduleAssignment::factory()->for($fourDay)->for(Schedule::factory()->create(['block2_out' => '19:00']))->create(['effective_from' => '2026-10-01']);
+        $otherSchedule = $this->compute($fourDay, ['2026-10-07' => self::taps('08:30', '19:00')])->days['2026-10-07'];
+
+        $this->assertSame([30, 30], [$unchecked->late, $otherSchedule->late]);
+    }
+
+    public function test_flexi_with_the_morning_on_an_ob_owes_five_oclock_whatever_it_tapped(): void
+    {
+        $employee = $this->regular(['flexitime' => true]);
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-15', 'date_to' => '2026-10-15', 'coverage' => LeaveCoverage::FirstHalf]);
+
+        // A tap at 9:00 on the OB morning is not the time in: the morning counts as 8:00, so 5:00 is due, not 6:00.
+        $day = $this->compute($employee, ['2026-10-15' => self::taps('09:00', '17:00')])->days['2026-10-15'];
+
+        $this->assertSame(0, $day->undertime);
+    }
 }

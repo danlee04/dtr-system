@@ -845,4 +845,15 @@ class DtrUploadResourceTest extends TestCase
             ->assertCanSeeTableRecords([$open])
             ->assertCanNotSeeTableRecords([$final]);
     }
+
+    public function test_a_flexitime_employees_dtr_says_flexi(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->computableUpload();
+        $upload->employee->update(['flexitime' => true]);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSee('8:00 AM – 12:00 PM, 1:00 PM – 5:00 PM · Flexi');
+    }
 }
