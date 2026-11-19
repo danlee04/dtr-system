@@ -53,7 +53,7 @@ which HR does not count.
 
 - `employees.flexitime`: boolean, default false; in `Employee`'s
   `#[Fillable]`, cast boolean. A checkbox on the employee form (staff only,
-  as the form is), with helper text stating the rule.
+  as the form is), with no helper text (HR had it removed, 2026-11-19).
 - `DtrCalculator::day()`: when the employee is flexitime and the day's
   schedule is 8:00/12:00/1:00/5:00, the morning's late cutoff becomes 9:00
   and the afternoon's time out due becomes clamp(time in, 7:00, 9:00) + 9

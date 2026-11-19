@@ -236,6 +236,86 @@
         flex-grow: 0;
     }
 
+    /*
+     * A chosen value stays on one line, so a long office name leaves the select
+     * as tall as the inputs beside it; the open list still shows every name whole.
+     */
+    .fi-select-input .fi-select-input-value-ctn > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* The employee form: each section's heading marked in amber, a rule between sections. */
+    .dtr-form-section .fi-section-header-heading {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2.5);
+    }
+
+    .dtr-form-section .fi-section-header-heading::before {
+        content: '';
+        inline-size: calc(var(--spacing) * 1);
+        block-size: 1.125rem;
+        border-radius: 9999px;
+        background-color: var(--primary-500);
+    }
+
+    .dtr-form-section-divided {
+        border-block-start: 1px solid var(--gray-200);
+        padding-block-start: calc(var(--spacing) * 6);
+    }
+
+    .dark .dtr-form-section-divided {
+        border-block-start-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+
+    /* The photo: a wide rounded box with a camera, the full width of its column, a rule between it and the name fields. */
+    .dtr-photo-drop.fi-fo-file-upload-avatar .fi-fo-file-upload-input-ctn {
+        inline-size: 100%;
+    }
+
+    .dtr-photo-drop .filepond--drop-label {
+        min-block-size: 7.5rem;
+    }
+
+    .dtr-photo-drop .filepond--panel-root {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-xl);
+        background-color: var(--gray-50);
+    }
+
+    .dark .dtr-photo-drop .filepond--panel-root {
+        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+        background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+    }
+
+    .dtr-photo-drop .filepond--drop-label svg {
+        display: block;
+        inline-size: 1.5rem;
+        block-size: 1.5rem;
+        margin: 0 auto calc(var(--spacing) * 1.5);
+        color: var(--gray-500);
+    }
+
+    @media (min-width: 48rem) {
+        .dtr-form-names {
+            border-inline-start: 1px solid var(--gray-200);
+            padding-inline-start: calc(var(--spacing) * 6);
+        }
+
+        .dark .dtr-form-names {
+            border-inline-start-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+        }
+    }
+
+    /* The switches stacked in Attendance's last column, level with the inputs, not their labels. */
+    @media (min-width: 40rem) {
+        .dtr-form-switches {
+            padding-block-start: calc(var(--spacing) * 7);
+        }
+    }
+
     /* Beside the photo on someone's own profile: their name, their post, and how to change the photo. */
     .dtr-profile-identity {
         display: grid;

@@ -368,6 +368,17 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   the employment status and the number.
 - **Photo:** Filament's round uploader with its cropper, in the employee form for
   HR and on the Profile page for the employee.
+- **Employee form** (the modal): Name first, the photo (a wide rounded box with a
+  camera, `.dtr-photo-drop`; the Profile page keeps the round one) beside the four
+  name fields (two by two), a rule between them (`.dtr-form-names`); Employment
+  four across; Attendance's three fields, then the Active and Flexitime switches
+  stacked in the fourth column, labels beside them (`.dtr-form-switches`). Two
+  across on a tablet, one on a phone. Headings, not cards, each marked with a
+  short amber bar (`.dtr-form-section`), a rule between sections
+  (`.dtr-form-section-divided`).
+- **Selects** keep a chosen value on one line, cut with "…", so a long office
+  name leaves the box as tall as the inputs beside it; the open list shows every
+  name whole.
 - **Tabs:** pills on a grey track (`--gray-100`; dark: white at 5%), started
   from the left. The open one is `--primary-400` with dark text, and a focused one
   gets the 2px outline.
