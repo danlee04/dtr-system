@@ -576,6 +576,13 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   (the DTR's), starting on that date and covering that part; To may run later
   for a travel order of several days. Saving makes the same entry this screen
   lists, with the same overlap rule; it is changed or removed here.
+  **Leave and gate pass** (added 2026-11-19): two more types on the same form
+  and screen (now "OB, Leave & Gate Pass"; the DTR button reads + OB/Leave).
+  A gate pass counts like an OB: its day or half is excused, with no late,
+  undertime or absence. Leave is HR's mark while the leave module is not yet in
+  use: the day shows Leave and is excused, but it takes no credits and needs no
+  application; HR adjusts the balance on the employee's Leave tab, or the
+  employee files later.
 - **Not yet.** Deducting the total from VL; how a missing tap counts for good
   (HR assumed complete for now); shifts past midnight and 16-hour duty, set
   aside until a nurse's DTR is in hand. The CSC table in code is the one above

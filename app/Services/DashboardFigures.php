@@ -52,7 +52,7 @@ final class DashboardFigures
     }
 
     /**
-     * Who is away today, on leave (unless cancelled), an OB or a travel order,
+     * Who is away today, on leave (unless cancelled), an OB, a travel order or a gate pass,
      * surname first; someone with two of them is listed once.
      *
      * @return list<array{employee: Employee, reason: string}>

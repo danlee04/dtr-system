@@ -383,6 +383,21 @@
         white-space: nowrap;
     }
 
+    /* Below 1280px the dashed "+ Add" and "+ OB/Leave" boxes hug their text, so the columns stay narrow. */
+    .dtr-record-days .dtr-grid-add,
+    .dtr-record-days .dtr-grid-ob {
+        gap: calc(var(--spacing) * 0.5);
+        padding-inline: 0.25rem;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-record-days .dtr-grid-add,
+        .dtr-record-days .dtr-grid-ob {
+            gap: calc(var(--spacing) * 1);
+            padding-inline: 0.5rem;
+        }
+    }
+
     /* A narrow column wraps the badges onto lines; it never cuts "Official business" short. */
     .dtr-record-days .dtr-grid-badges > * {
         flex: none;
@@ -418,7 +433,7 @@
     }
 
     .dtr-record-days td.dtr-record-notes {
-        min-width: 5.5rem;
+        min-width: 5rem;
         white-space: normal;
     }
 

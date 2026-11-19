@@ -224,7 +224,7 @@ decoration.
 | `tr.is-off` | A date that is not a work date: grey fill and grey text |
 | `tr.is-absent` | An absent date: a faint red tint, always with its Absent badge |
 | `.dtr-grid-add` | A blank HR may fill: a dashed amber box ("+ Add") on a Filament link action |
-| `.dtr-grid-ob` | "+ OB/TO" beside a day's status badge: the dashed box of `.dtr-grid-add`, in the info blue of the OB and travel order badges |
+| `.dtr-grid-ob` | "+ OB/Leave" beside a day's status badge: the dashed box of `.dtr-grid-add`, in the info blue of the OB and travel order badges |
 | `.dtr-grid-hr` / `.dtr-grid-hr-tag` | A time HR copied in: the time as text, then a blue "HR" tag |
 | `.dtr-grid-printed` | A printed time HR may correct: plain text on a Filament link action, a dotted underline on hover or focus |
 
@@ -285,10 +285,10 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   link ("Change A.M. arrival, Wed, Oct 14") for a time the device got wrong;
   once corrected it shows HR's time and tag, and the tooltip names the printed
   time.
-- **+ OB/TO** beside the status of a day with a part that has no tap (absent, or
-  a half with both taps blank), with an `aria-label` naming the date. It opens
-  "OB or travel order from Fri, Oct 16": the OB & travel orders form without its
-  employee, three across, the date and the untapped part filled in.
+- **+ OB/Leave** beside the status of a day with a part that has no tap (absent,
+  or a half with both taps blank), with an `aria-label` naming the date. It opens
+  "OB, TO, leave or gate pass from Fri, Oct 16": the OB, Leave & Gate Pass form
+  without its employee, three across, the date and the untapped part filled in.
 - **Legend** under the grid for + Add, HR and the grey rows.
 - **Fill-in modal:** "Fill in Fri, Oct 2", the date's four slots in a row
   (printed times as read-only text marked Printed, the blanks and HR's times as

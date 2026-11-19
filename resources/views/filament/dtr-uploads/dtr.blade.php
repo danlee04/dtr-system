@@ -125,7 +125,7 @@
                 <span><span class="dtr-grid-add">+ Add</span> a blank to fill from the signed DTR</span>
             @endif
             @if ($addException)
-                <span><span class="dtr-grid-ob">+ OB/TO</span> an OB or travel order for a day with no tap</span>
+                <span><span class="dtr-grid-ob">+ OB/Leave</span> an OB, travel order, leave or gate pass for a day with no tap</span>
             @endif
             <span><span class="dtr-grid-hr-tag">HR</span> a time HR copied in</span>
             <span><span class="dtr-record-swatch" aria-hidden="true"></span> not a work date</span>

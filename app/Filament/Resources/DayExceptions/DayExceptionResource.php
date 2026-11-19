@@ -28,9 +28,13 @@ class DayExceptionResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
-    protected static ?string $modelLabel = 'OB or travel order';
+    // "&", not "or": Filament capitalises every word of a heading, "Create OB, TO, Leave & Gate Pass".
+    protected static ?string $modelLabel = 'OB, TO, leave & gate pass';
 
-    protected static ?string $pluralModelLabel = 'OB & travel orders';
+    protected static ?string $pluralModelLabel = 'OB, TO, leave & gate passes';
+
+    // Short enough for the sidebar; a travel order is filed with the OBs.
+    protected static ?string $navigationLabel = 'OB, Leave & Gate Pass';
 
     // Its records are edited in a modal on the list, so there is no page for a search result to open.
     protected static bool $isGloballySearchable = false;

@@ -194,6 +194,22 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([[], 'Official business (afternoon)'], [$day->missing, $day->note]);
     }
 
+    public function test_leave_or_a_gate_pass_hr_marks_covers_its_part_of_the_day_like_an_ob(): void
+    {
+        $employee = $this->regular();
+        // HR marks leave by hand while the leave module is not yet in use: no application, no credits charged (HR, 2026-11-19).
+        DayException::factory()->for($employee)->create(['type' => ExceptionType::Leave, 'date_from' => '2026-10-16', 'date_to' => '2026-10-16']);
+        DayException::factory()->for($employee)->create(['type' => ExceptionType::GatePass, 'date_from' => '2026-10-15', 'date_to' => '2026-10-15', 'coverage' => LeaveCoverage::SecondHalf]);
+
+        $days = $this->compute($employee, ['2026-10-15' => ['am_arrival' => '07:55', 'am_departure' => '12:00']])->days;
+
+        $this->assertSame([AttendanceStatus::Leave, 0, 0, 0, 0], $this->figures($days['2026-10-16']));
+        $this->assertSame(0.0, $days['2026-10-16']->absent);
+        // The afternoon on a gate pass is neither missing nor undertime.
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-15']));
+        $this->assertSame([[], 'Gate pass (afternoon)'], [$days['2026-10-15']->missing, $days['2026-10-15']->note]);
+    }
+
     public function test_leave_in_the_morning_and_ob_in_the_afternoon_cover_the_day(): void
     {
         $employee = $this->regular();

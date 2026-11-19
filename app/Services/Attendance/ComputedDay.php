@@ -32,7 +32,7 @@ final readonly class ComputedDay
 
     /**
      * The part of the day with no tap at all and nothing covering it, which an
-     * OB or a travel order could cover: the whole day when it is absent, else
+     * OB, a travel order, leave or a gate pass could cover: the whole day when it is absent, else
      * the half whose arrival and departure are both blank. Null when every
      * half has a tap, or the day is not a work day judged.
      */

@@ -16,9 +16,10 @@ use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 
 /**
- * HR records an OB or a travel order from a DTR's day with no tap: the same
- * entry the OB & travel orders screen keeps and lists, for the DTR's
- * employee, starting on that date and covering the part of it with no tap.
+ * HR records an OB, a travel order, leave or a gate pass from a DTR's day with
+ * no tap: the same entry the OB, TO, leave & gate pass screen keeps and lists,
+ * for the DTR's employee, starting on that date and covering the part of it
+ * with no tap.
  * The date comes from the browser, so it is worked out again from the DTR.
  */
 class AddDayExceptionAction extends Action
@@ -35,16 +36,16 @@ class AddDayExceptionAction extends Action
         $this
             ->link()
             ->size(Size::Small)
-            ->label('OB/TO')
+            ->label('OB/Leave')
             ->icon(Heroicon::Plus)
             ->extraAttributes(fn (DtrUpload $record, array $arguments): array => [
                 'class' => 'dtr-grid-ob',
-                'aria-label' => 'Add an OB or travel order, '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'),
+                'aria-label' => 'Add an OB, travel order, leave or gate pass, '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'),
             ])
             ->authorize(fn (): bool => auth()->user()?->can('create', DayException::class) ?? false)
             ->visible(fn (DtrUpload $record, array $arguments): bool => self::day($record, $arguments) !== null)
-            ->modalHeading(fn (DtrUpload $record, array $arguments): string => 'OB or travel order from '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'))
-            ->modalDescription('From the signed slip. It is kept on the OB & travel orders screen too, where it can be changed or removed.')
+            ->modalHeading(fn (DtrUpload $record, array $arguments): string => 'OB, TO, leave or gate pass from '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'))
+            ->modalDescription('From the signed paper. Leave marked here takes no credits. It is kept on the OB, TO, leave & gate pass screen too, where it can be changed or removed.')
             ->modalWidth(Width::TwoExtraLarge)
             ->modalSubmitActionLabel('Save')
             ->fillForm(fn (DtrUpload $record, array $arguments): array => [

@@ -85,7 +85,7 @@ class DayExceptionResourceTest extends TestCase
             'date_from' => '2026-10-27',
             'date_to' => '2026-10-28',
             'coverage' => LeaveCoverage::WholeDay->value,
-        ])->assertHasFormErrors(['date_from' => 'These dates overlap an OB or travel order already recorded for this employee.']);
+        ])->assertHasFormErrors(['date_from' => 'These dates overlap an OB, travel order, leave or gate pass already recorded for this employee.']);
     }
 
     public function test_a_morning_and_an_afternoon_can_share_a_date(): void

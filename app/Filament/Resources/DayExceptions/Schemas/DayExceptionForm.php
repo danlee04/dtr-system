@@ -73,7 +73,7 @@ class DayExceptionForm
                             ->isNotEmpty();
 
                         if ($overlaps) {
-                            $fail('These dates overlap an OB or travel order already recorded for this employee.');
+                            $fail('These dates overlap an OB, travel order, leave or gate pass already recorded for this employee.');
                         }
                     },
                 ]),
@@ -96,7 +96,7 @@ class DayExceptionForm
             TextInput::make('reference_no')
                 ->label('Reference no.')
                 ->maxLength(50)
-                ->helperText('The slip or travel order number, if it has one.'),
+                ->helperText('The slip, travel order or gate pass number, if it has one.'),
             TextInput::make('remarks')
                 ->maxLength(255)
                 ->columnSpan(2),

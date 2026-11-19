@@ -173,7 +173,7 @@ class DtrUploadInfolist
                 'late' => self::minutes($result?->late),
                 'undertime' => self::minutes($result?->undertime),
                 'status' => $result?->status,
-                // A part of the day with no tap, which an OB or travel order could cover.
+                // A part of the day with no tap, which an OB, travel order, leave or gate pass could cover.
                 'untapped' => $result?->untappedCoverage() !== null,
                 // Each note with whether it needs a look.
                 'notes' => array_values(array_filter([

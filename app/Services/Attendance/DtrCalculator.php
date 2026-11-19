@@ -219,7 +219,7 @@ final class DtrCalculator
     }
 
     /**
-     * What covers each half of the day: leave, an OB or a travel order. A
+     * What covers each half of the day: leave, an OB, a travel order or a gate pass. A
      * half-day entry covers its half; on a one-block day it covers the whole
      * block. The first entry found for a half names it.
      *

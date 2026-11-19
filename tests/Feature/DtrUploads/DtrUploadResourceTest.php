@@ -13,6 +13,8 @@ use App\Models\DayException;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\Employee;
+use App\Models\LeaveApplication;
+use App\Models\LeaveLedgerEntry;
 use App\Models\ManualTap;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
@@ -568,6 +570,27 @@ class DtrUploadResourceTest extends TestCase
             [$upload->employee_id, ExceptionType::OfficialBusiness, '2026-10-29', LeaveCoverage::WholeDay, 'OB-2026-130', $hr->id],
             [$exception->employee_id, $exception->type, $exception->date_from->toDateString(), $exception->coverage, $exception->reference_no, $exception->created_by_user_id],
         );
+    }
+
+    public function test_hr_marks_leave_for_an_absent_day_from_the_dtr_without_an_application(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->addException($upload, '2026-10-29'), data: [
+                'type' => ExceptionType::Leave->value,
+                'date_from' => '2026-10-29',
+                'date_to' => '2026-10-29',
+                'coverage' => LeaveCoverage::WholeDay->value,
+            ])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Leave recorded: Oct 29, 2026');
+
+        $this->assertSame(ExceptionType::Leave, DayException::sole()->type);
+        // A mark on the DTR only: no leave application, and no credits taken.
+        $this->assertDatabaseCount(LeaveApplication::class, 0);
+        $this->assertDatabaseCount(LeaveLedgerEntry::class, 0);
     }
 
     public function test_the_ob_form_starts_on_the_date_and_the_half_with_no_tap(): void
