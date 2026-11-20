@@ -76,7 +76,7 @@ final class DashboardFigures
 
     /**
      * The offices whose month is not closed: a DTR not uploaded, or uploaded
-     * and not final; the most staff still open first, five at most.
+     * and not final; the most staff still open first; the card shows the first few and counts the rest.
      *
      * @param  array{offices: list<array{office: string, uploaded: int, staff: int}>}  $month  from month()
      * @param  array<string, int>  $finals  from finals()
@@ -91,7 +91,7 @@ final class DashboardFigures
         $open = array_values(array_filter($offices, fn (array $office): bool => $office['final'] < $office['staff']));
         usort($open, fn (array $a, array $b): int => [$b['staff'] - $b['final'], $a['office']] <=> [$a['staff'] - $a['final'], $b['office']]);
 
-        return array_slice($open, 0, 5);
+        return $open;
     }
 
     public function pendingApplications(): int

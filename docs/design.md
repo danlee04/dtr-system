@@ -340,13 +340,29 @@ Filament notifications:
 
 ### Dashboard pieces
 
+- **The staff dashboard's layout** (HR's reference, 2026-11-20): a visible
+  "Dashboard" heading (`.dtr-dash-heading`, no amber mark; the page's own h1
+  stays for screen readers) with a month select at the right (Livewire `month`: last month and the months with a DTR, as DTR Uploads lists them;
+  last month by default); four figures (`.dtr-dash-kpi`: a round icon tinted info,
+  success, warning or amber, the figure, its label, a link): late and undertime,
+  absences, leave to approve, out today; the Attendance overview chart (three
+  columns, a minutes scale at its left) beside the quick actions; DTRs for the
+  month (Uploaded and Final, each a label and count over its bar), the next step
+  (its note in a tinted box), On time and Offices not done (three offices, each
+  name over its figures; "+ N more" and View all at the foot); Out today, Leave in
+  the year and Recent leave at the foot. Cards in a row are one height: a card's
+  closing link sits at its foot (`.dtr-dash-foot`), the gauge and the bars in the
+  middle, an empty card shows an icon and its words in the middle
+  (`.dtr-dash-empty`), and the quick-action tiles fill their card. Two columns on a
+  tablet, one on a phone. Amber stays the primary colour.
 - **Stat:** a grey label, the figure, a link.
 - **Progress bar:** green on the track.
 - **Segmented bar:** with a legend giving each part's share.
 - **Gauge:** an SVG half-circle.
 - **List rows:** an initials avatar, two lines of text, and the status on the right.
 - **Quick-action tiles:** a 44px icon box over its label. As many fit across as
-  allow 64px each; the rest wrap to the next row. The view's one main action, if
+  allow 64px each; the rest wrap to the next row. On the staff dashboard they are
+  framed tiles, three across (`.dtr-dash-actions.is-tiles`), the icon in amber. The view's one main action, if
   it has one, is `.is-main`: an amber box with dark text (File leave, on an
   employee's dashboard).
 - **Series colours** come from `.is-late` and `.is-undertime`; a stack of lines

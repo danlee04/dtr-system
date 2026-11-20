@@ -10,7 +10,7 @@
         display: grid;
         gap: calc(var(--spacing) * 4);
         grid-template-columns: minmax(0, 1fr);
-        grid-template-areas: "a" "b" "c" "d" "e" "f" "g" "h" "i";
+        grid-template-areas: "top" "k1" "k2" "k3" "k4" "a" "c" "d" "e" "g" "h" "o" "f" "i";
     }
 
     .dark .dtr-dash {
@@ -24,18 +24,27 @@
     @media (min-width: 48rem) {
         .dtr-dash {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            grid-template-areas: "a a" "b c" "d e" "f g" "h i";
+            grid-template-areas: "top top" "k1 k2" "k3 k4" "a a" "c c" "d e" "g h" "o f" "i i";
         }
     }
 
-    /* The reference's layout: the chart wide on top, the quick actions down the right, four cards along the foot. */
+    /*
+     * HR's reference (2026-11-20): the heading and month, four figures, the chart wide beside
+     * the quick actions, the month's progress along the next row; today's leave at the foot.
+     */
     @media (min-width: 80rem) {
         .dtr-dash {
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            grid-template-areas: "a a b c" "d e e c" "f g h i";
+            grid-template-areas: "top top top top" "k1 k2 k3 k4" "a a a c" "d e g h" "o f i i";
         }
     }
 
+    .dtr-dash-top { grid-area: top; }
+    .dtr-dash-k1 { grid-area: k1; }
+    .dtr-dash-k2 { grid-area: k2; }
+    .dtr-dash-k3 { grid-area: k3; }
+    .dtr-dash-k4 { grid-area: k4; }
+    .dtr-dash-o { grid-area: o; }
     .dtr-dash-a { grid-area: a; }
     .dtr-dash-b { grid-area: b; }
     .dtr-dash-c { grid-area: c; }
@@ -224,27 +233,170 @@
         opacity: 1;
     }
 
-    /* B: three figures, one under the other. */
-    .dtr-dash-stats {
-        display: grid;
+    /* The heading, the month picker at the right. */
+    .dtr-dash-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: calc(var(--spacing) * 4);
     }
 
-    .dtr-dash-stat {
+    .dtr-dash-heading {
+        font-size: 1.5rem;
+        line-height: 1.2;
+        font-weight: var(--font-weight-semibold);
+        color: var(--dash-text);
+    }
+
+    .dtr-dash-month {
+        inline-size: 12rem;
+    }
+
+    /* K: a figure beside a round, tinted icon. */
+    .dtr-dash-kpi {
+        flex-direction: row;
+        align-items: center;
+        gap: calc(var(--spacing) * 4);
+    }
+
+    .dtr-dash-kpi-icon {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: calc(var(--spacing) * 12);
+        height: calc(var(--spacing) * 12);
+        border-radius: 9999px;
+        background-color: color-mix(in oklab, var(--tone) 14%, var(--dash-card));
+        color: var(--tone);
+    }
+
+    .dtr-dash-kpi-icon > svg {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash-kpi-icon.is-info { --tone: var(--info-500); }
+    .dtr-dash-kpi-icon.is-success { --tone: var(--success-500); }
+    .dtr-dash-kpi-icon.is-warning { --tone: var(--warning-500); }
+    .dtr-dash-kpi-icon.is-primary { --tone: var(--primary-500); }
+
+    .dtr-dash-kpi-text {
         display: grid;
         gap: calc(var(--spacing) * 1);
-        padding-block: calc(var(--spacing) * 3);
+        min-width: 0;
     }
 
-    .dtr-dash-stat + .dtr-dash-stat {
-        border-top: 1px solid var(--dash-line);
+    /* A card title with a small icon before it. */
+    .dtr-dash-titled {
+        display: flex;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 2.5);
     }
 
-    .dtr-dash-stat:first-child {
-        padding-top: 0;
+    .dtr-dash-title-icon {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+        color: var(--dash-muted);
     }
 
-    .dtr-dash-stat:last-child {
-        padding-bottom: 0;
+    .dtr-dash-title-icon > svg {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+    }
+
+    /* A: the scale at the left of the bars, level with their tracks. */
+    .dtr-dash-plot {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: calc(var(--spacing) * 3);
+        margin-top: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash-plot .dtr-dash-chart {
+        margin-top: 0;
+    }
+
+    .dtr-dash-axis {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 12rem;
+        padding-bottom: 1.5rem;
+        font-size: var(--text-xs);
+        text-align: end;
+        color: var(--dash-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /*
+     * The month's row and the foot row hold cards of the same height: what ends a card
+     * (a link, the "more" line) sits at its foot, the gauge in the middle, and an empty
+     * card shows its icon and words in the middle rather than a blank.
+     */
+    .dtr-dash-foot,
+    .dtr-dash-e > .dtr-dash-link {
+        margin-top: auto;
+    }
+
+    .dtr-dash-g .dtr-dash-gauge {
+        margin-block: auto;
+    }
+
+    /* The quick actions fill their card, as tall as the chart beside it. */
+    .dtr-dash-c .dtr-dash-actions.is-tiles {
+        flex: 1;
+        grid-auto-rows: minmax(5.5rem, 1fr);
+    }
+
+    .dtr-dash-meters {
+        display: grid;
+        gap: calc(var(--spacing) * 5);
+        margin-block: auto;
+    }
+
+    .dtr-dash-count {
+        font-weight: var(--font-weight-semibold);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dtr-dash-empty {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: calc(var(--spacing) * 2);
+        padding-block: calc(var(--spacing) * 4);
+        font-size: var(--text-sm);
+        text-align: center;
+        color: var(--dash-muted);
+    }
+
+    .dtr-dash-empty > svg {
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        opacity: 0.6;
+    }
+
+    /* H: an office's name over its figures. */
+    .dtr-dash-office {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+    }
+
+    /* E: the note in a tinted box, the bulb beside it. */
+    .dtr-dash-note {
+        display: flex;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 3);
+        padding: calc(var(--spacing) * 3);
+        border-radius: var(--radius-lg);
+        background-color: color-mix(in oklab, var(--warning-400) 10%, var(--dash-card));
+        font-size: var(--text-sm);
     }
 
     /* C: the quick actions as tiles, then who is out today. */
@@ -296,6 +448,49 @@
     .dtr-dash-action-icon > svg {
         width: calc(var(--spacing) * 5);
         height: calc(var(--spacing) * 5);
+    }
+
+    /* The staff dashboard's quick actions: framed tiles, three across, the icon over the label. */
+    .dtr-dash-actions.is-tiles {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action {
+        justify-content: center;
+        min-height: 5.5rem;
+        padding: calc(var(--spacing) * 3) calc(var(--spacing) * 2);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 0 0 1px var(--dash-line);
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action-icon {
+        width: auto;
+        height: auto;
+        box-shadow: none;
+        color: var(--primary-600);
+    }
+
+    .dark .dtr-dash-actions.is-tiles .dtr-dash-action-icon {
+        color: var(--primary-400);
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        background-color: var(--dash-track);
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:hover .dtr-dash-action-icon,
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible .dtr-dash-action-icon {
+        background-color: transparent;
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        outline: 2px solid var(--gray-500);
+        outline-offset: 2px;
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible .dtr-dash-action-icon {
+        outline: none;
     }
 
     .dtr-dash-divider {
@@ -369,12 +564,7 @@
         font-size: var(--text-sm);
     }
 
-    /* E: the next step, with a bulb beside it. */
-    .dtr-dash-e {
-        flex-direction: row;
-        align-items: flex-start;
-    }
-
+    /* E: the next step's bulb. */
     .dtr-dash-bulb {
         display: grid;
         flex: none;

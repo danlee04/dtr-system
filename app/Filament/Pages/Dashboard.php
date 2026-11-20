@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\NavigationGroup;
+use App\Filament\Resources\DtrUploads\Tables\DtrUploadsTable;
 use App\Models\DtrUpload;
 use App\Models\LeaveApplication;
 use App\Services\DashboardFigures;
@@ -24,6 +25,20 @@ class Dashboard extends BaseDashboard
 {
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Overview;
 
+    /** "Y-m", from the month picker over the staff dashboard. */
+    public string $month = '';
+
+    public function mount(): void
+    {
+        $this->month = self::lastMonth()->format('Y-m');
+    }
+
+    /** IT prints a month's DTRs once it is over, so the dashboard opens on last month. */
+    private static function lastMonth(): CarbonImmutable
+    {
+        return CarbonImmutable::today()->subMonthNoOverflow()->startOfMonth();
+    }
+
     public function content(Schema $schema): Schema
     {
         if (auth()->user()?->isStaff() ?? false) {
@@ -41,13 +56,20 @@ class Dashboard extends BaseDashboard
     private function cards(DashboardFigures $figures): array
     {
         $today = CarbonImmutable::today();
-        // The month whose DTRs IT has printed.
-        $lastMonth = $today->subMonthNoOverflow()->startOfMonth();
+        // The month picked, or last month; the browser sends anything, so only a real "Y-m" counts.
+        $lastMonth = CarbonImmutable::hasFormat($this->month, 'Y-m') && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $this->month) === 1
+            ? CarbonImmutable::createFromFormat('!Y-m', $this->month)
+            : self::lastMonth();
         $month = $figures->month($lastMonth);
         $finals = $figures->finals($lastMonth);
 
         return [
             'lastMonth' => $lastMonth,
+            // For the month select: last month, then every month with a DTR uploaded, newest first.
+            'months' => collect([self::lastMonth()->format('Y-m') => self::lastMonth()->format('F Y')])
+                ->merge(DtrUploadsTable::months())
+                ->sortKeysDesc()
+                ->all(),
             'month' => $month,
             // Closing the month: the DTRs HR has marked final, and the offices not done (HR, 2026-11-20).
             'finalCount' => array_sum($finals),

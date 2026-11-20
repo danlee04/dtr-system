@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Dashboard;
 use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
@@ -11,6 +12,7 @@ use App\Models\ScheduleAssignment;
 use App\Models\User;
 use App\Services\Leave\DtrDeduction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class DashboardPageTest extends TestCase
@@ -75,6 +77,24 @@ class DashboardPageTest extends TestCase
         $this->actingAs($hr)
             ->get('/')
             ->assertOk()
-            ->assertSee(['1 final of 2 uploaded', 'Offices not done', 'Nursing Service', 'final 1']);
+            ->assertSeeInOrder(['Uploaded', '2 of', 'Final', '1 of 2'])
+            ->assertSee(['Offices not done', 'Nursing Service', 'final 1']);
+    }
+
+    public function test_staff_choose_the_month_the_dashboard_shows(): void
+    {
+        $this->actingAs(User::factory()->create());
+        DtrUpload::factory()->create(['period_start' => '2026-08-01', 'period_end' => '2026-08-31']);
+
+        // Last month by default: October, as IT prints a month once it is over. The select lists it and every month with a DTR.
+        Livewire::test(Dashboard::class)
+            ->assertSet('month', '2026-10')
+            ->assertSeeHtmlInOrder(['<option value="2026-10">October 2026</option>', '<option value="2026-08">August 2026</option>'])
+            ->assertSee('DTRs for October')
+            ->set('month', '2026-09')
+            ->assertSee('DTRs for September')
+            // Anything but a "Y-m" month falls back to last month.
+            ->set('month', 'not-a-month')
+            ->assertSee('DTRs for October');
     }
 }
