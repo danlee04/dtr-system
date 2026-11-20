@@ -842,8 +842,13 @@ class DtrUploadResourceTest extends TestCase
         $final = $this->final($this->computableUpload());
         $open = $this->computableUpload();
 
+        // A Status column says it for each DTR; Month is gone, Days with entries stays (HR, 2026-11-20).
         Livewire::test(ListDtrUploads::class)
-            ->assertSeeText('21.100 day · Final')
+            ->assertTableColumnStateSet('status', 'Final', $final)
+            ->assertTableColumnStateSet('status', 'Not final', $open)
+            ->assertTableColumnDoesNotExist('period_start')
+            ->assertTableColumnExists('days_count')
+            ->assertDontSeeText('· Final')
             ->filterTable('not_final')
             ->assertCanSeeTableRecords([$open])
             ->assertCanNotSeeTableRecords([$final]);
@@ -858,5 +863,18 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($upload))
             ->assertMountedActionModalSee('8:00 AM – 12:00 PM, 1:00 PM – 5:00 PM · Flexi');
+    }
+
+    public function test_the_search_finds_a_dtr_by_its_printed_name_without_a_column_for_it(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $unmatched = DtrUpload::factory()->create(['employee_id' => null, 'employee_name' => 'SANTOS, ANA']);
+        $other = $this->computableUpload();
+
+        Livewire::test(ListDtrUploads::class)
+            ->assertTableColumnDoesNotExist('employee_name')
+            ->searchTable('SANTOS')
+            ->assertCanSeeTableRecords([$unmatched])
+            ->assertCanNotSeeTableRecords([$other]);
     }
 }

@@ -199,9 +199,21 @@ decoration.
   picked, come before the search. A list with a few filters may show them in its
   toolbar right of the search, applied as they change, in place of Filament's
   filter dropdown (DTR uploads: `filament.dtr-uploads.toolbar-filters`, with
-  Month, Needs an employee and Not final yet). The DTR list marks a final DTR
-  in its Late + undertime cell ("0.100 day · Final") rather than in a column
-  of its own, which would not fit a tablet.
+  Month, Needs an employee and Not final yet). The DTR list's Status column is a
+  badge, "Final" (green, a closed lock) or "Not final" (grey, an open lock), "—"
+  for a DTR not computed; it took the place of Month (HR, 2026-11-20), which
+  the Month filter already shows.
+  Columns: Employee (the printed name under "Needs an employee"; the search
+  covers it, with no column of its own), the figures right-aligned (Late +
+  undertime, Absent, Days with entries), Uploaded, then Status last, beside
+  the actions (HR, 2026-11-20). Days with
+  entries was dropped with Month and brought back the same day by HR's request;
+  it shows from 1536 px (`visibleFrom('2xl')`), as before: at 1024 the row
+  scrolled sideways and cut Delete off, at 1280 it broke Uploaded's time in two. A click on a row opens the DTR. The
+  actions show as links with icon and label (View, Choose employee, Delete),
+  lined up from the left (`recordActionsAlignment(Alignment::Start->value)`), so View
+  stays in one place on a final DTR, which has no Delete. A "⋯" menu that hid
+  them was tried and dropped (HR, 2026-11-20): View must be seen.
 - **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
 
 | Class | Use |

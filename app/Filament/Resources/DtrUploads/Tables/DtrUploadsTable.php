@@ -13,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
+use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -47,33 +48,19 @@ class DtrUploadsTable
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
                     ->placeholder('Needs an employee')
-                    // The printed name says whose it may be; on a laptop its own column is hidden.
+                    // The printed name says whose it may be, under "Needs an employee"; with an employee it would only repeat the name.
                     ->description(fn (DtrUpload $record): ?string => $record->employee_id === null ? $record->employee_name : null)
                     ->wrap(false)
-                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
-                        'employee',
-                        fn (Builder $employee): Builder => $employee->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"),
-                    )),
-                // The least-used columns step aside on a laptop or tablet; the search still covers the name.
-                TextColumn::make('employee_name')
-                    ->label('Name on the DTR')
-                    ->searchable()
-                    ->visibleFrom('2xl'),
-                TextColumn::make('period_start')
-                    ->label('Month')
-                    ->state(fn (DtrUpload $record): string => $record->period())
-                    ->sortable()
-                    ->visibleFrom('xl'),
-                TextColumn::make('days_count')
-                    ->label('Days with entries')
-                    ->alignEnd()
-                    ->visibleFrom('2xl'),
+                    // The printed name is searched too, though it has no column of its own (HR, 2026-11-20).
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $query): Builder => $query
+                        ->whereHas('employee', fn (Builder $employee): Builder => $employee->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"))
+                        ->orWhere('employee_name', 'like', "%{$search}%"))),
+                // The figures together, right-aligned.
                 TextColumn::make('late_and_undertime')
                     ->label('Late + undertime')
                     // In hours, as everywhere else (HR, 2026-11-20).
                     ->state(fn (DtrUpload $record): ?string => $record->isComputed() ? DtrUploadInfolist::hours($record->computed()->late + $record->computed()->undertime) : null)
-                    // "· Final" once HR has checked it and its VL is deducted; a new column would not fit a tablet.
-                    ->description(fn (DtrUpload $record): ?string => $record->isComputed() ? "{$record->computed()->dayEquivalent} day".($record->isFinal() ? ' · Final' : '') : null)
+                    ->description(fn (DtrUpload $record): ?string => $record->isComputed() ? "{$record->computed()->dayEquivalent} day" : null)
                     ->placeholder('—')
                     ->alignEnd(),
                 TextColumn::make('absent')
@@ -81,12 +68,29 @@ class DtrUploadsTable
                     ->state(fn (DtrUpload $record): int|float|null => $record->isComputed() ? $record->computed()->absent : null)
                     ->placeholder('—')
                     ->alignEnd(),
+                // Back by HR's request (2026-11-20), after it was dropped the same day; narrower, the row scrolls sideways or squeezes Uploaded.
+                TextColumn::make('days_count')
+                    ->label('Days with entries')
+                    ->alignEnd()
+                    ->visibleFrom('2xl'),
                 TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->dateTime('M j, Y g:i A')
                     ->description(fn (DtrUpload $record): ?string => $record->uploadedBy?->name)
                     ->sortable()
                     ->visibleFrom('xl'),
+                // Whether HR has checked it and marked it final, last, beside the actions (HR, 2026-11-20).
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->state(fn (DtrUpload $record): ?string => match (true) {
+                        ! $record->isComputed() => null,
+                        $record->isFinal() => 'Final',
+                        default => 'Not final',
+                    })
+                    ->badge()
+                    ->icon(fn (?string $state): Heroicon => $state === 'Final' ? Heroicon::OutlinedLockClosed : Heroicon::OutlinedLockOpen)
+                    ->color(fn (?string $state): string => $state === 'Final' ? 'success' : 'gray')
+                    ->placeholder('—'),
             ])
             // By last name A–Z (HR, 2026-11-18); a DTR with no employee yet by its printed name, which leads with the surname.
             ->defaultSort(fn (Builder $query): Builder => $query
@@ -117,6 +121,10 @@ class DtrUploadsTable
             ->deferFilters(false)
             // The toolbar already shows them; a row of the same filters under it would say it twice.
             ->hiddenFilterIndicators()
+            // A click on the row opens the DTR too.
+            ->recordAction('view')
+            // Lined up from the left, so View stays in one place whether a row also has Delete or not (a final DTR has none) (HR, 2026-11-20).
+            ->recordActionsAlignment(Alignment::Start->value)
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading(fn (DtrUpload $record): string => DtrUploadInfolist::heading($record))
