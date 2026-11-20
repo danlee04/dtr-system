@@ -1,5 +1,6 @@
 @php
     use App\Enums\LeaveType;
+    use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
     use Filament\Support\Icons\Heroicon;
 
     // Each balance by its name and colour on the dashboard's leave chart.
@@ -20,8 +21,8 @@
                 <dd class="dtr-profile-card-value">{{ $lastMonth->lateCount }} {{ str('late')->plural($lastMonth->lateCount) }}</dd>
                 <dd class="dtr-profile-card-detail">
                     {{ implode(' · ', array_filter([
-                        "{$lastMonth->late} min late",
-                        $lastMonth->undertime > 0 ? "{$lastMonth->undertime} min undertime" : null,
+                        DtrUploadInfolist::hours($lastMonth->late).' late',
+                        $lastMonth->undertime > 0 ? DtrUploadInfolist::hours($lastMonth->undertime).' undertime' : null,
                         $lastMonth->absent > 0 ? $lastMonth->absent.' '.($lastMonth->absent == 1 ? 'day' : 'days').' absent' : null,
                     ])) }}
                 </dd>

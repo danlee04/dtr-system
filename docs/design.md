@@ -279,6 +279,10 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   Absent (the days, with "2.000 days from SL, then VL" under them), and Blanks to fill, which turns
   `is-warning` (amber tint) while any blank is left. A DTR that is not computed
   shows one warning sentence instead (`.dtr-record-warning`).
+- **Hours, not minutes:** since 2026-11-20 every late and undertime figure is in that
+  hours format: each day's Late and Undertime cells, the DTR list, the dashboard's
+  chart and the employee's cards. The Monthly Summary's Excel holds them as
+  `[h]:mm` durations, which still add up.
 - **Final:** once HR marks it final, a `.dtr-record-sub` line under the cards,
   "Final · Nov 3, 2026 by Ana Reyes · SL −1.250 · VL −0.100" (real minus signs,
   SL before VL), or "nothing deducted". When the figures move after Final, HR sees a `.dtr-record-warning`
@@ -346,7 +350,7 @@ Filament notifications:
   last month by default); four figures (`.dtr-dash-kpi`: a round icon tinted info,
   success, warning or amber, the figure, its label, a link): late and undertime,
   absences, leave to approve, out today; the Attendance overview chart (three
-  columns, a minutes scale at its left) beside the quick actions; DTRs for the
+  columns, a scale in hours at its left, the legend and tooltips in hours) beside the quick actions; DTRs for the
   month (Uploaded and Final, each a label and count over its bar), the next step
   (its note in a tinted box), On time and Offices not done (three offices, each
   name over its figures; "+ N more" and View all at the foot); Out today, Leave in

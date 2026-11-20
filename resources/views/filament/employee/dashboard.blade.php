@@ -5,6 +5,7 @@
 --}}
 @php
     use App\Enums\AttendanceStatus;
+    use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
     use App\Filament\Employee\Pages\History;
     use App\Filament\Employee\Pages\LeaveTypes;
     use App\Filament\Employee\Pages\MyDtr;
@@ -96,8 +97,8 @@
                         $missing = array_sum(array_map(fn (ComputedDay $day): int => count($day->missing), $computed->days));
                         $absentOn = array_keys(array_filter($computed->days, fn (ComputedDay $day): bool => $day->status === AttendanceStatus::Absent));
                         $figures = [
-                            ['Late', "{$computed->late} min", $computed->lateCount === 0 ? 'None' : $count($computed->lateCount, 'time'), null],
-                            ['Undertime', "{$computed->undertime} min", $computed->undertimeCount === 0 ? 'None' : $count($computed->undertimeCount, 'time'), null],
+                            ['Late', DtrUploadInfolist::hours($computed->late), $computed->lateCount === 0 ? 'None' : $count($computed->lateCount, 'time'), null],
+                            ['Undertime', DtrUploadInfolist::hours($computed->undertime), $computed->undertimeCount === 0 ? 'None' : $count($computed->undertimeCount, 'time'), null],
                             ['Absent', $count($computed->absent, 'day'), match (true) {
                                 $absentOn === [] => 'None',
                                 count($absentOn) <= 3 => implode(', ', array_map(fn (string $date): string => date('M j', strtotime($date)), $absentOn)),
@@ -116,7 +117,7 @@
                         @endforeach
                     </dl>
                     <p class="dtr-dash-muted">
-                        Late and undertime: {{ $computed->late + $computed->undertime }} min, or {{ $computed->dayEquivalent }} day by the CSC table.
+                        Late and undertime: {{ DtrUploadInfolist::hours($computed->late + $computed->undertime) }}, or {{ $computed->dayEquivalent }} day by the CSC table.
                         Something wrong? Bring your signed DTR to HR.
                     </p>
                 @endif

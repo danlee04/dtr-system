@@ -75,9 +75,9 @@
                     @if ($hasOvertime)
                         <th scope="col" class="dtr-grid-start">O.T.</th>
                     @endif
-                    <th scope="col">Late (min)</th>
+                    <th scope="col">Late</th>
                     {{-- The soft hyphen lets a narrow column break the word as "Under-time". --}}
-                    <th scope="col">Under&shy;time (min)</th>
+                    <th scope="col">Under&shy;time</th>
                     <th scope="col" class="dtr-grid-start">Status</th>
                     <th scope="col" class="dtr-grid-start">Notes</th>
                 </tr>

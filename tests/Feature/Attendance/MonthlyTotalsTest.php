@@ -18,6 +18,7 @@ use App\Services\Attendance\MonthlyTotals;
 use App\Services\Leave\DtrDeduction;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
+use DateInterval;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Reader\XLSX\Reader;
@@ -157,11 +158,13 @@ class MonthlyTotalsTest extends TestCase
             ->create(['last_name' => 'Cruz', 'first_name' => 'Carlo', 'middle_name' => null, 'employee_number' => '2019-0003']);
         $this->upload($ana, '2026-10-01', '2026-10-01', '08:30');
 
-        $rows = array_map(fn (array $cells): array => array_map(fn (Cell $cell): mixed => $cell->getValue(), $cells), $this->octoberSheet());
+        // Late and undertime are Excel durations, read back as intervals: shown here as "h:mm".
+        $value = fn (Cell $cell): mixed => $cell->getValue() instanceof DateInterval ? $cell->getValue()->format('%h:%I') : $cell->getValue();
+        $rows = array_map(fn (array $cells): array => array_map($value, $cells), $this->octoberSheet());
 
-        // Numbers stay numbers, so HR can add them up in Excel. Half an hour is 0.062 by the table.
+        // Numbers stay numbers, so HR can add them up in Excel. Half an hour is 0:30, and 0.062 day by the table.
         // The three without-pay columns are numbers too, 0 when there is none.
-        $this->assertContains(['Abad, Ana', '2019-0001', 'Nursing Service', 1, 30, 0, 0, 0, 0.062, 0, 0, 0, ''], $rows);
+        $this->assertContains(['Abad, Ana', '2019-0001', 'Nursing Service', 1, '0:30', 0, '0:00', 0, 0.062, 0, 0, 0, ''], $rows);
         $this->assertContains(['Bautista, Ben', '2019-0002', 'Nursing Service', '', '', '', '', '', '', 0, 0, 0, 'No DTR uploaded'], $rows);
         $this->assertContains(['Cruz, Carlo', '2019-0003', 'Pharmacy', '', '', '', '', '', '', 0, 0, 0, 'No DTR uploaded'], $rows);
     }

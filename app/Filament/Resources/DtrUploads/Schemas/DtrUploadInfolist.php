@@ -208,8 +208,8 @@ class DtrUploadInfolist
                 'absent' => $result?->status === AttendanceStatus::Absent,
                 'slots' => $slots,
                 'ot' => implode('–', array_filter([self::clock($day?->ot_arrival), self::clock($day?->ot_departure)])) ?: null,
-                'late' => self::minutes($result?->late),
-                'undertime' => self::minutes($result?->undertime),
+                'late' => self::dayHours($result?->late),
+                'undertime' => self::dayHours($result?->undertime),
                 'status' => $result?->status,
                 // A part of the day with no tap, which an OB, travel order, leave or gate pass could cover.
                 'untapped' => $result?->untappedCoverage() !== null,
@@ -249,16 +249,12 @@ class DtrUploadInfolist
     }
 
     /**
-     * A day's minutes, with the hours beside them from an hour up: "240 (4 hrs)" (HR, 2026-11-18). None is blank.
-     * Each number keeps its unit by a no-break space, so a narrow column breaks "(3 hrs 15 min)" only between the two.
+     * A day's minutes in hours, as everywhere else: "4 hrs", "1 hr 13 min" (HR, 2026-11-20). None is blank.
+     * Each number keeps its unit by a no-break space, so a narrow column breaks "3 hrs 15 min" only between the two.
      */
-    private static function minutes(?int $minutes): ?string
+    private static function dayHours(?int $minutes): ?string
     {
-        return match (true) {
-            ! $minutes => null,
-            $minutes >= 60 => "{$minutes} (".preg_replace('/(\d) /', "\$1\u{00A0}", self::hours($minutes)).')',
-            default => (string) $minutes,
-        };
+        return $minutes ? preg_replace('/(\d) /', "\$1\u{00A0}", self::hours($minutes)) : null;
     }
 
     /** "2 times", or "None". */

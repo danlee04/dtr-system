@@ -98,7 +98,10 @@ final class MonthlyTotals
         $writer->openToFile($path);
         $writer->addRow(new Row([new StringCell('Monthly summary: '.($office->name ?? 'All offices').", {$month->format('F Y')}", null)], $bold));
         $writer->addRow(Row::fromValues([]));
-        $writer->addRow(Row::fromValues(['Employee', 'Employee No.', 'Office', 'Times late', 'Minutes late', 'Times undertime', 'Minutes undertime', 'Absent (days)', 'Equivalent (days)', 'Without pay: DTR', 'Without pay: leave', 'Without pay: total', 'Notes'], $bold));
+        $writer->addRow(Row::fromValues(['Employee', 'Employee No.', 'Office', 'Times late', 'Late (hours)', 'Times undertime', 'Undertime (hours)', 'Absent (days)', 'Equivalent (days)', 'Without pay: DTR', 'Without pay: leave', 'Without pay: total', 'Notes'], $bold));
+        // Hours as Excel durations, "2:30": they still add up, unlike "2 hrs 30 min" as text (HR, 2026-11-20).
+        $hours = (new Style)->setFormat('[h]:mm');
+        $duration = fn (?int $minutes): Cell => Cell::fromValue($minutes === null ? null : $minutes / 1440, $minutes === null ? null : $hours);
 
         foreach ($this->rows($office, $month) as ['employee' => $employee, 'dtr' => $dtr, 'notes' => $notes, 'withoutPay' => $withoutPay]) {
             // Text goes in as text: OpenSpout reads anything starting with "=" as a formula, even a name.
@@ -106,11 +109,11 @@ final class MonthlyTotals
                 new StringCell($employee->full_name, null),
                 new StringCell($employee->employee_number, null),
                 new StringCell($employee->office->name, null),
+                Cell::fromValue($dtr?->lateCount),
+                $duration($dtr?->late),
+                Cell::fromValue($dtr?->undertimeCount),
+                $duration($dtr?->undertime),
                 ...array_map(Cell::fromValue(...), [
-                    $dtr?->lateCount,
-                    $dtr?->late,
-                    $dtr?->undertimeCount,
-                    $dtr?->undertime,
                     $dtr?->absent,
                     $dtr !== null ? (float) $dtr->dayEquivalent : null,
                     (float) $withoutPay['dtr'],

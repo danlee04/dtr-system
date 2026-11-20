@@ -70,7 +70,8 @@ class DtrUploadsTable
                     ->visibleFrom('2xl'),
                 TextColumn::make('late_and_undertime')
                     ->label('Late + undertime')
-                    ->state(fn (DtrUpload $record): ?string => $record->isComputed() ? ($record->computed()->late + $record->computed()->undertime).' min' : null)
+                    // In hours, as everywhere else (HR, 2026-11-20).
+                    ->state(fn (DtrUpload $record): ?string => $record->isComputed() ? DtrUploadInfolist::hours($record->computed()->late + $record->computed()->undertime) : null)
                     // "· Final" once HR has checked it and its VL is deducted; a new column would not fit a tablet.
                     ->description(fn (DtrUpload $record): ?string => $record->isComputed() ? "{$record->computed()->dayEquivalent} day".($record->isFinal() ? ' · Final' : '') : null)
                     ->placeholder('—')

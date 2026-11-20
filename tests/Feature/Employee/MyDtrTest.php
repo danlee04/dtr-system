@@ -116,8 +116,8 @@ class MyDtrTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee(['Your DTR for October', '14 min', MyDtr::getUrl()])
-            ->assertDontSee('30 min');
+            ->assertSee(['Your DTR for October', '0 hrs 14 min', MyDtr::getUrl()])
+            ->assertDontSee('0 hrs 30 min');
     }
 
     public function test_with_no_upload_yet_the_page_says_so(): void

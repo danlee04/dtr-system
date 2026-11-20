@@ -288,12 +288,14 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
             // October 2026 has 22 weekdays; only the 1st has taps. Each of the 21 absent days is 8 hours undertime too, and that part comes off SL first.
-            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', "480 (8\u{00A0}hrs)", 'Present', 'Absent'])
+            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', "8\u{00A0}hrs", 'Present', 'Absent'])
+            // Hours throughout, no minute column (HR, 2026-11-20).
+            ->assertMountedActionModalDontSee(['(min)', '480 ('])
             // The Undertime column already says it; a note repeating it was clutter (HR, 2026-11-19).
             ->assertMountedActionModalDontSee('hrs absent');
     }
 
-    public function test_a_days_minutes_from_an_hour_up_show_the_hours_beside_them(): void
+    public function test_a_days_late_and_undertime_show_in_hours(): void
     {
         $this->travelTo('2026-11-03 09:00');
         $this->actingAs(User::factory()->create());
@@ -304,7 +306,8 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($upload))
             // Each number keeps its unit (a no-break space), so a narrow column breaks only between them.
-            ->assertMountedActionModalSee(["73 (1\u{00A0}hr 13\u{00A0}min)", "240 (4\u{00A0}hrs)"]);
+            ->assertMountedActionModalSee(["1\u{00A0}hr 13\u{00A0}min", "4\u{00A0}hrs"])
+            ->assertMountedActionModalDontSee('73 (');
     }
 
     public function test_the_list_shows_each_dtrs_late_and_undertime(): void
@@ -314,7 +317,7 @@ class DtrUploadResourceTest extends TestCase
         $this->computableUpload();
 
         Livewire::test(ListDtrUploads::class)
-            ->assertSeeText(['10128 min', '21.100 day']);
+            ->assertSeeText(['168 hrs 48 min', '21.100 day']);
     }
 
     public function test_a_job_order_dtr_is_shown_but_not_computed(): void

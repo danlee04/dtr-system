@@ -11,6 +11,7 @@
     use App\Filament\Pages\LeaveOpeningBalances;
     use App\Filament\Pages\MonthlySummary;
     use App\Filament\Resources\DtrUploads\DtrUploadResource;
+    use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
     use App\Filament\Resources\Employees\EmployeeResource;
     use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
     use App\Models\Employee;
@@ -86,8 +87,8 @@
                 </div>
             </div>
             <ul class="dtr-dash-legend">
-                <li><span class="dtr-dash-key is-late"></span>Late ({{ $month['late'] }} min)</li>
-                <li><span class="dtr-dash-key is-undertime"></span>Undertime ({{ $month['undertime'] }} min)</li>
+                <li><span class="dtr-dash-key is-late"></span>Late ({{ DtrUploadInfolist::hours($month['late']) }})</li>
+                <li><span class="dtr-dash-key is-undertime"></span>Undertime ({{ DtrUploadInfolist::hours($month['undertime']) }})</li>
             </ul>
         </div>
 
@@ -95,16 +96,16 @@
             <p class="dtr-dash-muted">No DTRs for {{ $monthName }} yet. <a class="dtr-dash-link" href="{{ $uploadUrl }}">Upload them</a></p>
         @else
             <div class="dtr-dash-plot">
-                {{-- The scale, in minutes: the tallest day, half of it, none. --}}
+                {{-- The scale, in whole hours: the tallest day, half of it, none. --}}
                 <div class="dtr-dash-axis" aria-hidden="true">
-                    <span>{{ number_format($tallest) }}</span>
-                    <span>{{ number_format(intdiv($tallest, 2)) }}</span>
+                    <span>{{ number_format(round($tallest / 60)) }} hrs</span>
+                    <span>{{ number_format(round($tallest / 120)) }} hrs</span>
                     <span>0</span>
                 </div>
                 <div class="dtr-dash-chart">
                     @foreach ($month['byWeekday'] as $weekday => $minutes)
-                        <div class="dtr-dash-col" tabindex="0" aria-label="{{ $weekdays[$weekday] }}: {{ $minutes['late'] }} minutes late, {{ $minutes['undertime'] }} minutes under">
-                            <span class="dtr-dash-tip" aria-hidden="true">{{ $minutes['late'] }} min late · {{ $minutes['undertime'] }} min under</span>
+                        <div class="dtr-dash-col" tabindex="0" aria-label="{{ $weekdays[$weekday] }}: {{ DtrUploadInfolist::hours($minutes['late']) }} late, {{ DtrUploadInfolist::hours($minutes['undertime']) }} under">
+                            <span class="dtr-dash-tip" aria-hidden="true">{{ DtrUploadInfolist::hours($minutes['late']) }} late · {{ DtrUploadInfolist::hours($minutes['undertime']) }} under</span>
                             <div class="dtr-dash-track">
                                 <span class="is-late" style="height: {{ $minutes['late'] / $tallest * 100 }}%"></span>
                                 <span class="is-undertime" style="height: {{ $minutes['undertime'] / $tallest * 100 }}%"></span>
