@@ -275,7 +275,7 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   for an employee on flexitime), and the printed name
   with who uploaded it (`.dtr-record-head`, `.dtr-record-line`, `.dtr-record-sub`).
 - **Cards:** the employee page's cards (`.dtr-profile-card`), grey, filling the
-  row: Late and Undertime in hours and minutes ("0 hrs 48 min", as the Monthly Summary shows them); Late + undertime leads with the CSC days ("2.158 days", "equivalent to leave credits"), its hours in the label,
+  row: Late and Undertime in hours and minutes ("1 hr 13 min"; under an hour the minutes alone, "48 min", never "0 hrs"; as the Monthly Summary shows them); Late + undertime leads with the CSC days ("2.158 days", "equivalent to leave credits"), its hours in the label,
   Absent (the days, with "2.000 days from SL, then VL" under them), and Blanks to fill, which turns
   `is-warning` (amber tint) while any blank is left. A DTR that is not computed
   shows one warning sentence instead (`.dtr-record-warning`).

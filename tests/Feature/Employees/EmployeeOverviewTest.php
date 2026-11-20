@@ -74,7 +74,7 @@ class EmployeeOverviewTest extends TestCase
         $this->lates($employee, '2026-10', 3);
 
         $this->page($employee)->assertSeeInOrder([
-            'October', '3 lates', '0 hrs 15 min late',
+            'October', '3 lates', '15 min late',
             'Vacation', '12.500', 'Sick', '0.000', 'Special privilege', '0.000', 'Wellness', '0.000',
             'Schedule', 'REG', '8:00 AM – 12:00 PM, 1:00 PM – 5:00 PM',
             'Job details', $employee->employee_number, 'Mar 14, 2022 · 4 years 7 months',

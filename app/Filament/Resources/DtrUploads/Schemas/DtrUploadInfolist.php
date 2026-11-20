@@ -240,9 +240,16 @@ class DtrUploadInfolist
         return "HR: {$reasons}".($remarks !== '' ? " ({$remarks})" : '');
     }
 
-    /** "0 hrs 48 min", "1 hr 13 min", "4 hrs": the month's minutes as HR reads them, here and on the Monthly Summary (HR, 2026-11-18). */
+    /**
+     * "48 min", "1 hr 13 min", "4 hrs": minutes as HR reads them, everywhere (HR, 2026-11-18). Under an hour,
+     * the minutes alone, never "0 hrs 48 min" (HR, 2026-11-20).
+     */
     public static function hours(int $minutes): string
     {
+        if ($minutes < 60) {
+            return "{$minutes} min";
+        }
+
         $hours = intdiv($minutes, 60);
 
         return $hours.($hours === 1 ? ' hr' : ' hrs').($minutes % 60 > 0 ? ' '.($minutes % 60).' min' : '');

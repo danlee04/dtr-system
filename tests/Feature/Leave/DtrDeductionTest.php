@@ -77,7 +77,7 @@ class DtrDeductionTest extends TestCase
 
         $row = LeaveLedgerEntry::sole();
         $this->assertSame(
-            [$upload->employee_id, LeaveType::Vacation, '-0.100', LedgerKind::DtrDeduction, '2026-10', '2026-11-03', $this->hr->id, $upload->id, 'October 2026 DTR: 0 hrs 48 min late and undertime'],
+            [$upload->employee_id, LeaveType::Vacation, '-0.100', LedgerKind::DtrDeduction, '2026-10', '2026-11-03', $this->hr->id, $upload->id, 'October 2026 DTR: 48 min late and undertime'],
             [$row->employee_id, $row->leave_type, $row->days, $row->kind, $row->period, $row->posted_on->toDateString(), $row->created_by_user_id, $row->dtr_upload_id, $row->remarks],
         );
         $upload->refresh();

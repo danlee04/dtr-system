@@ -288,9 +288,9 @@ class DtrUploadResourceTest extends TestCase
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($this->computableUpload()))
             // October 2026 has 22 weekdays; only the 1st has taps. Each of the 21 absent days is 8 hours undertime too, and that part comes off SL first.
-            ->assertMountedActionModalSee(['0 hrs 23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', "8\u{00A0}hrs", 'Present', 'Absent'])
-            // Hours throughout, no minute column (HR, 2026-11-20).
-            ->assertMountedActionModalDontSee(['(min)', '480 ('])
+            ->assertMountedActionModalSee(['23 min', '2 times', '168 hrs 25 min', '23 times', '21.100 days', 'Late + undertime · 168 hrs 48 min', 'equivalent to leave credits', '21 days', '21.000 days from SL, then VL', "8\u{00A0}hrs", 'Present', 'Absent'])
+            // Hours throughout, no minute column, and under an hour only the minutes: never "0 hrs" (HR, 2026-11-20).
+            ->assertMountedActionModalDontSee(['(min)', '480 (', '0 hrs'])
             // The Undertime column already says it; a note repeating it was clutter (HR, 2026-11-19).
             ->assertMountedActionModalDontSee('hrs absent');
     }
