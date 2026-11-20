@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('leave:post')->hourly()->withoutOverlapping();
+
+// Noon, not midnight: an office PC may be off at night.
+Schedule::command('dtr:backup')->dailyAt('12:00')->withoutOverlapping();
