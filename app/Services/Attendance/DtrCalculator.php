@@ -25,9 +25,10 @@ use Illuminate\Support\Collection as SupportCollection;
  * schedules, holidays and leave as they stand, so fixing a schedule fixes
  * the month without uploading it again.
  *
- * HR's rule for now: a day with any tap is a day at work. A missing tap costs
- * nothing and is listed for HR to look at; late is read from the arrivals
- * there are, and undertime from the departures. A half of the day with no
+ * HR's rule for now: a day with any tap is a day at work. A missing tap is
+ * listed for HR to look at and costs nothing, except a missing time in, which
+ * is undertime for the first half until HR fills it (HR, 2026-11-20); late is
+ * read from the arrivals there are, and undertime from the departures. A half of the day with no
  * tap at all, while the other half has one, is undertime for all its hours
  * (HR, 2026-11-18). A work day with no tap at all, and no leave filed, is
  * absent, and undertime for all its hours too, so the CSC conversion charges
@@ -211,8 +212,9 @@ final class DtrCalculator
             [$arrivedName, $leftName] = self::TAPS[$scheduledHalves][$index];
             [$arrivedSlot, $leftSlot] = self::SLOTS[$scheduledHalves][$index];
 
-            // A half with no tap at all, while the other has one, is undertime for all its hours (HR, 2026-11-18).
-            if ($arrived === null && $left === null) {
+            // A half with no tap at all, while the other has one, is undertime for all its hours (HR, 2026-11-18);
+            // so is the first half with no time in, until HR fills it: undertime, not late, since a missing tap is no proof of a late arrival (HR, 2026-11-20).
+            if (($arrived === null && $left === null) || ($index === 0 && $arrived === null)) {
                 $undertime += $half['out'] - $half['in'];
                 $undertimeCount++;
             }

@@ -477,7 +477,8 @@ class DtrCalculatorTest extends TestCase
     {
         $day = $this->compute($this->regular(['flexitime' => true]), ['2026-10-12' => self::taps(null, '16:30')])->days['2026-10-12'];
 
-        $this->assertSame(30, $day->undertime);
+        // 30 minutes short of 5:00, and the morning with no time in until HR fills it.
+        $this->assertSame(240 + 30, $day->undertime);
         $this->assertContains('time in', $day->missing);
     }
 
@@ -520,5 +521,30 @@ class DtrCalculatorTest extends TestCase
         $day = $this->compute($employee, ['2026-10-15' => self::taps('09:00', '17:00')])->days['2026-10-15'];
 
         $this->assertSame(0, $day->undertime);
+    }
+
+    public function test_a_missing_time_in_is_undertime_for_the_morning_until_hr_fills_it(): void
+    {
+        $employee = $this->regular();
+        $taps = ['2026-10-05' => self::taps(null, '18:10', '12:01', '12:38')];
+
+        // Not proof of a late arrival, so not counted as one; but it costs the morning until the signed DTR fills it (HR, 2026-11-20).
+        $day = $this->compute($employee, $taps)->days['2026-10-05'];
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 240, 1], $this->figures($day));
+        $this->assertContains('time in', $day->missing);
+
+        $this->hrFills($employee, '2026-10-05', DtrSlot::AmArrival, '08:00');
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($this->compute($employee, $taps)->days['2026-10-05']));
+    }
+
+    public function test_other_missing_taps_still_cost_nothing(): void
+    {
+        // In at 8:00 and out at 5:00 with no lunch taps, and an afternoon with no time out: listed, not charged.
+        $days = $this->compute($this->regular(), [
+            '2026-10-06' => ['am_arrival' => '08:00', 'pm_departure' => '17:00'],
+            '2026-10-07' => self::taps('08:00', null),
+        ])->days;
+
+        $this->assertSame([0, 0], [$days['2026-10-06']->undertime, $days['2026-10-07']->undertime]);
     }
 }

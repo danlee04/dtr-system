@@ -545,7 +545,11 @@ Added 2026-11-03, from the IT Unit's sample (one employee, October 2026).
   columns the second; late and undertime are counted per half as in
   **Computing a day**, with no grace and no offset. HR's rule for now: a day
   with any tap is a day at work, a missing tap costs nothing and is listed,
-  and a work day with no tap and no leave is absent. Since 2026-11-18 a half
+  and a work day with no tap and no leave is absent. Since 2026-11-20 a
+  missing time in is the exception: the first half's hours are undertime (4 on
+  8–5), not late, since a missing tap is no proof of a late arrival, until HR
+  fills the time from the signed DTR; a missing lunch out, lunch in or time out
+  still costs nothing. Since 2026-11-18 a half
   of the day with no tap at all, while the other half has one, is undertime
   for all its scheduled hours: 4 hours for either half of the regular
   schedule; 4 for the morning and 6 for the afternoon of the four-day week.
