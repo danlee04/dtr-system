@@ -32,5 +32,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Blank, so no test reads this PC's start date; a test that needs one sets config('leave.start_date'). -->
+        <env name="LEAVE_START_DATE" value=""/>
     </php>
 </phpunit>

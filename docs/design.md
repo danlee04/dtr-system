@@ -396,6 +396,13 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   across on a tablet, one on a phone. Headings, not cards, each marked with a
   short amber bar (`.dtr-form-section`), a rule between sections
   (`.dtr-form-section-divided`).
+- **Balances** (Leave; it took Opening Balances' place in the sidebar, which now
+  opens from its "Opening balances" button): the entry grid with Office and Month
+  selects (the leave start to this month, last month by default), a row per
+  employee, a column per balance (VL, SL, SPL, Wellness): the balance at the
+  month's end, and under it in red (`.dtr-grid-taken`) what the month took from
+  that balance. A row counts in the month it is for: a leave in the month of its
+  first date, a credit or a DTR in its period, anything else when posted.
 - **Monthly Summary, Without pay:** one column, the total with "DTR x · leave y"
   under it when there is any; the Excel has the three as columns. "Without pay
   only" is a checkbox above the count, out of the section header, shown even when

@@ -208,6 +208,18 @@
         color: var(--grid-muted);
     }
 
+    /* Under a balance, in red: what the month took from it (Balances). */
+    .dtr-grid-taken {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--danger-600);
+    }
+
+    .dark .dtr-grid-taken {
+        color: var(--danger-400);
+    }
+
     .dtr-grid-lock {
         display: flex;
         align-items: flex-start;

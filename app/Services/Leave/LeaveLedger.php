@@ -24,6 +24,70 @@ final class LeaveLedger
      */
     public const string SIGNED_DAYS = '/^-?\d{1,3}(\.\d{1,3})?\z/';
 
+    /** What takes days off a balance, shown in red on the Balances page; a reversal among them gives its days back. */
+    private const array TAKING = [
+        LedgerKind::DtrDeduction, LedgerKind::DtrReopened, LedgerKind::Application,
+        LedgerKind::Cancellation, LedgerKind::ForcedLeave, LedgerKind::Lapse,
+    ];
+
+    /**
+     * Each employee's balances at the end of a month, and what the month took
+     * from each, for the Balances page (HR, 2026-11-20). A row counts in the
+     * month it is for, not the day it was posted: a leave in the month of its
+     * first date, a monthly credit or a DTR's deduction in its period ("2026-10",
+     * so October's DTR marked final in November is October's), anything else in
+     * the month it was posted. A reversal in the same month nets its row out.
+     *
+     * @param  list<int>  $employeeIds
+     * @return array<int, array<string, array{balance: string, taken: string}>> employee id → leave type code → days
+     */
+    public function monthly(array $employeeIds, CarbonImmutable $month): array
+    {
+        $end = $month->format('Y-m');
+        $figures = [];
+
+        foreach ($employeeIds as $id) {
+            foreach (LeaveType::tracked() as $type) {
+                $figures[$id][$type->value] = ['balance' => '0.000', 'taken' => '0.000'];
+            }
+        }
+
+        $rows = LeaveLedgerEntry::query()
+            ->leftJoin('leave_applications', 'leave_applications.id', '=', 'leave_ledger_entries.leave_application_id')
+            ->whereIn('leave_ledger_entries.employee_id', $employeeIds)
+            ->toBase()
+            ->get(['leave_ledger_entries.employee_id', 'leave_ledger_entries.leave_type', 'leave_ledger_entries.days', 'leave_ledger_entries.kind', 'leave_ledger_entries.period', 'leave_ledger_entries.posted_on', 'leave_applications.date_from']);
+
+        foreach ($rows as $row) {
+            if (! isset($figures[$row->employee_id][$row->leave_type])) {
+                continue;
+            }
+
+            $for = match (true) {
+                $row->date_from !== null => substr((string) $row->date_from, 0, 7),
+                is_string($row->period) && preg_match('/^\d{4}-\d{2}$/', $row->period) === 1 => $row->period,
+                default => substr((string) $row->posted_on, 0, 7),
+            };
+
+            if ($for > $end) {
+                continue;
+            }
+
+            $days = number_format((float) $row->days, 3, '.', '');
+            $cell = &$figures[$row->employee_id][$row->leave_type];
+            $cell['balance'] = bcadd($cell['balance'], $days, 3);
+            $kind = LedgerKind::from($row->kind);
+
+            if ($for === $end && (in_array($kind, self::TAKING, true) || ($kind === LedgerKind::Adjustment && bccomp($days, '0', 3) < 0))) {
+                $cell['taken'] = bcsub($cell['taken'], $days, 3);
+            }
+
+            unset($cell);
+        }
+
+        return $figures;
+    }
+
     /**
      * Every tracked type's balance, VL first, "0.000" where the employee
      * has no rows. With $on, only rows posted on or before that date count.

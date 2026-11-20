@@ -43,6 +43,12 @@ class LeaveOpeningBalances extends Page
 
     protected static ?string $title = 'Opening Balances';
 
+    /** Balances took its place in the sidebar (HR, 2026-11-20); this page opens from its "Opening balances" button. */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     /** From the office filter, which sends a string; blank for all offices. */
     public int|string|null $officeId = null;
 
