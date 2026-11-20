@@ -3,13 +3,19 @@
 namespace Tests\Feature\Attendance;
 
 use App\Enums\EmploymentStatus;
+use App\Enums\LeaveType;
+use App\Enums\LedgerKind;
 use App\Models\DtrUpload;
 use App\Models\Employee;
+use App\Models\LeaveApplication;
+use App\Models\LeaveLedgerEntry;
 use App\Models\Office;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
+use App\Models\User;
 use App\Services\Attendance\ComputedDtr;
 use App\Services\Attendance\MonthlyTotals;
+use App\Services\Leave\DtrDeduction;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -154,9 +160,10 @@ class MonthlyTotalsTest extends TestCase
         $rows = array_map(fn (array $cells): array => array_map(fn (Cell $cell): mixed => $cell->getValue(), $cells), $this->octoberSheet());
 
         // Numbers stay numbers, so HR can add them up in Excel. Half an hour is 0.062 by the table.
-        $this->assertContains(['Abad, Ana', '2019-0001', 'Nursing Service', 1, 30, 0, 0, 0, 0.062, ''], $rows);
-        $this->assertContains(['Bautista, Ben', '2019-0002', 'Nursing Service', '', '', '', '', '', '', 'No DTR uploaded'], $rows);
-        $this->assertContains(['Cruz, Carlo', '2019-0003', 'Pharmacy', '', '', '', '', '', '', 'No DTR uploaded'], $rows);
+        // The three without-pay columns are numbers too, 0 when there is none.
+        $this->assertContains(['Abad, Ana', '2019-0001', 'Nursing Service', 1, 30, 0, 0, 0, 0.062, 0, 0, 0, ''], $rows);
+        $this->assertContains(['Bautista, Ben', '2019-0002', 'Nursing Service', '', '', '', '', '', '', 0, 0, 0, 'No DTR uploaded'], $rows);
+        $this->assertContains(['Cruz, Carlo', '2019-0003', 'Pharmacy', '', '', '', '', '', '', 0, 0, 0, 'No DTR uploaded'], $rows);
     }
 
     public function test_a_name_that_starts_with_an_equals_sign_stays_text_in_the_sheet(): void
@@ -196,5 +203,35 @@ class MonthlyTotalsTest extends TestCase
         unlink($path);
 
         return $rows;
+    }
+
+    public function test_rows_carry_the_days_without_pay_from_the_dtr_and_from_leave(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $ana = $this->staff();
+        // 6 minutes late on each of October's 22 weekdays: 132 minutes, 0.275 day, of which 0.075 is more than her 0.200 VL.
+        $this->upload($ana, '2026-10-01', '2026-10-31', '08:06');
+        LeaveLedgerEntry::factory()->for($ana)->create(['leave_type' => LeaveType::Vacation, 'days' => '0.200', 'kind' => LedgerKind::Opening, 'posted_on' => '2026-09-30']);
+        app(DtrDeduction::class)->finalize(DtrUpload::query()->whereBelongsTo($ana)->sole(), User::factory()->create());
+        LeaveApplication::factory()->for($ana)->create([
+            'date_from' => '2026-10-17', 'date_to' => '2026-10-17', 'days_with_pay' => '0.000', 'days_without_pay' => '1.000',
+            'breakdown' => ['2026-10-17' => ['days' => '1.000', 'without_pay' => '1.000']],
+        ]);
+
+        $this->assertSame(['dtr' => '0.075', 'leave' => '1.000', 'total' => '1.075'], $this->october()[$ana->id]['withoutPay']);
+
+        // The title, then the header: the reader skips the empty row between.
+        $header = array_map(fn (Cell $cell): mixed => $cell->getValue(), $this->octoberSheet()[1]);
+        $this->assertSame(['Without pay: DTR', 'Without pay: leave', 'Without pay: total'], array_slice($header, 9, 3));
+    }
+
+    public function test_staff_separated_in_or_after_the_month_still_have_a_row(): void
+    {
+        // Resigned October 31 and set inactive since: October's row is the one payroll needs for the final pay.
+        $resigned = $this->staff(['date_separated' => '2026-10-31', 'is_active' => false]);
+        $gone = $this->staff(['date_separated' => '2026-09-30', 'is_active' => false]);
+
+        $this->assertArrayHasKey($resigned->id, $this->october());
+        $this->assertArrayNotHasKey($gone->id, $this->october());
     }
 }

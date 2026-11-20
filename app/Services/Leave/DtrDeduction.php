@@ -7,6 +7,7 @@ use App\Enums\LedgerKind;
 use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
 use App\Models\DtrUpload;
 use App\Models\Employee;
+use App\Models\LeaveLedgerEntry;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -166,6 +167,45 @@ final class DtrDeduction
         if (bccomp($fromVacation, '0', 3) > 0) {
             $this->row($upload, LeaveType::Vacation, bcsub('0', $fromVacation, 3), LedgerKind::DtrDeduction, $remarks, $by);
         }
+    }
+
+    /**
+     * The days without pay its Final made, for payroll: how far its VL rows
+     * took VL below zero (HR, 2026-11-20). Only the latest Final counts, so a
+     * Reopen cancels it; a later credit that fills the negative does not.
+     */
+    public function withoutPay(DtrUpload $upload): string
+    {
+        if (! $upload->isFinal()) {
+            return '0.000';
+        }
+
+        $lastReopen = $upload->ledgerEntries()->where('kind', LedgerKind::DtrReopened)->max('id') ?? 0;
+        $rows = $upload->ledgerEntries()
+            ->where('kind', LedgerKind::DtrDeduction)
+            ->where('leave_type', LeaveType::Vacation)
+            ->where('id', '>', $lastReopen)
+            ->get(['id', 'days']);
+
+        if ($rows->isEmpty()) {
+            return '0.000';
+        }
+
+        // A later month's DTR is left out of the VL it found, or reopening this one after that month's Final would count those days twice.
+        $laterDtrs = DtrUpload::query()
+            ->where('employee_id', $upload->employee_id)
+            ->whereDate('period_start', '>', $upload->period_start->toDateString())
+            ->pluck('id');
+        $before = number_format((float) LeaveLedgerEntry::query()
+            ->where('employee_id', $upload->employee_id)
+            ->where('leave_type', LeaveType::Vacation)
+            ->where('id', '<', $rows->min('id'))
+            ->where(fn ($query) => $query->whereNull('dtr_upload_id')->orWhereNotIn('dtr_upload_id', $laterDtrs))
+            ->sum('days'), 3, '.', '');
+        $after = bcadd($before, number_format((float) $rows->sum('days'), 3, '.', ''), 3);
+        $owed = fn (string $balance): string => bccomp($balance, '0', 3) < 0 ? bcsub('0', $balance, 3) : '0.000';
+
+        return bcsub($owed($after), $owed($before), 3);
     }
 
     /** The days off VL for late and undertime alone: the month's CSC days less the absent days' part, so the two add up to the total shown. */

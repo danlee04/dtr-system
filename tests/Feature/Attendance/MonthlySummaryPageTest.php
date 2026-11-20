@@ -9,6 +9,7 @@ use App\Models\Office;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
+use App\Services\Leave\DtrDeduction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -99,5 +100,23 @@ class MonthlySummaryPageTest extends TestCase
         Livewire::test(MonthlySummary::class)
             ->set('month', '')
             ->assertActionHidden('download');
+    }
+
+    public function test_without_pay_only_lists_the_employees_with_any(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $juan = Employee::factory()->for($this->nursing)->create(['last_name' => 'Dela Cruz', 'first_name' => 'Juan', 'middle_name' => null]);
+        ScheduleAssignment::factory()->for($juan)->for(Schedule::factory())->create(['effective_from' => '2026-10-01']);
+        $upload = DtrUpload::factory()->for($juan)->create(['period_start' => '2026-10-01', 'period_end' => '2026-10-01']);
+        $upload->days()->create(['date' => '2026-10-01', 'am_arrival' => '08:14', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '16:50']);
+        // No VL at all: the whole 0.050 is without pay.
+        app(DtrDeduction::class)->finalize($upload, User::factory()->create());
+        Employee::factory()->for($this->nursing)->create(['last_name' => 'Santos', 'first_name' => 'Maria', 'middle_name' => null]);
+
+        Livewire::test(MonthlySummary::class)
+            ->assertSee(['DTR 0.050 · leave 0.000', 'Santos, Maria'])
+            ->set('withoutPayOnly', true)
+            ->assertSee('Dela Cruz, Juan')
+            ->assertDontSee('Santos, Maria');
     }
 }

@@ -6,6 +6,8 @@ use App\Enums\EmploymentStatus;
 use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\Office;
+use App\Services\Leave\DtrDeduction;
+use App\Services\Leave\LeavePosting;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -27,14 +29,16 @@ final class MonthlyTotals
     public const int FREQUENT_LATES = 10;
 
     /**
-     * The active staff who earn leave credits, of one office or of all,
-     * surname first, each with the month's figures (null when no DTR covers
-     * the month) and what HR should look at. Only their DTRs are computed.
+     * The staff who earn leave credits and are active, or were separated in
+     * or after the month, of one office or of all, surname first, each with
+     * the month's figures (null when no DTR covers the month) and what HR
+     * should look at. Only their DTRs are computed. Someone who resigned on
+     * the 31st and was set inactive since keeps the row payroll needs for the
+     * final pay (2026-11-20).
      *
-     * shortcut: lists today's active staff, so someone separated during the month drops off; add them back if HR reports on them.
      * shortcut: computes every DTR of the month on each call; keep the results if all offices at once gets slow.
      *
-     * @return list<array{employee: Employee, dtr: ComputedDtr|null, notes: list<string>}>
+     * @return list<array{employee: Employee, dtr: ComputedDtr|null, notes: list<string>, withoutPay: array{dtr: string, leave: string, total: string}}>
      */
     public function rows(?Office $office, CarbonImmutable $month): array
     {
@@ -43,22 +47,31 @@ final class MonthlyTotals
         $employees = Employee::query()
             ->when($office, fn (Builder $query, Office $office): Builder => $query->whereBelongsTo($office))
             ->whereIn('employment_status', $earning)
-            ->where('is_active', true)
+            ->where(fn (Builder $query): Builder => $query
+                ->where('is_active', true)
+                ->orWhereDate('date_separated', '>=', $month->startOfMonth()->toDateString()))
             ->with('office')
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get();
 
         $uploads = $this->uploads($employees->modelKeys(), $month);
+        $leaveWithoutPay = app(LeavePosting::class)->daysWithoutPayIn($month);
 
-        return $employees->map(function (Employee $employee) use ($uploads, $month): array {
+        return $employees->map(function (Employee $employee) use ($uploads, $month, $leaveWithoutPay): array {
+            // For payroll: what each DTR's Final took below zero, and the leave filed without pay (HR, 2026-11-20).
+            $fromDtr = ($uploads->get($employee->id) ?? collect())
+                ->reduce(fn (string $sum, DtrUpload $upload): string => bcadd($sum, app(DtrDeduction::class)->withoutPay($upload), 3), '0.000');
+            $fromLeave = bcadd($leaveWithoutPay[$employee->id] ?? '0', '0', 3);
+            $withoutPay = ['dtr' => $fromDtr, 'leave' => $fromLeave, 'total' => bcadd($fromDtr, $fromLeave, 3)];
+
             if (! $uploads->has($employee->id)) {
-                return ['employee' => $employee, 'dtr' => null, 'notes' => ['No DTR uploaded']];
+                return ['employee' => $employee, 'dtr' => null, 'notes' => ['No DTR uploaded'], 'withoutPay' => $withoutPay];
             }
 
             $dtr = $this->combine($uploads->get($employee->id), $month);
 
-            return ['employee' => $employee, 'dtr' => $dtr, 'notes' => $this->notes($dtr)];
+            return ['employee' => $employee, 'dtr' => $dtr, 'notes' => $this->notes($dtr), 'withoutPay' => $withoutPay];
         })->all();
     }
 
@@ -77,17 +90,17 @@ final class MonthlyTotals
         $options->setColumnWidth(32, 1);
         $options->setColumnWidth(14, 2);
         $options->setColumnWidth(28, 3);
-        $options->setColumnWidthForRange(12, 4, 9);
-        $options->setColumnWidth(40, 10);
+        $options->setColumnWidthForRange(12, 4, 12);
+        $options->setColumnWidth(40, 13);
 
         $bold = (new Style)->setFontBold();
         $writer = new Writer($options);
         $writer->openToFile($path);
         $writer->addRow(new Row([new StringCell('Monthly summary: '.($office->name ?? 'All offices').", {$month->format('F Y')}", null)], $bold));
         $writer->addRow(Row::fromValues([]));
-        $writer->addRow(Row::fromValues(['Employee', 'Employee No.', 'Office', 'Times late', 'Minutes late', 'Times undertime', 'Minutes undertime', 'Absent (days)', 'Equivalent (days)', 'Notes'], $bold));
+        $writer->addRow(Row::fromValues(['Employee', 'Employee No.', 'Office', 'Times late', 'Minutes late', 'Times undertime', 'Minutes undertime', 'Absent (days)', 'Equivalent (days)', 'Without pay: DTR', 'Without pay: leave', 'Without pay: total', 'Notes'], $bold));
 
-        foreach ($this->rows($office, $month) as ['employee' => $employee, 'dtr' => $dtr, 'notes' => $notes]) {
+        foreach ($this->rows($office, $month) as ['employee' => $employee, 'dtr' => $dtr, 'notes' => $notes, 'withoutPay' => $withoutPay]) {
             // Text goes in as text: OpenSpout reads anything starting with "=" as a formula, even a name.
             $writer->addRow(new Row([
                 new StringCell($employee->full_name, null),
@@ -100,6 +113,9 @@ final class MonthlyTotals
                     $dtr?->undertime,
                     $dtr?->absent,
                     $dtr !== null ? (float) $dtr->dayEquivalent : null,
+                    (float) $withoutPay['dtr'],
+                    (float) $withoutPay['leave'],
+                    (float) $withoutPay['total'],
                 ]),
                 new StringCell(implode('; ', $notes), null),
             ]));

@@ -8,6 +8,7 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Models\DayException;
+use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Services\Attendance\MonthlyTotals;
@@ -36,14 +37,61 @@ final class DashboardFigures
     /**
      * The month's DTRs added up across the staff who earn leave credits: the
      * minutes by weekday (1 is Monday), each employee's day-equivalent added,
-     * the share of days at work begun on time, and the five offices with the
-     * most staff still without a DTR.
+     * the share of days at work begun on time, and each office's staff and
+     * how many of them have a DTR.
      *
-     * @return array{dtrs: int, staff: int, late: int, undertime: int, dayEquivalent: string, absent: float, byWeekday: array<int, array{late: int, undertime: int}>, onTimeRate: int|null, officesBehind: list<array{office: string, uploaded: int, staff: int}>}
+     * @return array{dtrs: int, staff: int, late: int, undertime: int, dayEquivalent: string, absent: float, byWeekday: array<int, array{late: int, undertime: int}>, onTimeRate: int|null, offices: list<array{office: string, uploaded: int, staff: int}>}
      */
     public function month(CarbonImmutable $month): array
     {
-        return Cache::remember("dashboard.month.{$month->format('Y-m')}", now()->addMinutes(10), fn (): array => $this->computeMonth($month));
+        // "offices" replaced "officesBehind" (2026-11-20); a new key, so a cached copy of the old shape is never read.
+        return Cache::remember("dashboard.month.v2.{$month->format('Y-m')}", now()->addMinutes(10), fn (): array => $this->computeMonth($month));
+    }
+
+    /**
+     * Each office's staff whose DTRs for the month are all final. Read fresh,
+     * not from month()'s cache, so a DTR HR just marked final shows at once.
+     *
+     * @return array<string, int> office name → staff
+     */
+    public function finals(CarbonImmutable $month): array
+    {
+        // The same staff month() counts: MonthlyTotals keeps those separated in or after the month.
+        $staff = Employee::query()
+            ->whereIn('employment_status', array_filter(EmploymentStatus::cases(), fn (EmploymentStatus $status): bool => $status->earnsLeaveCredits()))
+            ->where(fn (Builder $query): Builder => $query->where('is_active', true)->orWhereDate('date_separated', '>=', $month->startOfMonth()->toDateString()))
+            ->select('id');
+
+        return DtrUpload::query()
+            ->whereIn('employee_id', $staff)
+            ->whereDate('period_start', '<=', $month->endOfMonth()->toDateString())
+            ->whereDate('period_end', '>=', $month->startOfMonth()->toDateString())
+            ->with('employee.office')
+            ->get()
+            ->groupBy('employee_id')
+            ->filter(fn (EloquentCollection $uploads): bool => $uploads->every(fn (DtrUpload $upload): bool => $upload->isFinal()))
+            ->countBy(fn (EloquentCollection $uploads): string => $uploads->first()->employee->office->name)
+            ->all();
+    }
+
+    /**
+     * The offices whose month is not closed: a DTR not uploaded, or uploaded
+     * and not final; the most staff still open first, five at most.
+     *
+     * @param  array{offices: list<array{office: string, uploaded: int, staff: int}>}  $month  from month()
+     * @param  array<string, int>  $finals  from finals()
+     * @return list<array{office: string, uploaded: int, final: int, staff: int}>
+     */
+    public function officesNotDone(array $month, array $finals): array
+    {
+        $offices = array_map(
+            fn (array $office): array => ['office' => $office['office'], 'uploaded' => $office['uploaded'], 'final' => $finals[$office['office']] ?? 0, 'staff' => $office['staff']],
+            $month['offices'],
+        );
+        $open = array_values(array_filter($offices, fn (array $office): bool => $office['final'] < $office['staff']));
+        usort($open, fn (array $a, array $b): int => [$b['staff'] - $b['final'], $a['office']] <=> [$a['staff'] - $a['final'], $b['office']]);
+
+        return array_slice($open, 0, 5);
     }
 
     public function pendingApplications(): int
@@ -151,7 +199,7 @@ final class DashboardFigures
         return Employee::query()->whereIn('employment_status', $earning)->where('is_active', true);
     }
 
-    /** @return array{dtrs: int, staff: int, late: int, undertime: int, dayEquivalent: string, absent: float, byWeekday: array<int, array{late: int, undertime: int}>, onTimeRate: int|null, officesBehind: list<array{office: string, uploaded: int, staff: int}>} */
+    /** @return array{dtrs: int, staff: int, late: int, undertime: int, dayEquivalent: string, absent: float, byWeekday: array<int, array{late: int, undertime: int}>, onTimeRate: int|null, offices: list<array{office: string, uploaded: int, staff: int}>} */
     private function computeMonth(CarbonImmutable $month): array
     {
         $rows = $this->monthlyTotals->rows(null, $month);
@@ -188,9 +236,6 @@ final class DashboardFigures
             }
         }
 
-        $behind = array_values(array_filter($offices, fn (array $office): bool => $office['uploaded'] < $office['staff']));
-        usort($behind, fn (array $a, array $b): int => [$b['staff'] - $b['uploaded'], $a['office']] <=> [$a['staff'] - $a['uploaded'], $b['office']]);
-
         return [
             'dtrs' => $dtrs,
             'staff' => count($rows),
@@ -200,7 +245,8 @@ final class DashboardFigures
             'absent' => $absent,
             'byWeekday' => $byWeekday,
             'onTimeRate' => $present > 0 ? (int) round($onTime / $present * 100) : null,
-            'officesBehind' => array_slice($behind, 0, 5),
+            // Every office: officesNotDone() picks the open ones with the fresh final counts.
+            'offices' => array_values($offices),
         ];
     }
 }

@@ -131,6 +131,13 @@
             <span>{{ $month['dtrs'] }} uploaded</span>
             <span class="dtr-dash-muted">of {{ $month['staff'] }}</span>
         </div>
+        {{-- Closing the month: how many of the uploaded HR has checked and marked final. --}}
+        <div class="dtr-dash-progress" role="progressbar" aria-label="DTRs final" aria-valuemin="0" aria-valuemax="{{ $month['dtrs'] }}" aria-valuenow="{{ $finalCount }}">
+            <span style="width: {{ $month['dtrs'] > 0 ? $finalCount / $month['dtrs'] * 100 : 0 }}%"></span>
+        </div>
+        <div class="dtr-dash-between">
+            <span>{{ $finalCount }} final of {{ $month['dtrs'] }} uploaded</span>
+        </div>
     </section>
 
     {{-- E: what to do next. --}}
@@ -204,25 +211,25 @@
         @endif
     </section>
 
-    {{-- H: the offices furthest behind on last month's DTRs. --}}
+    {{-- H: the offices whose month is not closed, a DTR not uploaded or not final, furthest behind first. --}}
     <section class="dtr-dash-card dtr-dash-h" aria-labelledby="dash-h">
         <div>
-            <h2 id="dash-h" class="dtr-dash-title">Offices still missing DTRs</h2>
+            <h2 id="dash-h" class="dtr-dash-title">Offices not done</h2>
             <p class="dtr-dash-sub">{{ $lastMonth->format('F Y') }}, furthest behind first</p>
         </div>
 
-        @forelse ($month['officesBehind'] as $office)
+        @forelse ($officesNotDone as $office)
             <div class="dtr-dash-stack">
                 <div class="dtr-dash-between">
                     <span>{{ $office['office'] }}</span>
-                    <span class="dtr-dash-muted">{{ $office['uploaded'] }} of {{ $office['staff'] }}</span>
+                    <span class="dtr-dash-muted">uploaded {{ $office['uploaded'] }} of {{ $office['staff'] }} · final {{ $office['final'] }}</span>
                 </div>
                 <div class="dtr-dash-progress is-thin" aria-hidden="true">
-                    <span style="width: {{ $office['uploaded'] / $office['staff'] * 100 }}%"></span>
+                    <span style="width: {{ $office['final'] / $office['staff'] * 100 }}%"></span>
                 </div>
             </div>
         @empty
-            <p class="dtr-dash-muted">{{ $month['staff'] === 0 ? 'No staff who earn leave credits yet.' : "Every office's DTRs for {$monthName} are in." }}</p>
+            <p class="dtr-dash-muted">{{ $month['staff'] === 0 ? 'No staff who earn leave credits yet.' : "Every office's DTRs for {$monthName} are in and final." }}</p>
         @endforelse
     </section>
 

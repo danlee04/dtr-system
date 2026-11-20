@@ -13,7 +13,9 @@ use App\Models\LeaveLedgerEntry;
 use App\Models\Office;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
+use App\Models\User;
 use App\Services\DashboardFigures;
+use App\Services\Leave\DtrDeduction;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -84,22 +86,29 @@ class DashboardFiguresTest extends TestCase
         $this->assertSame(33, $month['onTimeRate']);
     }
 
-    public function test_the_offices_furthest_behind_on_uploads_come_first(): void
+    public function test_the_offices_not_done_come_furthest_behind_first(): void
     {
         $pharmacy = Office::factory()->create(['name' => 'Pharmacy']);
         $records = Office::factory()->create(['name' => 'Records']);
+        $library = Office::factory()->create(['name' => 'Library']);
         $this->day($this->staff(), '2026-10-01');
         $this->staff();
         $this->staff();
         $this->staff(office: $pharmacy);
         $this->day($this->staff(office: $records), '2026-10-01');
+        $this->day($this->staff(office: $library), '2026-10-01');
+        app(DtrDeduction::class)->finalize(DtrUpload::query()->whereRelation('employee', 'office_id', $library->id)->sole(), User::factory()->create());
 
-        $month = $this->figures->month(CarbonImmutable::parse('2026-10-01'));
+        $october = CarbonImmutable::parse('2026-10-01');
+        $finals = $this->figures->finals($october);
 
+        // Library's one DTR is in and final: done. Records' is in but open: not done.
+        $this->assertSame(['Library' => 1], $finals);
         $this->assertSame([
-            ['office' => 'Nursing Service', 'uploaded' => 1, 'staff' => 3],
-            ['office' => 'Pharmacy', 'uploaded' => 0, 'staff' => 1],
-        ], $month['officesBehind']);
+            ['office' => 'Nursing Service', 'uploaded' => 1, 'final' => 0, 'staff' => 3],
+            ['office' => 'Pharmacy', 'uploaded' => 0, 'final' => 0, 'staff' => 1],
+            ['office' => 'Records', 'uploaded' => 1, 'final' => 0, 'staff' => 1],
+        ], $this->figures->officesNotDone($this->figures->month($october), $finals));
     }
 
     public function test_whoever_is_on_leave_ob_or_travel_today_is_out(): void

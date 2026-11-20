@@ -376,6 +376,17 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   across on a tablet, one on a phone. Headings, not cards, each marked with a
   short amber bar (`.dtr-form-section`), a rule between sections
   (`.dtr-form-section-divided`).
+- **Monthly Summary, Without pay:** one column, the total with "DTR x · leave y"
+  under it when there is any; the Excel has the three as columns. "Without pay
+  only" is a checkbox above the count, out of the section header, shown even when
+  nothing matches.
+- **Dashboard, closing the month:** "DTRs for <month>" has a second bar, "N final
+  of M uploaded"; "Offices not done" lists an office with a DTR not uploaded or not
+  final, "uploaded a of s · final f", its bar the share final.
+- **Activity log** (admin only): a Filament table, When, Who ("System" when no one
+  was signed in), Record (kind, #id under it), Action (badge: created green,
+  deleted red, else grey), Fields (from lg); View opens Field / Before / After in a
+  grid (`filament.activity-log.changes`). Labels in sentence case.
 - **Selects** keep a chosen value on one line, cut with "…", so a long office
   name leaves the box as tall as the inputs beside it; the open list shows every
   name whole.

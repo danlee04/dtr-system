@@ -49,6 +49,9 @@ class MonthlySummary extends Page
     /** From the pagination's select. */
     public int $perPage = 25;
 
+    /** Only the employees with days without pay, for payroll (HR, 2026-11-20). */
+    public bool $withoutPayOnly = false;
+
     public static function canAccess(): bool
     {
         return auth()->user()?->can('viewAny', DtrUpload::class) ?? false;
@@ -63,7 +66,7 @@ class MonthlySummary extends Page
     /** A new office, month or page size starts again on the first page. */
     public function updated(string $property): void
     {
-        if (in_array($property, ['officeId', 'month', 'perPage'], true)) {
+        if (in_array($property, ['officeId', 'month', 'perPage', 'withoutPayOnly'], true)) {
             $this->resetPage();
         }
     }
@@ -112,6 +115,11 @@ class MonthlySummary extends Page
     {
         $month = $this->chosenMonth();
         $rows = $month !== null ? app(MonthlyTotals::class)->rows($this->chosenOffice(), $month) : [];
+
+        if ($this->withoutPayOnly) {
+            $rows = array_values(array_filter($rows, fn (array $row): bool => bccomp($row['withoutPay']['total'], '0', 3) > 0));
+        }
+
         // Every row is counted for the totals and the download; the page shows a slice.
         $perPage = in_array($this->perPage, self::PAGE_SIZES, true) ? $this->perPage : 25;
         $page = $this->getPage();

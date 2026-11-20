@@ -2,9 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
+use App\Models\Office;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
 use App\Models\User;
+use App\Services\Leave\DtrDeduction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -51,5 +56,25 @@ class DashboardPageTest extends TestCase
             ->assertOk()
             ->assertSee('Leave balance')
             ->assertDontSee(['Leave to approve', 'Out today', 'Recent leave']);
+    }
+
+    public function test_the_dashboard_shows_how_many_dtrs_are_final_and_the_offices_not_done(): void
+    {
+        $nursing = Office::factory()->create(['name' => 'Nursing Service']);
+
+        foreach (['Abad', 'Bautista'] as $lastName) {
+            $employee = Employee::factory()->for($nursing)->create(['last_name' => $lastName]);
+            ScheduleAssignment::factory()->for($employee)->for(Schedule::factory())->create(['effective_from' => '2026-09-01']);
+            DtrUpload::factory()->for($employee)->create(['period_start' => '2026-10-01', 'period_end' => '2026-10-01'])
+                ->days()->create(['date' => '2026-10-01', 'am_arrival' => '08:00', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00']);
+        }
+
+        $hr = User::factory()->create();
+        app(DtrDeduction::class)->finalize(DtrUpload::query()->whereRelation('employee', 'last_name', 'Abad')->sole(), $hr);
+
+        $this->actingAs($hr)
+            ->get('/')
+            ->assertOk()
+            ->assertSee(['1 final of 2 uploaded', 'Offices not done', 'Nursing Service', 'final 1']);
     }
 }

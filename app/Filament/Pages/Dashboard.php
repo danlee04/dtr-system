@@ -44,10 +44,14 @@ class Dashboard extends BaseDashboard
         // The month whose DTRs IT has printed.
         $lastMonth = $today->subMonthNoOverflow()->startOfMonth();
         $month = $figures->month($lastMonth);
+        $finals = $figures->finals($lastMonth);
 
         return [
             'lastMonth' => $lastMonth,
             'month' => $month,
+            // Closing the month: the DTRs HR has marked final, and the offices not done (HR, 2026-11-20).
+            'finalCount' => array_sum($finals),
+            'officesNotDone' => $figures->officesNotDone($month, $finals),
             'pending' => $figures->pendingApplications(),
             'outToday' => $figures->outToday($today),
             'leave' => $figures->leaveByType($today->year),

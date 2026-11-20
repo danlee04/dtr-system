@@ -35,6 +35,14 @@
             </ul>
         @endif
 
+        {{-- Out of the header, which a third control squeezes on a tablet, and shown even when nothing matches, so it can be cleared. --}}
+        @if ($monthName !== null)
+            <label class="dtr-grid-picker dtr-grid-count">
+                <x-filament::input.checkbox wire:model.live="withoutPayOnly" />
+                Without pay only
+            </label>
+        @endif
+
         @if ($rows->total() > 0)
             <p class="dtr-grid-count">
                 {{ $rows->total() }} {{ str('employee')->plural($rows->total()) }} who earn leave credits ·
@@ -52,11 +60,12 @@
                             <th scope="col" class="dtr-grid-divider">Absent<span class="dtr-grid-sub">days</span>
                             </th>
                             <th scope="col">Equivalent<span class="dtr-grid-sub">days of leave</span></th>
+                            <th scope="col" class="dtr-grid-divider">Without pay<span class="dtr-grid-sub">days</span></th>
                             <th scope="col" class="dtr-grid-divider dtr-grid-start">Notes</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($rows as ['employee' => $employee, 'dtr' => $dtr, 'notes' => $notes])
+                        @foreach ($rows as ['employee' => $employee, 'dtr' => $dtr, 'notes' => $notes, 'withoutPay' => $withoutPay])
                             <tr wire:key="summary-{{ $employee->id }}" @class(['is-muted' => $dtr === null])>
                                 <th scope="row" class="dtr-grid-name">
                                     {{ $employee->full_name }}
@@ -74,6 +83,17 @@
                                 @endforeach
                                 <td class="dtr-grid-value dtr-grid-divider">{{ $dtr?->absent ?? '—' }}</td>
                                 <td class="dtr-grid-value">{{ $dtr?->dayEquivalent ?? '—' }}</td>
+                                {{-- One column on screen, so the report still fits a tablet; the Excel has the three. --}}
+                                <td class="dtr-grid-value dtr-grid-divider">
+                                    @if ($dtr === null && bccomp($withoutPay['leave'], '0', 3) === 0)
+                                        —
+                                    @else
+                                        {{ $withoutPay['total'] }}
+                                        @if (bccomp($withoutPay['total'], '0', 3) > 0)
+                                            <span class="dtr-grid-sub">DTR {{ $withoutPay['dtr'] }} · leave {{ $withoutPay['leave'] }}</span>
+                                        @endif
+                                    @endif
+                                </td>
                                 <td class="dtr-grid-divider">
                                     <div class="dtr-grid-badges">
                                         @foreach ($notes as $note)

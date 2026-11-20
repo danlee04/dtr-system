@@ -262,4 +262,50 @@ class DtrDeductionTest extends TestCase
         $this->assertSame([null, null], LeaveLedgerEntry::query()->pluck('dtr_upload_id')->all());
         $this->assertEquals(0, LeaveLedgerEntry::query()->sum('days'));
     }
+
+    public function test_without_pay_is_how_far_the_final_took_vl_below_zero(): void
+    {
+        // The DTR takes 0.100: from 0.050, 0.050 of it is without pay; from −0.200, all of it; from 5.000, none.
+        foreach (['0.050' => '0.050', '-0.200' => '0.100', '5.000' => '0.000'] as $opening => $withoutPay) {
+            $upload = $this->upload();
+            LeaveLedgerEntry::factory()->for($upload->employee)->create(['leave_type' => LeaveType::Vacation, 'days' => (string) $opening, 'kind' => LedgerKind::Opening, 'posted_on' => '2026-09-30']);
+
+            $this->assertSame('0.000', $this->deduction()->withoutPay($upload), 'An open DTR has none.');
+            $this->deduction()->finalize($upload, $this->hr);
+
+            $this->assertSame($withoutPay, $this->deduction()->withoutPay($upload), "VL {$opening}");
+        }
+    }
+
+    public function test_without_pay_follows_the_latest_final(): void
+    {
+        $upload = $this->upload();
+        LeaveLedgerEntry::factory()->for($upload->employee)->create(['leave_type' => LeaveType::Vacation, 'days' => '0.050', 'kind' => LedgerKind::Opening, 'posted_on' => '2026-09-30']);
+        $this->deduction()->finalize($upload, $this->hr);
+        $this->assertSame('0.050', $this->deduction()->withoutPay($upload));
+
+        // Reopened, VL topped up, then final again: judged on the VL of that moment.
+        $this->deduction()->reopen($upload, $this->hr, 'Leave filed late');
+        LeaveLedgerEntry::factory()->for($upload->employee)->create(['leave_type' => LeaveType::Vacation, 'days' => '1.000', 'kind' => LedgerKind::Adjustment, 'posted_on' => '2026-11-03']);
+        $this->deduction()->finalize($upload, $this->hr);
+
+        $this->assertSame('0.000', $this->deduction()->withoutPay($upload));
+    }
+
+    public function test_without_pay_does_not_count_a_later_months_deduction(): void
+    {
+        $october = $this->upload();
+        LeaveLedgerEntry::factory()->for($october->employee)->create(['leave_type' => LeaveType::Vacation, 'days' => '0.050', 'kind' => LedgerKind::Opening, 'posted_on' => '2026-09-30']);
+        // November 2, 20 minutes late: 0.042 day.
+        $november = DtrUpload::factory()->for($october->employee)->create(['period_start' => '2026-11-02', 'period_end' => '2026-11-02']);
+        $november->days()->create(['date' => '2026-11-02', 'am_arrival' => '08:20', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00']);
+
+        $this->deduction()->finalize($october, $this->hr);
+        $this->deduction()->finalize($november, $this->hr);
+        $this->deduction()->reopen($october, $this->hr, 'Leave filed late');
+        $this->deduction()->finalize($october, $this->hr);
+
+        // VL 0.050 against 0.100 and 0.042: 0.092 short in all. October's share stays 0.050; November's 0.042 is not counted again in it.
+        $this->assertSame(['0.050', '0.042'], [$this->deduction()->withoutPay($october), $this->deduction()->withoutPay($november)]);
+    }
 }

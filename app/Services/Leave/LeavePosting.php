@@ -271,7 +271,7 @@ final class LeavePosting
      *
      * @return array<int, string> employee id → days
      */
-    private function daysWithoutPayIn(CarbonImmutable $month, ?int $employeeId = null): array
+    public function daysWithoutPayIn(CarbonImmutable $month, ?int $employeeId = null): array
     {
         $prefix = $month->format('Y-m');
         $totals = [];

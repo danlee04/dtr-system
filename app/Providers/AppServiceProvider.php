@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Policies\ActivityPolicy;
 use App\Services\Attendance\PunchSources\PunchSource;
 use App\Services\Attendance\PunchSources\ZktecoPunchSource;
 use Carbon\CarbonImmutable;
@@ -16,10 +17,12 @@ use Filament\Tables\Columns\Column;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The activity log's model lives in the package, so its policy is not found by name.
+        Gate::policy(Activity::class, ActivityPolicy::class);
+
         $this->configureDefaults();
         $this->configureModals();
         $this->configureFields();
