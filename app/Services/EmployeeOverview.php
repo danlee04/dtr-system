@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LeaveApplicationStatus;
+use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Models\Employee;
 use App\Models\Schedule;
@@ -13,16 +14,17 @@ use App\Services\Leave\LeavePosting;
 use Carbon\CarbonImmutable;
 
 /**
- * What an employee's Overview tab shows (filament.employees.cards and
- * needs-a-look): last month's lates, the leave balances and the schedule, and
- * the first thing about the employee that HR should look at.
+ * What an employee's Overview tab shows (filament.employees.cards,
+ * needs-a-look and deductions): last month's lates, the leave balances and
+ * the schedule, the first thing about the employee that HR should look at,
+ * and this year's deductions.
  */
 final class EmployeeOverview
 {
     public function __construct(private MonthlyTotals $monthlyTotals, private LeaveLedger $leaveLedger) {}
 
     /**
-     * @return array{earns: bool, month: CarbonImmutable, lastMonth: ComputedDtr|null, balances: array<string, string>, schedule: Schedule|null, needsALook: array{step: string, count?: int}|null}
+     * @return array{earns: bool, month: CarbonImmutable, lastMonth: ComputedDtr|null, balances: array<string, string>, schedule: Schedule|null, needsALook: array{step: string, count?: int}|null, year: int, deductions: list<array{date: CarbonImmutable, title: string, detail: ?string, leave_type: LeaveType, days: string}>}
      */
     public function for(Employee $employee, CarbonImmutable $today): array
     {
@@ -39,6 +41,9 @@ final class EmployeeOverview
             'balances' => $earns ? $this->leaveLedger->balances($employee) : [],
             'schedule' => $schedule,
             'needsALook' => $this->needsALook($employee, $today, $schedule, $lastMonth),
+            'year' => $today->year,
+            // In the Name card's place (HR, 2026-11-23).
+            'deductions' => $earns ? $this->leaveLedger->deductions($employee, $today->year) : [],
         ];
     }
 

@@ -16,7 +16,7 @@ use Filament\Support\Icons\Heroicon;
 /**
  * The employee page's Overview tab, after HR's reference: cards of last
  * month, the leave balances and the schedule; the job details as rows; and
- * beside them what needs a look and the name the DTRs are matched to.
+ * beside them what needs a look and this year's deductions.
  */
 class EmployeeInfolist
 {
@@ -60,19 +60,15 @@ class EmployeeInfolist
                             View::make('filament.employees.needs-a-look')
                                 ->viewData(fn (ViewEmployee $livewire): array => [...$livewire->overview, 'employee' => $livewire->record])
                                 ->visible(fn (ViewEmployee $livewire): bool => $livewire->overview['needsALook'] !== null),
-                            Section::make('Name')
-                                ->description('DTR uploads are matched to this name.')
-                                ->icon(Heroicon::OutlinedUser)
+                            // In the Name card's place (HR, 2026-11-23); the name stays in the heading and the form.
+                            Section::make('Deductions')
+                                ->description(fn (ViewEmployee $livewire): string => "Taken from the leave balances in {$livewire->overview['year']}, newest first.")
+                                ->icon(Heroicon::OutlinedMinusCircle)
                                 ->compact()
-                                ->divided()
-                                ->inlineLabel()
+                                ->visible(fn (ViewEmployee $livewire): bool => $livewire->overview['earns'])
                                 ->schema([
-                                    TextEntry::make('last_name'),
-                                    TextEntry::make('first_name'),
-                                    TextEntry::make('middle_name')
-                                        ->placeholder('—'),
-                                    TextEntry::make('suffix')
-                                        ->placeholder('—'),
+                                    View::make('filament.employees.deductions')
+                                        ->viewData(fn (ViewEmployee $livewire): array => $livewire->overview),
                                 ]),
                         ]),
                     ]),

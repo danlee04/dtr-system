@@ -493,6 +493,14 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
 - **Needs a look** (`.dtr-callout`): an amber tint and ring, a 40px amber icon
   box, "Needs a look", a 16px heading, one sentence and one button. It shows
   only when something needs a look.
+- **Deductions** (`.dtr-deductions`, HR, 2026-11-23, in the Name card's place;
+  the name stays in the heading and the form): a section, for those who earn
+  leave, with one line per deduction this year, newest first: what on the left
+  ("October 2026 DTR", and "57 min late and undertime" in grey under it; a
+  leave's type and dates), the leave and days on the right in red ("VL
+  −0.119"), then a total per leave under a rule. Only what still stands: a
+  DTR's rows since it was last reopened, a leave's net charge (none once
+  cancelled), and forced leave, lapses and adjustments that took days.
 
 All in `entries.blade.php`.
 

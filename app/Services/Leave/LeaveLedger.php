@@ -89,6 +89,68 @@ final class LeaveLedger
     }
 
     /**
+     * What still stands taken from an employee's balances in a year, newest
+     * first, for their page (HR, 2026-11-23): each DTR's deductions since it
+     * was last reopened, each leave's net charge (a cancelled one has none),
+     * and forced leave, lapses and adjustments that took days. A row's date is
+     * the one it counts on: a DTR's month end, a leave's first day, else the
+     * day it was posted.
+     *
+     * @return list<array{date: CarbonImmutable, title: string, detail: ?string, leave_type: LeaveType, days: string}>
+     */
+    public function deductions(Employee $employee, int $year): array
+    {
+        $rows = $employee->leaveLedgerEntries()
+            ->with('application')
+            ->whereIn('kind', [...self::TAKING, LedgerKind::Adjustment])
+            ->orderBy('id')
+            ->get();
+        $lines = [];
+
+        foreach ($rows->whereIn('kind', [LedgerKind::DtrDeduction, LedgerKind::DtrReopened])->groupBy('dtr_upload_id') as $dtrRows) {
+            $lastReopen = $dtrRows->where('kind', LedgerKind::DtrReopened)->max('id') ?? 0;
+
+            foreach ($dtrRows->where('kind', LedgerKind::DtrDeduction)->where('id', '>', $lastReopen) as $row) {
+                // "October 2026 DTR: 57 min late and undertime"
+                [$title, $detail] = array_pad(explode(': ', (string) $row->remarks, 2), 2, null);
+                $lines[] = [
+                    'date' => is_string($row->period) && preg_match('/^\d{4}-\d{2}$/', $row->period) === 1 ? CarbonImmutable::createFromFormat('!Y-m', $row->period)->endOfMonth() : $row->posted_on->toImmutable(),
+                    'title' => $title,
+                    'detail' => $detail,
+                    'leave_type' => $row->leave_type,
+                    'days' => $row->days,
+                ];
+            }
+        }
+
+        foreach ($rows->whereIn('kind', [LedgerKind::Application, LedgerKind::Cancellation])->groupBy(fn (LeaveLedgerEntry $row): string => "{$row->leave_application_id}:{$row->leave_type->value}") as $leaveRows) {
+            $days = $leaveRows->reduce(fn (string $sum, LeaveLedgerEntry $row): string => bcadd($sum, $row->days, 3), '0.000');
+            $application = $leaveRows->first()->application;
+
+            if (bccomp($days, '0', 3) < 0) {
+                $lines[] = [
+                    'date' => $application?->date_from->toImmutable() ?? $leaveRows->first()->posted_on->toImmutable(),
+                    'title' => $application?->leave_type->getLabel() ?? LedgerKind::Application->getLabel(),
+                    'detail' => $application?->dates(),
+                    'leave_type' => $leaveRows->first()->leave_type,
+                    'days' => $days,
+                ];
+            }
+        }
+
+        foreach ($rows->whereIn('kind', [LedgerKind::ForcedLeave, LedgerKind::Lapse, LedgerKind::Adjustment]) as $row) {
+            if (bccomp($row->days, '0', 3) < 0) {
+                $lines[] = ['date' => $row->posted_on->toImmutable(), 'title' => $row->kind->getLabel(), 'detail' => $row->remarks, 'leave_type' => $row->leave_type, 'days' => $row->days];
+            }
+        }
+
+        $lines = array_values(array_filter($lines, fn (array $line): bool => $line['date']->year === $year));
+        usort($lines, fn (array $a, array $b): int => $b['date'] <=> $a['date']);
+
+        return $lines;
+    }
+
+    /**
      * Every tracked type's balance, VL first, "0.000" where the employee
      * has no rows. With $on, only rows posted on or before that date count.
      *

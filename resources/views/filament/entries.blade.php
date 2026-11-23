@@ -623,6 +623,80 @@
         box-shadow: inset 0 0 0 1px var(--grid-line);
     }
 
+    /* An employee's deductions this year (HR, 2026-11-23): a line each, what on the left, the leave and days on the right in red, a total under them. */
+    .dtr-deductions {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dtr-deduction,
+    .dtr-deductions-total {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: calc(var(--spacing) * 3);
+        padding-block: calc(var(--spacing) * 2.5);
+        font-size: var(--text-sm);
+    }
+
+    .dtr-deduction + .dtr-deduction {
+        border-top: 1px solid color-mix(in oklab, var(--gray-950) 5%, transparent);
+    }
+
+    .dtr-deduction-what {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .dtr-deduction-title {
+        color: var(--gray-950);
+    }
+
+    .dtr-deduction-detail {
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    .dtr-deduction-days {
+        flex: none;
+        font-weight: var(--font-weight-medium);
+        font-variant-numeric: tabular-nums;
+        color: var(--danger-700);
+    }
+
+    .dtr-deductions-total {
+        margin-top: calc(var(--spacing) * 1);
+        border-top: 1px solid color-mix(in oklab, var(--gray-950) 10%, transparent);
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-950);
+    }
+
+    .dtr-deductions-empty {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    .dark .dtr-deduction + .dtr-deduction {
+        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+
+    .dark .dtr-deductions-total {
+        border-color: color-mix(in oklab, var(--color-white) 15%, transparent);
+    }
+
+    .dark :is(.dtr-deduction-title, .dtr-deductions-total) {
+        color: var(--color-white);
+    }
+
+    .dark :is(.dtr-deduction-detail, .dtr-deductions-empty) {
+        color: var(--gray-400);
+    }
+
+    .dark .dtr-deduction-days {
+        color: var(--danger-300);
+    }
+
     /* What needs a look, after the reference's "due a review" card: an amber tint, an icon, a sentence, one button. */
     .dtr-callout {
         display: flex;

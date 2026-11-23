@@ -141,6 +141,37 @@ class EmployeeOverviewTest extends TestCase
         $this->page($employee)->assertSee('Late 10 times in October');
     }
 
+    public function test_the_deductions_card_lists_what_still_stands_this_year_in_place_of_the_name(): void
+    {
+        $employee = $this->settled();
+        $october = DtrUpload::factory()->for($employee)->create(['period_start' => '2026-10-01', 'period_end' => '2026-10-31']);
+        $deduct = fn (string $days, LedgerKind $kind, string $remarks, string $postedOn) => LeaveLedgerEntry::factory()->for($employee)->create([
+            'leave_type' => 'VL', 'days' => $days, 'kind' => $kind, 'remarks' => $remarks, 'posted_on' => $postedOn, 'period' => '2026-10', 'dtr_upload_id' => $october->id,
+        ]);
+        // Marked final, reopened, then final again: only the last stands.
+        $deduct('-0.077', LedgerKind::DtrDeduction, 'October 2026 DTR: 37 min late and undertime', '2026-11-02');
+        $deduct('0.077', LedgerKind::DtrReopened, 'October 2026 DTR reopened', '2026-11-03');
+        $deduct('-0.119', LedgerKind::DtrDeduction, 'October 2026 DTR: 57 min late and undertime', '2026-11-03');
+        // A leave taken, and one cancelled, which takes nothing.
+        $taken = LeaveApplication::factory()->for($employee)->create(['leave_type' => 'SL', 'date_from' => '2026-10-07', 'date_to' => '2026-10-07', 'status' => LeaveApplicationStatus::Approved]);
+        LeaveLedgerEntry::factory()->for($employee)->create(['leave_type' => 'SL', 'days' => '-1.000', 'kind' => LedgerKind::Application, 'leave_application_id' => $taken->id, 'posted_on' => '2026-10-06']);
+        $cancelled = LeaveApplication::factory()->for($employee)->create(['leave_type' => 'VL', 'date_from' => '2026-10-20', 'date_to' => '2026-10-20', 'status' => LeaveApplicationStatus::Cancelled]);
+        LeaveLedgerEntry::factory()->for($employee)->create(['leave_type' => 'VL', 'days' => '-1.000', 'kind' => LedgerKind::Application, 'leave_application_id' => $cancelled->id, 'posted_on' => '2026-10-19']);
+        LeaveLedgerEntry::factory()->for($employee)->create(['leave_type' => 'VL', 'days' => '1.000', 'kind' => LedgerKind::Cancellation, 'leave_application_id' => $cancelled->id, 'posted_on' => '2026-10-19']);
+
+        // HR, 2026-11-23: the deductions, newest first, net of reopens and cancellations, with a total per leave.
+        $this->page($employee)
+            ->assertDontSee('DTR uploads are matched to this name.')
+            ->assertSeeInOrder(['Deductions', 'October 2026 DTR', '57 min late and undertime', 'VL', '−0.119', 'Sick Leave', 'Oct 7, 2026', 'SL', '−1.000', 'Total', 'VL −0.119', 'SL −1.000'])
+            ->assertDontSee('37 min late and undertime')
+            ->assertDontSee('Oct 20, 2026');
+    }
+
+    public function test_an_employee_with_no_deductions_this_year_is_told_so(): void
+    {
+        $this->page($this->settled())->assertSeeInOrder(['Deductions', 'No deductions in 2026.']);
+    }
+
     public function test_only_active_employees_need_a_look(): void
     {
         $this->page(Employee::factory()->create(['date_separated' => '2026-09-30']))->assertDontSee('Needs a look');
