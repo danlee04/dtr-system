@@ -351,10 +351,10 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   (printed times as read-only text marked Printed, the blanks and HR's times as
   time inputs, the clicked one focused), the reason as radio choices, an
   optional note; Save, Cancel, and an outlined danger "Remove HR times" when the
-  date has any. Picking Gate pass or Out on official business fills each empty
-  input with the schedule's time, the time out being the flexi time out due;
-  printed and typed times stay, and HR may change or clear what was filled
-  (HR, 2026-11-23).
+  date has any. Picking Out on official business fills each empty input with
+  the schedule's time; picking Gate pass fills only the time clicked, if empty.
+  The time out is the flexi time out due; printed and typed times stay, and HR
+  may change or clear what was filled (HR, 2026-11-23).
 - **My DTR** shows the same view to the employee, read-only (`viewData(mine: true)`,
   no fill-in action registered): a section headed with the month, the schedule
   and printed name as its description, a Month picker in `afterHeader`, then a

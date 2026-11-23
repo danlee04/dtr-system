@@ -298,16 +298,17 @@ class FillDayAction extends Action
                 ->options(ManualTapReason::class)
                 ->inline()
                 ->required()
-                // On a gate pass or OB, the blanks take the schedule's times; HR may still change them (HR, 2026-11-23).
+                // The schedule's time goes into a blank: on an OB every blank, on a gate pass only the time clicked; HR may still change it (HR, 2026-11-23).
                 ->live()
-                ->afterStateUpdated(function (mixed $state, Get $get, Set $set) use ($day): void {
+                ->afterStateUpdated(function (mixed $state, Get $get, Set $set) use ($day, $focus): void {
                     $reason = $state instanceof ManualTapReason ? $state : ManualTapReason::tryFrom((string) $state);
+                    $slots = match ($reason) {
+                        ManualTapReason::OfficialBusiness => $day['editable'],
+                        ManualTapReason::GatePass => array_filter([$focus], fn (?DtrSlot $slot): bool => in_array($slot, $day['editable'], true)),
+                        default => [],
+                    };
 
-                    if (! in_array($reason, [ManualTapReason::GatePass, ManualTapReason::OfficialBusiness], true)) {
-                        return;
-                    }
-
-                    foreach ($day['editable'] as $slot) {
+                    foreach ($slots as $slot) {
                         if (blank($get($slot->value)) && isset($day['schedule'][$slot->value])) {
                             $set($slot->value, $day['schedule'][$slot->value]);
                         }

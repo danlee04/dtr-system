@@ -637,12 +637,21 @@ class DtrUploadResourceTest extends TestCase
         $upload = $this->uploadWithoutTimeOut();
 
         // October 2 has no time out; the printed times stay as they are (HR, 2026-11-23).
-        foreach ([ManualTapReason::GatePass, ManualTapReason::OfficialBusiness] as $reason) {
-            Livewire::test(ListDtrUploads::class)
-                ->mountAction($this->fillIn($upload, '2026-10-02'))
-                ->fillForm(['reason' => $reason->value])
-                ->assertActionDataSet(['pm_departure' => '17:00', 'am_arrival' => '07:47']);
-        }
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->fillIn($upload, '2026-10-02'))
+            ->fillForm(['reason' => ManualTapReason::OfficialBusiness->value])
+            ->assertActionDataSet(['pm_departure' => '17:00', 'am_arrival' => '07:47']);
+
+        // October 29 has no tap: a gate pass fills only the time clicked, an OB every blank (HR, 2026-11-23).
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->fillIn($upload, '2026-10-29'))
+            ->fillForm(['reason' => ManualTapReason::GatePass->value])
+            ->assertActionDataSet(['pm_departure' => '17:00', 'am_arrival' => null, 'am_departure' => null, 'pm_arrival' => null]);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->fillIn($upload, '2026-10-29'))
+            ->fillForm(['reason' => ManualTapReason::OfficialBusiness->value])
+            ->assertActionDataSet(['am_arrival' => '08:00', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00']);
 
         Livewire::test(ListDtrUploads::class)
             ->mountAction($this->fillIn($upload, '2026-10-02'))
