@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\LeaveApplications\Actions;
 
-use App\Enums\LeaveApplicationStatus;
 use App\Models\LeaveApplication;
 use App\Services\Leave\LeaveApplications;
 use Filament\Actions\Action;
@@ -11,8 +10,8 @@ use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 
 /**
- * Cancels a rejected or withdrawn application, with the reason, and gives
- * back the days it drew.
+ * Cancels a withdrawn application, with the reason, and gives back the days
+ * it drew. A pending one HR does not approve is disapproved instead.
  */
 class CancelLeaveApplicationAction extends Action
 {
@@ -29,7 +28,7 @@ class CancelLeaveApplicationAction extends Action
             ->label('Cancel')
             ->icon(Heroicon::OutlinedXCircle)
             ->color('danger')
-            ->visible(fn (LeaveApplication $record): bool => $record->status !== LeaveApplicationStatus::Cancelled)
+            ->visible(fn (LeaveApplication $record): bool => $record->status->stands())
             ->authorize('cancel')
             ->modalHeading('Cancel this leave')
             ->modalDescription('The days it drew are given back.')

@@ -64,6 +64,15 @@ class PrintLeaveApplicationTest extends TestCase
             ->assertSee('Edhel S. Miro, MD, DPCAM, MM-PA');
     }
 
+    public function test_a_disapproved_form_prints_the_reason_in_7d_and_nothing_in_7c(): void
+    {
+        app(LeaveApplications::class)->disapprove($this->application, 'No medical certificate');
+
+        $this->get(route('leave-applications.print', $this->application))
+            ->assertOk()
+            ->assertSeeInOrder(['7.C APPROVED FOR:', '<span class="short"></span> days with pay', '7.D DISAPPROVED DUE TO:', 'No medical certificate'], escape: false);
+    }
+
     public function test_wellness_leave_prints_under_others(): void
     {
         $wellness = LeaveApplication::factory()->for($this->employee)->create(['leave_type' => LeaveType::Wellness]);
@@ -112,9 +121,9 @@ class PrintLeaveApplicationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_the_hr_list_offers_the_print_action(): void
+    public function test_the_hr_list_offers_the_print_action_in_the_application(): void
     {
         Livewire::test(ListLeaveApplications::class)
-            ->assertActionVisible(TestAction::make('print')->table($this->application));
+            ->assertActionVisible([TestAction::make('view')->table($this->application), TestAction::make('print')]);
     }
 }

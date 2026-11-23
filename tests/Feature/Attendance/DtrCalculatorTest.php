@@ -147,17 +147,18 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame(0, $days['2026-10-08']->late);
     }
 
-    public function test_leave_on_a_work_day_is_not_absent_unless_it_was_cancelled(): void
+    public function test_leave_on_a_work_day_is_not_absent_unless_it_was_cancelled_or_disapproved(): void
     {
         $employee = $this->regular();
         LeaveApplication::factory()->for($employee)->create(['date_from' => '2026-10-15', 'date_to' => '2026-10-16']);
         LeaveApplication::factory()->for($employee)->create(['date_from' => '2026-10-20', 'date_to' => '2026-10-20', 'status' => LeaveApplicationStatus::Cancelled]);
+        LeaveApplication::factory()->for($employee)->create(['date_from' => '2026-10-21', 'date_to' => '2026-10-21', 'status' => LeaveApplicationStatus::Disapproved]);
 
         $days = $this->compute($employee)->days;
 
         $this->assertSame(
-            [AttendanceStatus::Leave, AttendanceStatus::Leave, AttendanceStatus::Absent],
-            [$days['2026-10-15']->status, $days['2026-10-16']->status, $days['2026-10-20']->status],
+            [AttendanceStatus::Leave, AttendanceStatus::Leave, AttendanceStatus::Absent, AttendanceStatus::Absent],
+            [$days['2026-10-15']->status, $days['2026-10-16']->status, $days['2026-10-20']->status, $days['2026-10-21']->status],
         );
     }
 

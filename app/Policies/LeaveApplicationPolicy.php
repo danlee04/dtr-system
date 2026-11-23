@@ -7,9 +7,10 @@ use App\Models\LeaveApplication;
 use App\Models\User;
 
 /**
- * Staff file, approve, cancel and print any application. An employee files
- * their own, sees and prints their own, and cancels their own while it is
- * pending. An application is never edited or deleted: a wrong one is
+ * Staff file, change, approve, disapprove, cancel and print any application.
+ * An employee files their own, sees and prints their own, and changes or
+ * cancels their own while it is pending (HR, 2026-11-23). An application is
+ * changed only while pending and never deleted: a wrong approved one is
  * cancelled, which gives its days back.
  */
 class LeaveApplicationPolicy
@@ -34,9 +35,14 @@ class LeaveApplicationPolicy
         return $user->isStaff() && $leaveApplication->status === LeaveApplicationStatus::Pending;
     }
 
+    public function disapprove(User $user, LeaveApplication $leaveApplication): bool
+    {
+        return $user->isStaff() && $leaveApplication->status === LeaveApplicationStatus::Pending;
+    }
+
     public function cancel(User $user, LeaveApplication $leaveApplication): bool
     {
-        if ($leaveApplication->status === LeaveApplicationStatus::Cancelled) {
+        if (! $leaveApplication->status->stands()) {
             return false;
         }
 
@@ -51,7 +57,8 @@ class LeaveApplicationPolicy
 
     public function update(User $user, LeaveApplication $leaveApplication): bool
     {
-        return false;
+        return $leaveApplication->status === LeaveApplicationStatus::Pending
+            && ($user->isStaff() || $this->owns($user, $leaveApplication));
     }
 
     public function delete(User $user, LeaveApplication $leaveApplication): bool

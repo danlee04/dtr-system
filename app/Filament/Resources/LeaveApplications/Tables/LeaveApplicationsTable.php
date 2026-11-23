@@ -6,10 +6,13 @@ use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveType;
 use App\Filament\Resources\LeaveApplications\Actions\ApproveLeaveApplicationAction;
 use App\Filament\Resources\LeaveApplications\Actions\CancelLeaveApplicationAction;
+use App\Filament\Resources\LeaveApplications\Actions\DisapproveLeaveApplicationAction;
+use App\Filament\Resources\LeaveApplications\Actions\EditLeaveApplicationAction;
 use App\Filament\Resources\LeaveApplications\Actions\PrintLeaveApplicationAction;
 use App\Models\LeaveApplication;
 use App\Models\Office;
 use Filament\Actions\ViewAction;
+use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -65,18 +68,25 @@ class LeaveApplicationsTable
                         ? $query->whereHas('employee', fn (Builder $employee): Builder => $employee->where('office_id', $data['value']))
                         : $query),
             ])
+            // A click on the row opens the application too.
+            ->recordAction('view')
+            // Lined up from the left, so View stays in one place whether the row also has Edit or not.
+            ->recordActionsAlignment(Alignment::Start->value)
+            // View and Edit only on the row: with Print, Approve and Cancel it ran past a 1024px screen
+            // with a long name; the rest wait in the application's footer (2026-11-23).
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading('Leave Application')
                     ->extraModalFooterActions([
                         PrintLeaveApplicationAction::make(),
+                        EditLeaveApplicationAction::make()->cancelParentActions(),
                         ApproveLeaveApplicationAction::make()->cancelParentActions(),
+                        // Decided after reading the application, beside Approve (HR, 2026-11-23).
+                        DisapproveLeaveApplicationAction::make()->outlined()->cancelParentActions(),
                         // Not "cancel": every modal already has a button by that name, its Close.
                         CancelLeaveApplicationAction::make('cancelLeave')->outlined()->cancelParentActions(),
                     ]),
-                PrintLeaveApplicationAction::make(),
-                ApproveLeaveApplicationAction::make(),
-                CancelLeaveApplicationAction::make(),
+                EditLeaveApplicationAction::make(),
             ]);
     }
 }

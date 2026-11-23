@@ -56,7 +56,7 @@ colours (success = green, warning = amber, danger = red, info = blue).
 |---|---|---|
 | `success` | Done, fine | Approved, Active, progress bars, the on-time gauge |
 | `warning` | Waiting or needs a look | Pending, unsaved changes, report notes ("10+ lates") |
-| `danger` | Wrong or destructive | Validation errors, Absent, Habitual, Delete |
+| `danger` | Wrong or destructive | Validation errors, Absent, Habitual, Delete, Disapproved |
 | `info` | Away on purpose | Leave, OB, travel order |
 | `gray` | Inactive or not counted | Cancelled, Inactive, rest day |
 
@@ -222,6 +222,14 @@ decoration.
   lined up from the left (`recordActionsAlignment(Alignment::Start->value)`), so View
   stays in one place on a final DTR, which has no Delete. A "⋯" menu that hid
   them was tried and dropped (HR, 2026-11-20): View must be seen.
+  The leave lists (HR's and the employee's) follow the same pattern: a click on
+  a row opens the application, and the row shows View and, while pending,
+  Edit, lined up from the left. Print, Edit, Approve, an outlined red
+  Disapprove (HR only) and an outlined Cancel wait in the application's footer
+  (2026-11-23): with Print, Approve and Cancel on the row too, it ran past a
+  1024px screen with a long name. Edit opens the filing form filled in
+  ("Change Leave", "Print the form again after the change."); Disapprove asks
+  "Disapproved due to", which prints in 7.D, and leaves 7.C blank.
 - **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
 
 | Class | Use |

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\LeaveApplications\Schemas;
 
-use App\Enums\LeaveApplicationStatus;
 use App\Enums\LedgerKind;
 use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
@@ -128,6 +127,12 @@ class LeaveApplicationInfolist
                             ->iconColor('danger')
                             ->state(fn (LeaveApplication $record): ?string => $record->cancelled_at === null ? null : self::byLine($record->cancelledBy?->name, $record->cancelled_at)." — {$record->cancel_reason}")
                             ->visible(fn (LeaveApplication $record): bool => $record->cancelled_at !== null),
+                        TextEntry::make('disapproved')
+                            ->label('Disapproved')
+                            ->icon(Heroicon::OutlinedHandThumbDown)
+                            ->iconColor('danger')
+                            ->state(fn (LeaveApplication $record): ?string => $record->disapproved_at === null ? null : self::byLine($record->disapprovedBy?->name, $record->disapproved_at)." — {$record->disapproval_reason}")
+                            ->visible(fn (LeaveApplication $record): bool => $record->disapproved_at !== null),
                     ]),
             ]);
     }
@@ -151,7 +156,7 @@ class LeaveApplicationInfolist
             return null;
         }
 
-        return $draws->implode(' · ').($record->status === LeaveApplicationStatus::Cancelled ? ' — given back' : '');
+        return $draws->implode(' · ').($record->status->stands() ? '' : ' — given back');
     }
 
     /** @return list<array{date: string, days: string, without_pay: ?string}> */

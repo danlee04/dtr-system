@@ -244,7 +244,7 @@ final class LeavePosting
             ->where('leave_ledger_entries.kind', LedgerKind::Application)
             ->where('leave_ledger_entries.leave_type', LeaveType::Vacation)
             ->whereIn('leave_applications.leave_type', [LeaveType::Vacation, LeaveType::Forced])
-            ->where('leave_applications.status', '!=', LeaveApplicationStatus::Cancelled)
+            ->whereIn('leave_applications.status', LeaveApplicationStatus::standing())
             ->whereYear('leave_applications.date_from', $year)
             ->selectRaw('leave_ledger_entries.employee_id, sum(leave_ledger_entries.days) as total')
             ->groupBy('leave_ledger_entries.employee_id')
@@ -267,7 +267,7 @@ final class LeavePosting
 
     /**
      * Each employee's days without pay dated in the month, from applications
-     * that are not cancelled, read from their breakdowns.
+     * that stand (not cancelled or disapproved), read from their breakdowns.
      *
      * @return array<int, string> employee id → days
      */
@@ -277,7 +277,7 @@ final class LeavePosting
         $totals = [];
 
         $applications = LeaveApplication::query()
-            ->where('status', '!=', LeaveApplicationStatus::Cancelled)
+            ->whereIn('status', LeaveApplicationStatus::standing())
             ->where('days_without_pay', '>', 0)
             ->whereDate('date_from', '<=', $month->endOfMonth())
             ->whereDate('date_to', '>=', $month->startOfMonth())
@@ -305,20 +305,30 @@ final class LeavePosting
      * pay when they are posted; a month the employee was not credited stays
      * that way, since who earns is judged when a period is posted.
      *
-     * Call it after the application is saved (filed) or marked cancelled.
+     * Call it after the application is saved (filed or changed) or marked
+     * cancelled or disapproved; for a change, pass the breakdown it had
+     * before, so only the difference is posted.
      *
+     * @param  array<string, array{without_pay: string}>  $before
      * @return int the number of rows inserted
      */
-    public function correctCredits(LeaveApplication $application): int
+    public function correctCredits(LeaveApplication $application, array $before = []): int
     {
         $employee = $application->employee;
-        $cancelled = $application->status === LeaveApplicationStatus::Cancelled;
+        $givenBack = ! $application->status->stands();
         $changes = [];
 
         foreach ($application->breakdown as $date => $day) {
             if (bccomp($day['without_pay'], '0', 3) > 0) {
                 $period = substr($date, 0, 7);
-                $changes[$period] = bcadd($changes[$period] ?? '0', $cancelled ? bcsub('0', $day['without_pay'], 3) : $day['without_pay'], 3);
+                $changes[$period] = bcadd($changes[$period] ?? '0', $givenBack ? bcsub('0', $day['without_pay'], 3) : $day['without_pay'], 3);
+            }
+        }
+
+        foreach ($before as $date => $day) {
+            if (bccomp($day['without_pay'], '0', 3) > 0) {
+                $period = substr($date, 0, 7);
+                $changes[$period] = bcsub($changes[$period] ?? '0', $day['without_pay'], 3);
             }
         }
 

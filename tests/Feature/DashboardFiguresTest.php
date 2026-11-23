@@ -121,6 +121,7 @@ class DashboardFiguresTest extends TestCase
         LeaveApplication::factory()->for($ana)->create(['date_from' => '2026-11-02', 'date_to' => '2026-11-04', 'status' => LeaveApplicationStatus::Approved]);
         LeaveApplication::factory()->for($ben)->create(['leave_type' => LeaveType::Sick]);
         LeaveApplication::factory()->for($carl)->create(['status' => LeaveApplicationStatus::Cancelled]);
+        LeaveApplication::factory()->for($carl)->create(['status' => LeaveApplicationStatus::Disapproved]);
         DayException::factory()->for($dina)->create(['date_from' => '2026-11-03', 'date_to' => '2026-11-03']);
         LeaveApplication::factory()->for($ed)->create(['date_from' => '2026-11-04', 'date_to' => '2026-11-04']);
 
@@ -141,6 +142,7 @@ class DashboardFiguresTest extends TestCase
         }
 
         LeaveApplication::factory()->for($ana)->create(['days' => '4.000', 'status' => LeaveApplicationStatus::Cancelled]);
+        LeaveApplication::factory()->for($ana)->create(['days' => '6.000', 'status' => LeaveApplicationStatus::Disapproved]);
         LeaveApplication::factory()->for($ana)->create(['days' => '5.000', 'date_from' => '2025-12-01', 'date_to' => '2025-12-05']);
 
         // Forced leave is vacation leave; Solo Parent goes with the rarer types.

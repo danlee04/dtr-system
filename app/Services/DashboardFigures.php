@@ -111,7 +111,7 @@ final class DashboardFigures
 
         return LeaveApplication::query()
             ->tap($covering)
-            ->where('status', '!=', LeaveApplicationStatus::Cancelled)
+            ->whereIn('status', LeaveApplicationStatus::standing())
             ->with('employee')
             ->get()
             ->map(fn (LeaveApplication $leave): array => ['employee' => $leave->employee, 'reason' => $leave->leave_type->getLabel()])
@@ -135,7 +135,7 @@ final class DashboardFigures
     public function leaveByType(int $year): array
     {
         $byType = LeaveApplication::query()
-            ->where('status', '!=', LeaveApplicationStatus::Cancelled)
+            ->whereIn('status', LeaveApplicationStatus::standing())
             ->whereYear('date_from', $year)
             ->toBase()
             ->selectRaw('leave_type, sum(days) as total')

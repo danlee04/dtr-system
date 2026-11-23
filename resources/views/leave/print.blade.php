@@ -4,6 +4,7 @@
     $detail = $application->detail?->value;
     $certification = $application->certification();
     $filedOn = $application->created_at->format('F j, Y');
+    $disapproved = $application->status === \App\Enums\LeaveApplicationStatus::Disapproved;
 
     // The thirteen types on CS Form No. 6, Revised 2020, in the form's order.
     $types = [
@@ -528,16 +529,17 @@
                 </section>
                 <section class="split">
                     <div>
+                        {{-- A disapproved application leaves 7.C blank and gives its reason in 7.D (HR, 2026-11-23). --}}
                         <h3>7.C APPROVED FOR:</h3>
-                        <p class="indent"><span class="short">{{ $application->days_with_pay }}</span> days with pay
+                        <p class="indent"><span class="short">{{ $disapproved ? '' : $application->days_with_pay }}</span> days with pay
                         </p>
-                        <p class="indent"><span class="short">{{ $application->days_without_pay }}</span> days without
+                        <p class="indent"><span class="short">{{ $disapproved ? '' : $application->days_without_pay }}</span> days without
                             pay</p>
                         <p class="indent"><span class="short"></span> others (Specify)</p>
                     </div>
                     <div>
                         <h3>7.D DISAPPROVED DUE TO:</h3>
-                        <p class="line indent"></p>
+                        <p class="line indent">{{ $disapproved ? $application->disapproval_reason : '' }}</p>
                         <p class="line indent"></p>
                         <p class="line indent"></p>
                     </div>

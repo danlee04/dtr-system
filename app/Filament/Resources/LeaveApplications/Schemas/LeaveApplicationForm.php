@@ -7,6 +7,7 @@ use App\Enums\LeaveCoverage;
 use App\Enums\LeaveDetail;
 use App\Enums\LeaveType;
 use App\Models\Employee;
+use App\Models\LeaveApplication;
 use App\Services\Leave\LeaveApplications;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -48,13 +49,15 @@ class LeaveApplicationForm
     }
 
     /**
-     * Everything but the employee, so an employee's own form can use the same
-     * fields with the employee fixed.
+     * Everything but the employee, so an employee's own form, and the form
+     * that changes a pending application, can use the same fields with the
+     * employee fixed. $changing is that application: what it draws counts as
+     * on hand in the preview.
      *
      * @param  Closure(Get): ?Employee  $employee
      * @return array<int, Component>
      */
-    public static function fields(Closure $employee): array
+    public static function fields(Closure $employee, ?LeaveApplication $changing = null): array
     {
         return [
             Select::make('leave_type')
@@ -82,7 +85,7 @@ class LeaveApplicationForm
                 ->selectablePlaceholder(false)
                 ->visible(fn (Get $get): bool => self::oneDate($get))
                 ->live(),
-            Text::make(fn (Get $get): string => self::preview($get, $employee($get)))
+            Text::make(fn (Get $get): string => self::preview($get, $employee($get), $changing))
                 ->columnSpanFull(),
             Select::make('detail')
                 ->label('Details')
@@ -124,7 +127,7 @@ class LeaveApplicationForm
             ->all();
     }
 
-    private static function preview(Get $get, ?Employee $employee): string
+    private static function preview(Get $get, ?Employee $employee, ?LeaveApplication $changing = null): string
     {
         $type = self::type($get);
 
@@ -140,7 +143,7 @@ class LeaveApplicationForm
 
         try {
             return app(LeaveApplications::class)->preview(
-                $employee, $type, CarbonImmutable::parse($get('date_from')), CarbonImmutable::parse($get('date_to')), $coverage,
+                $employee, $type, CarbonImmutable::parse($get('date_from')), CarbonImmutable::parse($get('date_to')), $coverage, $changing,
             )->describe();
         } catch (ValidationException $exception) {
             return collect($exception->errors())->flatten()->first();

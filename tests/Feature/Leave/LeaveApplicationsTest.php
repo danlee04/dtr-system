@@ -5,6 +5,7 @@ namespace Tests\Feature\Leave;
 use App\Enums\EmploymentStatus;
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\LeaveDetail;
+use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
@@ -177,6 +178,74 @@ class LeaveApplicationsTest extends TestCase
 
         $this->assertSame(0, $application->ledgerEntries()->where('kind', LedgerKind::Cancellation)->count());
         $this->assertSame('3.000', $this->balances()['SPL']);   // 2027's grant only
+    }
+
+    public function test_a_pending_application_is_changed_in_place_without_extra_ledger_rows(): void
+    {
+        $application = $this->fileLeave();
+
+        $this->travelTo('2026-11-03 09:00');
+        app(LeaveApplications::class)->update($application, ['leave_type' => 'SL', 'date_from' => '2026-11-05', 'date_to' => '2026-11-05', 'coverage' => 'whole_day', 'division_head' => 'Dr. Reyes']);
+
+        $application->refresh();
+        $this->assertSame([LeaveType::Sick, '2026-11-05', '1.000', 'Dr. Reyes'], [$application->leave_type, $application->date_from->toDateString(), $application->days, $application->division_head]);
+        // What it draws now, still dated the day it was filed (HR, 2026-11-23).
+        $row = $application->ledgerEntries()->sole();
+        $this->assertSame(['SL', '-1.000', '2026-11-02', LedgerKind::Application], [$row->leave_type->value, $row->days, $row->posted_on->toDateString(), $row->kind]);
+        $this->assertSame(['VL' => '5.000', 'SL' => '1.000', 'SPL' => '0.000', 'WL' => '0.000'], $this->balances());
+        $this->assertSame(['VL' => '5.000', 'SL' => '2.000'], $application->credits_at_filing);
+    }
+
+    public function test_only_a_pending_application_can_be_changed(): void
+    {
+        $approved = $this->fileLeave();
+        app(LeaveApplications::class)->approve($approved);
+        $cancelled = $this->fileLeave(['date_from' => '2026-11-05', 'date_to' => '2026-11-05']);
+        app(LeaveApplications::class)->cancel($cancelled, 'Withdrawn');
+
+        foreach ([$approved, $cancelled] as $application) {
+            $this->assertRefused(fn () => app(LeaveApplications::class)->update($application->fresh(), ['leave_type' => 'VL', 'date_from' => '2026-11-06', 'date_to' => '2026-11-06']), 'status');
+        }
+    }
+
+    public function test_a_change_keeps_its_own_dates_but_may_not_overlap_another(): void
+    {
+        $application = $this->fileLeave();
+        $this->fileLeave(['date_from' => '2026-11-05', 'date_to' => '2026-11-05']);
+
+        app(LeaveApplications::class)->update($application, ['leave_type' => 'SL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-04']);
+
+        $this->assertRefused(fn () => app(LeaveApplications::class)->update($application->fresh(), ['leave_type' => 'VL', 'date_from' => '2026-11-04', 'date_to' => '2026-11-05']), 'date_from');
+        $this->assertSame(LeaveType::Sick, $application->fresh()->leave_type);
+    }
+
+    public function test_disapproving_gives_the_days_back_with_the_reason(): void
+    {
+        $application = $this->fileLeave(['leave_type' => 'SL', 'date_to' => '2026-11-13']);
+
+        app(LeaveApplications::class)->disapprove($application, ' Short of staff that week ');
+
+        $application->refresh();
+        $this->assertSame([LeaveApplicationStatus::Disapproved, 'Short of staff that week', auth()->id()], [$application->status, $application->disapproval_reason, $application->disapproved_by_user_id]);
+        $this->assertNotNull($application->disapproved_at);
+        $this->assertSame(['VL' => '5.000', 'SL' => '2.000', 'SPL' => '0.000', 'WL' => '0.000'], $this->balances());
+        $this->assertSame("#{$application->id} disapproved: Short of staff that week", $application->ledgerEntries()->where('kind', LedgerKind::Cancellation)->first()->remarks);
+
+        // Closed like a cancelled one, and its dates are free again.
+        $this->assertRefused(fn () => app(LeaveApplications::class)->disapprove($application->fresh(), 'Again'), 'status');
+        $this->assertRefused(fn () => app(LeaveApplications::class)->cancel($application->fresh(), 'Withdrawn'), 'status');
+        $this->assertRefused(fn () => app(LeaveApplications::class)->approve($application->fresh()), 'status');
+        $this->fileLeave();
+    }
+
+    public function test_only_a_pending_application_with_a_reason_is_disapproved(): void
+    {
+        $application = $this->fileLeave();
+        $this->assertRefused(fn () => app(LeaveApplications::class)->disapprove($application, ' '), 'disapproval_reason');
+
+        app(LeaveApplications::class)->approve($application);
+        $this->assertRefused(fn () => app(LeaveApplications::class)->disapprove($application->fresh(), 'Too late'), 'status');
+        $this->assertSame('3.000', $this->balances()['VL']);
     }
 
     /** @param  array<string, mixed>  $overrides */

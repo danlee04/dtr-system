@@ -63,6 +63,27 @@ class LeaveWithoutPayCreditsTest extends TestCase
         $this->assertSame(['monthly_credit 1.250', 'credit_correction -0.156', 'credit_correction 0.156'], $this->creditRows('2026-11'));
     }
 
+    public function test_changing_without_pay_posts_only_the_difference(): void
+    {
+        $this->travelTo('2026-12-02 08:00');
+        $application = $this->fileLeave(['leave_type' => 'VL', 'date_from' => '2026-11-23', 'date_to' => '2026-11-27']);
+
+        // One day now, which the VL on hand covers: no day without pay, so the correction is undone.
+        app(LeaveApplications::class)->update($application, ['leave_type' => 'VL', 'date_from' => '2026-11-23', 'date_to' => '2026-11-23']);
+
+        $this->assertSame(['monthly_credit 1.250', 'credit_correction -0.156', 'credit_correction 0.156'], $this->creditRows('2026-11'));
+    }
+
+    public function test_disapproving_without_pay_reverses_the_correction(): void
+    {
+        $this->travelTo('2026-12-02 08:00');
+        $application = $this->fileLeave(['leave_type' => 'VL', 'date_from' => '2026-11-23', 'date_to' => '2026-11-27']);
+
+        app(LeaveApplications::class)->disapprove($application, 'Not recommended');
+
+        $this->assertSame(['monthly_credit 1.250', 'credit_correction -0.156', 'credit_correction 0.156'], $this->creditRows('2026-11'));
+    }
+
     public function test_a_correction_carries_only_the_leave_without_pay(): void
     {
         $this->travelTo('2026-12-02 08:00');

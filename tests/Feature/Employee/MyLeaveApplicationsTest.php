@@ -102,7 +102,7 @@ class MyLeaveApplicationsTest extends TestCase
 
         try {
             Livewire::test(ListMyLeaveApplications::class)
-                ->callAction(TestAction::make('cancel')->table($theirs), ['cancel_reason' => 'Not mine']);
+                ->callAction([TestAction::make('view')->table($theirs), TestAction::make('cancelLeave')], ['cancel_reason' => 'Not mine']);
         } catch (\Throwable) {
             // Refused outright is as good as ignored; only the outcome matters.
         }
@@ -115,7 +115,7 @@ class MyLeaveApplicationsTest extends TestCase
         $application = app(LeaveApplications::class)->file($this->employee, ['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-03', 'coverage' => 'whole_day']);
 
         Livewire::test(ListMyLeaveApplications::class)
-            ->callAction(TestAction::make('cancel')->table($application), ['cancel_reason' => 'Plans changed'])
+            ->callAction([TestAction::make('view')->table($application), TestAction::make('cancelLeave')], ['cancel_reason' => 'Plans changed'])
             ->assertHasNoFormErrors();
 
         $this->assertSame(LeaveApplicationStatus::Cancelled, $application->fresh()->status);
@@ -126,7 +126,35 @@ class MyLeaveApplicationsTest extends TestCase
         $application = LeaveApplication::factory()->for($this->employee)->create(['status' => LeaveApplicationStatus::Approved]);
 
         Livewire::test(ListMyLeaveApplications::class)
-            ->assertActionHidden(TestAction::make('cancel')->table($application))
-            ->assertActionDoesNotExist(TestAction::make('approve')->table($application));
+            ->assertActionHidden([TestAction::make('view')->table($application), TestAction::make('cancelLeave')])
+            ->assertActionHidden(TestAction::make('edit')->table($application))
+            ->assertActionDoesNotExist(TestAction::make('approve')->table($application))
+            ->assertActionDoesNotExist(TestAction::make('disapprove')->table($application));
+    }
+
+    public function test_an_employee_changes_their_pending_leave(): void
+    {
+        $application = app(LeaveApplications::class)->file($this->employee, ['leave_type' => 'VL', 'date_from' => '2026-11-03', 'date_to' => '2026-11-03', 'coverage' => 'whole_day']);
+
+        Livewire::test(ListMyLeaveApplications::class)
+            ->callAction(TestAction::make('edit')->table($application), ['date_to' => '2026-11-04'])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Leave changed');
+
+        $this->assertSame('2.000', $application->fresh()->days);
+    }
+
+    public function test_an_employee_cannot_change_someone_elses_leave_through_livewire(): void
+    {
+        $theirs = LeaveApplication::factory()->create(['date_from' => '2026-11-03', 'date_to' => '2026-11-03']);
+
+        try {
+            Livewire::test(ListMyLeaveApplications::class)
+                ->callAction(TestAction::make('edit')->table($theirs), ['date_to' => '2026-11-06']);
+        } catch (\Throwable) {
+            // Refused outright is as good as ignored; only the outcome matters.
+        }
+
+        $this->assertSame('2026-11-03', $theirs->fresh()->date_to->toDateString());
     }
 }

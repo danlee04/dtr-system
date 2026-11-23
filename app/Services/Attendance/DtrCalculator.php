@@ -77,7 +77,7 @@ final class DtrCalculator
         // Leave, OBs and travel orders, each with what it makes of the days it covers.
         $covers = LeaveApplication::query()
             ->whereBelongsTo($employee)
-            ->where('status', '!=', LeaveApplicationStatus::Cancelled)
+            ->whereIn('status', LeaveApplicationStatus::standing())
             ->whereDate('date_from', '<=', $to)
             ->whereDate('date_to', '>=', $from)
             ->get()

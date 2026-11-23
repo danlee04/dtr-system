@@ -17,9 +17,10 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 /**
- * One leave filed on CS Form No. 6. It is never edited: a wrong one is
- * cancelled, which gives its days back, and filed again. Its ledger rows are
- * what it drew; its breakdown is how each date was counted at filing.
+ * One leave filed on CS Form No. 6. While pending it may be changed, which
+ * charges it again in place (HR, 2026-11-23); once approved, a wrong one is
+ * cancelled, which gives its days back. Its ledger rows are what it draws;
+ * its breakdown is how each date was counted.
  */
 #[Fillable([
     'employee_id',
@@ -43,6 +44,9 @@ use Spatie\Activitylog\Support\LogOptions;
     'cancelled_at',
     'cancelled_by_user_id',
     'cancel_reason',
+    'disapproved_at',
+    'disapproved_by_user_id',
+    'disapproval_reason',
 ])]
 class LeaveApplication extends Model
 {
@@ -83,6 +87,12 @@ class LeaveApplication extends Model
     public function cancelledBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by_user_id');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function disapprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'disapproved_by_user_id');
     }
 
     /** @return HasMany<LeaveLedgerEntry, $this> */
@@ -166,6 +176,7 @@ class LeaveApplication extends Model
             'status' => LeaveApplicationStatus::class,
             'approved_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'disapproved_at' => 'datetime',
         ];
     }
 }
