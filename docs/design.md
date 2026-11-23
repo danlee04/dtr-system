@@ -301,7 +301,8 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   under it: "Changed since Final: deducted 0.100, now 0.752. Reopen and mark it
   final again." The modal footer holds **Mark final** (a confirmation saying
   what it deducts, or why nothing, and how many blanks are still empty) or
-  **Reopen** (asks for the reason). While final, + Add, the printed-time links,
+  **Reopen** (one click, no reason and no confirmation, HR 2026-11-20; it can
+  be marked final again). While final, + Add, the printed-time links,
   + OB/Leave and Delete are gone.
 - **Days:** a grid with A.M. and P.M. as group headings over Arrival and
   Departure, as on the paper form. Grey rows are not work dates, red-tinted rows

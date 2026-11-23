@@ -101,24 +101,19 @@ final class DtrDeduction
         $upload->refresh();
     }
 
-    public function reopen(DtrUpload $upload, User $by, ?string $reason): void
+    /** No reason is asked: HR reopens in one click (HR, 2026-11-20). */
+    public function reopen(DtrUpload $upload, User $by): void
     {
-        $reason = trim((string) $reason);
-
-        DB::transaction(function () use ($upload, $by, $reason): void {
+        DB::transaction(function () use ($upload, $by): void {
             $locked = DtrUpload::query()->whereKey($upload->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $locked->isFinal()) {
                 throw ValidationException::withMessages(['dtr' => 'This DTR is not final.']);
             }
 
-            if ($reason === '') {
-                throw ValidationException::withMessages(['reopen_reason' => 'Give the reason for reopening.']);
-            }
-
             foreach ($this->netByType($locked) as $type => $net) {
                 if (bccomp($net, '0', 3) !== 0) {
-                    $this->row($locked, LeaveType::from($type), bcsub('0', $net, 3), LedgerKind::DtrReopened, DtrUploadInfolist::month($locked)." DTR reopened: {$reason}", $by);
+                    $this->row($locked, LeaveType::from($type), bcsub('0', $net, 3), LedgerKind::DtrReopened, DtrUploadInfolist::month($locked).' DTR reopened', $by);
                 }
             }
 

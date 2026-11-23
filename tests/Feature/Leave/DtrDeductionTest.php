@@ -162,7 +162,7 @@ class DtrDeductionTest extends TestCase
         $upload = $this->upload();
         $this->deduction()->finalize($upload, $this->hr);
 
-        $this->deduction()->reopen($upload, $this->hr, '  Leave filed late ');
+        $this->deduction()->reopen($upload, $this->hr);
         $this->assertSame([null, null], [$upload->refresh()->finalized_at, $upload->finalized_by_user_id]);
 
         $this->deduction()->finalize($upload, $this->hr);
@@ -170,7 +170,7 @@ class DtrDeductionTest extends TestCase
         $rows = LeaveLedgerEntry::query()->orderBy('id')->get();
         $this->assertSame(['-0.100', '0.100', '-0.100'], $rows->pluck('days')->all());
         $this->assertSame([LedgerKind::DtrDeduction, LedgerKind::DtrReopened, LedgerKind::DtrDeduction], $rows->pluck('kind')->all());
-        $this->assertSame('October 2026 DTR reopened: Leave filed late', $rows[1]->remarks);
+        $this->assertSame('October 2026 DTR reopened', $rows[1]->remarks);
         $this->assertSame('0.100', $this->deduction()->deducted($upload));
     }
 
@@ -216,7 +216,7 @@ class DtrDeductionTest extends TestCase
         $this->deduction()->finalize($upload, $this->hr);
 
         $this->assertSame(['SL' => '1.250', 'VL' => '0.850'], $this->deduction()->deductedByType($upload));
-        $this->deduction()->reopen($upload, $this->hr, 'Sick leave filed late');
+        $this->deduction()->reopen($upload, $this->hr);
 
         $this->assertSame([
             ['VL', '-0.100', LedgerKind::DtrDeduction],
@@ -228,34 +228,23 @@ class DtrDeductionTest extends TestCase
         $this->assertSame([[], '0.000'], [$this->deduction()->deductedByType($upload), $this->deduction()->deducted($upload)]);
     }
 
-    public function test_reopen_needs_a_reason_and_a_final_dtr(): void
+    public function test_reopen_needs_a_final_dtr(): void
     {
         $upload = $this->upload();
 
         try {
-            $this->deduction()->reopen($upload, $this->hr, 'Leave filed late');
+            $this->deduction()->reopen($upload, $this->hr);
             $this->fail('An open DTR was reopened.');
         } catch (ValidationException $exception) {
             $this->assertSame(['dtr' => ['This DTR is not final.']], $exception->errors());
         }
-
-        $this->deduction()->finalize($upload, $this->hr);
-
-        try {
-            $this->deduction()->reopen($upload, $this->hr, '  ');
-            $this->fail('A DTR was reopened without a reason.');
-        } catch (ValidationException $exception) {
-            $this->assertSame(['reopen_reason' => ['Give the reason for reopening.']], $exception->errors());
-        }
-
-        $this->assertTrue($upload->refresh()->isFinal());
     }
 
     public function test_deleting_a_reopened_dtr_keeps_its_ledger_rows(): void
     {
         $upload = $this->upload();
         $this->deduction()->finalize($upload, $this->hr);
-        $this->deduction()->reopen($upload, $this->hr, 'Wrong employee');
+        $this->deduction()->reopen($upload, $this->hr);
 
         $upload->delete();
 
@@ -285,7 +274,7 @@ class DtrDeductionTest extends TestCase
         $this->assertSame('0.050', $this->deduction()->withoutPay($upload));
 
         // Reopened, VL topped up, then final again: judged on the VL of that moment.
-        $this->deduction()->reopen($upload, $this->hr, 'Leave filed late');
+        $this->deduction()->reopen($upload, $this->hr);
         LeaveLedgerEntry::factory()->for($upload->employee)->create(['leave_type' => LeaveType::Vacation, 'days' => '1.000', 'kind' => LedgerKind::Adjustment, 'posted_on' => '2026-11-03']);
         $this->deduction()->finalize($upload, $this->hr);
 
@@ -302,7 +291,7 @@ class DtrDeductionTest extends TestCase
 
         $this->deduction()->finalize($october, $this->hr);
         $this->deduction()->finalize($november, $this->hr);
-        $this->deduction()->reopen($october, $this->hr, 'Leave filed late');
+        $this->deduction()->reopen($october, $this->hr);
         $this->deduction()->finalize($october, $this->hr);
 
         // VL 0.050 against 0.100 and 0.042: 0.092 short in all. October's share stays 0.050; November's 0.042 is not counted again in it.

@@ -762,19 +762,15 @@ class DtrUploadResourceTest extends TestCase
         }
     }
 
-    public function test_hr_reopens_a_final_dtr_with_a_reason(): void
+    public function test_hr_reopens_a_final_dtr_in_one_click(): void
     {
         config(['leave.start_date' => '2026-10-01']);
         $this->actingAs(User::factory()->create());
         $upload = $this->final($this->checkedUpload());
 
+        // No reason asked: Reopen goes straight through (HR, 2026-11-20).
         Livewire::test(ListDtrUploads::class)
-            ->callAction($this->footer($upload, 'reopen'), data: ['reopen_reason' => ''])
-            ->assertHasActionErrors(['reopen_reason' => 'required']);
-        $this->assertTrue($upload->refresh()->isFinal());
-
-        Livewire::test(ListDtrUploads::class)
-            ->callAction($this->footer($upload, 'reopen'), data: ['reopen_reason' => 'Leave filed late'])
+            ->callAction($this->footer($upload, 'reopen'))
             ->assertHasNoActionErrors()
             ->assertNotified('DTR reopened');
 
