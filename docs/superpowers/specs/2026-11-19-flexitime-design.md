@@ -37,6 +37,8 @@ which HR does not count.
 - **A morning-only day** (the afternoon on leave, an OB, a TO or a gate
   pass): late after 8:00, as on 8–5; in at 9:00 and out at 12:00 is 60
   minutes late (HR, 2026-11-23).
+- **Never on a Monday** (the office's policy): a Monday is 8–5, so in at
+  8:20 is 20 minutes late and 5:00 is due (2026-11-23).
 - **A half with no tap** is still 4 hours undertime, and **an absent day**
   still 8 hours, as on 8–5.
 - The DTR's schedule line says "Flexi", so HR sees why the figures differ.

@@ -40,7 +40,8 @@ use Illuminate\Support\Collection as SupportCollection;
  * 9:00 (8:00 when there is none), so 4:00 to 6:00. The break stays 12–1, and
  * an untapped half or an absent day keeps its 8–5 hours (HR, 2026-11-19). A
  * morning-only day, the afternoon on leave or an OB, is late after 8:00 as on
- * 8–5 (HR, 2026-11-23).
+ * 8–5 (HR, 2026-11-23). A Monday is always 8–5, flexitime or not (the office's
+ * policy, 2026-11-23).
  *
  * The DTR's columns are the slots: A.M. Arrival and Departure for the first
  * half of the day, P.M. for the second. O.T. is not read. A time HR copied
@@ -175,8 +176,8 @@ final class DtrCalculator
         }
 
         // Flexitime: late only after 9:00, and out 9 hours after a time in counted from 7:00 to 9:00;
-        // 8:00 when there is none, or the morning is on an OB or leave (HR, 2026-11-19).
-        if (self::isFlexiDay($employee, $resolved->schedule)) {
+        // 8:00 when there is none, or the morning is on an OB or leave (HR, 2026-11-19). Never on a Monday (the office's policy, 2026-11-23).
+        if (self::isFlexiDay($employee, $resolved->schedule) && ! $date->isMonday()) {
             $arrived = isset($covered[0]) || $taps[0][0] === null ? 480 : self::minute($taps[0][0]);
 
             // A morning-only day, the afternoon on leave, an OB, a TO or a gate pass: late after 8:00, as on 8–5 (HR, 2026-11-23).

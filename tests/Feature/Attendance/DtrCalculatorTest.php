@@ -473,17 +473,29 @@ class DtrCalculatorTest extends TestCase
     public function test_flexi_counts_eight_hours_from_a_time_in_between_seven_and_nine(): void
     {
         $days = $this->compute($this->regular(['flexitime' => true]), [
-            '2026-10-05' => self::taps('06:30', '15:30'),
+            '2026-10-09' => self::taps('06:30', '15:30'),
             '2026-10-06' => self::taps('07:15', '16:15'),
             '2026-10-07' => self::taps('08:30', '17:30'),
             '2026-10-08' => self::taps('09:10', '18:10'),
         ])->days;
 
         // In before 7:00 counts as 7:00, so 4:00 is due; after 9:00 is late, and 6:00 is the latest due.
-        $this->assertSame([AttendanceStatus::Present, 0, 0, 30, 1], $this->figures($days['2026-10-05']));
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 30, 1], $this->figures($days['2026-10-09']));
         $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-06']));
         $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-07']));
         $this->assertSame([AttendanceStatus::Present, 10, 1, 0, 0], $this->figures($days['2026-10-08']));
+    }
+
+    public function test_flexi_does_not_apply_on_a_monday(): void
+    {
+        // Not granted on Mondays (the office's policy, 2026-11-23): in at 8:20 is 20 minutes late, and 5:00 is due.
+        $days = $this->compute($this->regular(['flexitime' => true]), [
+            '2026-10-19' => self::taps('08:20', '17:20'),
+            '2026-10-26' => self::taps('07:30', '16:30'),
+        ])->days;
+
+        $this->assertSame([20, 0], [$days['2026-10-19']->late, $days['2026-10-19']->undertime]);
+        $this->assertSame([0, 30], [$days['2026-10-26']->late, $days['2026-10-26']->undertime]);
     }
 
     public function test_flexi_keeps_the_break_at_twelve_to_one(): void
