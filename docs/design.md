@@ -461,8 +461,10 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   something comes back here with its notice): the entry grid with Office and Month
   selects (the leave start to this month, last month by default), a row per
   employee, a column per balance (VL, SL, SPL, Wellness): the balance at the
-  month's end, and under it in red (`.dtr-grid-taken`) what the month took from
-  that balance. A row counts in the month it is for: a leave in the month of its
+  month's end. Where the month took from it, the cell is a sum (`.dtr-grid-sum`):
+  the balance before in small grey (`.dtr-grid-before`), what the month took in
+  red (`.dtr-grid-taken`), then the month's end under a rule (`.dtr-grid-total`).
+  A row counts in the month it is for: a leave in the month of its
   first date, a credit or a DTR in its period, anything else when posted.
 - **Monthly Summary, Without pay:** one column, the total with "DTR x · leave y"
   under it when there is any; the Excel has the three as columns. "Without pay

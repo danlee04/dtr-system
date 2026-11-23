@@ -3,7 +3,7 @@
     @include('filament.entry-grid')
 
     <x-filament::section class="dtr-grid" :heading="$monthName"
-        description="Each balance at the end of the month; in red, what the month took from it: DTR deductions, leave, forced leave, lapse and adjustments.">
+        description="Each balance at the end of the month. Where the month took from it: in grey the balance before, in red what it took (DTR deductions, leave, forced leave, lapse and adjustments).">
         <x-slot name="afterHeader">
             <div class="dtr-grid-pickers">
                 <label class="dtr-grid-picker">
@@ -54,10 +54,15 @@
                                 @foreach (LeaveType::tracked() as $type)
                                     @php($cell = $figures[$employee->id][$type->value])
                                     <td class="dtr-grid-value dtr-grid-divider">
-                                        {{ $cell['balance'] }}
-                                        {{-- What the month took, under the balance it came off (HR, 2026-11-20). --}}
+                                        {{-- Where the month took something, a sum: the balance before it, what it took (HR, 2026-11-20), then the month's end (HR, 2026-11-23). --}}
                                         @if (bccomp($cell['taken'], '0', 3) > 0)
-                                            <span class="dtr-grid-taken">&minus;{{ $cell['taken'] }}</span>
+                                            <span class="dtr-grid-sum">
+                                                <span class="dtr-grid-before"><span class="fi-sr-only">Before: </span>{{ bcadd($cell['balance'], $cell['taken'], 3) }}</span>
+                                                <span class="dtr-grid-taken">&minus;{{ $cell['taken'] }}</span>
+                                                <span class="dtr-grid-total"><span class="fi-sr-only">End of month: </span>{{ $cell['balance'] }}</span>
+                                            </span>
+                                        @else
+                                            {{ $cell['balance'] }}
                                         @endif
                                     </td>
                                 @endforeach

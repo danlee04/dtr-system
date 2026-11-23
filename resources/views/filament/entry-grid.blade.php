@@ -220,6 +220,26 @@
         color: var(--danger-400);
     }
 
+    /* On Balances, a sum where the month took something: the balance before it, small and grey; the red; then the month's end under a rule. */
+    .dtr-grid-sum {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .dtr-grid-before {
+        font-size: 0.75rem;
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-total {
+        align-self: stretch;
+        margin-top: 0.125rem;
+        padding-top: 0.125rem;
+        border-top: 1px solid var(--grid-line);
+        text-align: end;
+    }
+
     .dtr-grid-lock {
         display: flex;
         align-items: flex-start;

@@ -48,9 +48,10 @@ class LeaveBalancesPageTest extends TestCase
         $spl = LeaveApplication::factory()->for($ana)->create(['leave_type' => LeaveType::SpecialPrivilege, 'date_from' => '2026-10-15', 'date_to' => '2026-10-15']);
         $this->row($ana, LeaveType::SpecialPrivilege, '-1.000', LedgerKind::Application, '2026-11-02', application: $spl);
 
+        // Where the month took something: the balance before it, what it took, then the month's end (HR, 2026-11-23).
         Livewire::test(LeaveBalances::class)
             ->assertSet('month', '2026-10')
-            ->assertSeeInOrder(['Abad', '6.150', "\u{2212}0.100", '4.250', '2.000', "\u{2212}1.000", '0.000'])
+            ->assertSeeInOrder(['Abad', '6.250', "\u{2212}0.100", '6.150', '4.250', '3.000', "\u{2212}1.000", '2.000', '0.000'])
             // November took nothing yet: the same balances, no red.
             ->set('month', '2026-11')
             ->assertSeeInOrder(['Abad', '6.150', '4.250', '2.000'])
