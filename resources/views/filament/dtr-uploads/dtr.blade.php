@@ -124,7 +124,8 @@
                                 @endforeach
                             </span>
                         </td>
-                        <td class="dtr-record-notes">
+                        {{-- The whole note on hover: on a laptop a long one ends in "…". --}}
+                        <td class="dtr-record-notes" @if ($row['notes'] !== []) title="{{ collect($row['notes'])->pluck(0)->implode(' · ') }}" @endif>
                             @foreach ($row['notes'] as [$note, $needsALook])
                                 <span @class(['is-warning' => $needsALook])>{{ $note }}</span>@unless ($loop->last) · @endunless
                             @endforeach

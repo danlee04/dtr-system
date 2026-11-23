@@ -444,19 +444,9 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /*
-     * Room between a day's status badge and its "+ OB/Leave" or "Edit" button, on one line
-     * from a laptop's width (HR, 2026-11-23). On a portrait tablet they may wrap: one line
-     * there scrolls the grid sideways, and an OB row is two lines tall there anyway.
-     */
+    /* Room between a day's status badge and its "+ OB/Leave" or "Edit" button; on a portrait tablet they may wrap. */
     .dtr-record-days .dtr-grid-badges {
         gap: calc(var(--spacing) * 2);
-    }
-
-    @media (min-width: 64rem) {
-        .dtr-record-days .dtr-grid-badges {
-            flex-wrap: nowrap;
-        }
     }
 
     /* A time HR may click reads at the grid's size, not the link's own, so its column is no wider than a printed one. */
@@ -550,6 +540,48 @@
     .dtr-record-days td.dtr-record-notes {
         min-width: 5rem;
         white-space: normal;
+    }
+
+    /*
+     * One line a day from a laptop's width (HR, 2026-11-23): a time keeps its OB, TO or HR tag
+     * beside it, a date and the hours do not break, and a long note ends in "…", its whole
+     * text in the cell's title.
+     */
+    @media (min-width: 64rem) {
+        .dtr-record-days .dtr-grid-hr,
+        .dtr-record-days td.dtr-grid-value,
+        .dtr-record-days tbody th.dtr-record-date {
+            white-space: nowrap;
+        }
+
+        /* The badge and its button as words on one line, not flex items: a squeezed flex row let "Edit" spill over the note. */
+        .dtr-record-days .dtr-grid-badges {
+            display: block;
+        }
+
+        .dtr-record-days .dtr-grid-badges > * {
+            display: inline-flex;
+            vertical-align: middle;
+        }
+
+        .dtr-record-days .dtr-grid-badges > * + * {
+            margin-inline-start: calc(var(--spacing) * 1);
+        }
+
+        /* Filament truncates a badge, so a squeezed column would cut it to "Official b…"; here it is shown whole. */
+        .dtr-record-days .fi-badge,
+        .dtr-record-days .fi-badge .fi-badge-label {
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .dtr-record-days td.dtr-record-notes {
+            width: 100%;
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
 
     @media (min-width: 80rem) {

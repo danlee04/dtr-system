@@ -155,8 +155,16 @@ decoration.
     or `'2xl'`; the search still covers a hidden column.
   - Our grids are tighter below 1280px (smaller padding, inputs and type; a long
     name may take two lines) and roomier from 1280px up (`min-width: 80rem`).
-  - A DTR's day grid shows O.T. only when the month has some, lets a date break
-    after its weekday ("Thu," over "Oct 1"), and keeps its Day column fixed.
+  - A DTR's day grid shows O.T. only when the month has some and keeps its Day
+    column fixed. From 1024px every day is one line (HR, 2026-11-23): a time
+    keeps its OB, TO or HR tag beside it, dates and hours do not break, the
+    status badge and its button sit on one line (as inline boxes, and the badge
+    is not truncated, so the column is never squeezed under them), and the
+    Notes column takes what is left, a long note ending in "…" with its whole
+    text in the cell's `title`. At 1024px that leaves Notes about 90px, so most
+    warnings are cut there. On a portrait tablet (768px) a date may break after
+    its weekday, a tag may drop under its time and a button under its badge:
+    one line there would scroll the grid sideways.
 - **Wide tables** that still cannot fit, Duty Roster's 31 days, scroll sideways
   inside their frame, with the name column fixed.
 - **Long lists** come a page at a time: 25 rows by default (10, 25, 50, 100) on
