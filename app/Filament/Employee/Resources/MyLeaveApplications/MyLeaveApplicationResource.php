@@ -27,7 +27,7 @@ class MyLeaveApplicationResource extends Resource
 
     protected static ?string $slug = 'applications';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::MyLeave;
 

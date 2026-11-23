@@ -22,7 +22,7 @@ class LeaveApplicationResource extends Resource
 {
     protected static ?string $model = LeaveApplication::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Leave;
 

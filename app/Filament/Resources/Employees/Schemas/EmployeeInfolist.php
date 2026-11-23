@@ -30,8 +30,10 @@ class EmployeeInfolist
                 Grid::make(['default' => 1, 'lg' => 3])
                     ->columnSpanFull()
                     ->schema([
-                        Section::make('Job details')
+                        // Title case and blue icons, after HR's reference (2026-11-23).
+                        Section::make('Job Details')
                             ->icon(Heroicon::OutlinedBriefcase)
+                            ->iconColor('primary')
                             ->compact()
                             ->divided()
                             ->inlineLabel()
@@ -43,17 +45,24 @@ class EmployeeInfolist
                                     ->label('Office'),
                                 TextEntry::make('position')
                                     ->placeholder('—'),
-                                TextEntry::make('employment_status'),
+                                TextEntry::make('employment_status')
+                                    ->label('Employment Status')
+                                    ->badge()
+                                    ->color('success'),
                                 // How long they have served, to the day they left if they have.
                                 TextEntry::make('date_hired')
+                                    ->label('Date Hired')
+                                    ->icon(Heroicon::OutlinedCalendar)
                                     ->formatStateUsing(fn (CarbonInterface $state, Employee $record): string => $state->format('M j, Y').' · '.$state->longAbsoluteDiffForHumans($record->date_separated ?? today(), 2))
                                     ->placeholder('—'),
                                 TextEntry::make('date_separated')
+                                    ->label('Date Separated')
                                     ->date('M j, Y')
                                     ->placeholder('—'),
                                 // Blank means their punches cannot be matched yet, so it says so.
                                 TextEntry::make('biometric_id')
                                     ->label('Biometric ID')
+                                    ->icon(Heroicon::OutlinedFingerPrint)
                                     ->placeholder('Not set'),
                             ]),
                         Group::make([
@@ -62,8 +71,8 @@ class EmployeeInfolist
                                 ->visible(fn (ViewEmployee $livewire): bool => $livewire->overview['needsALook'] !== null),
                             // In the Name card's place (HR, 2026-11-23); the name stays in the heading and the form.
                             Section::make('Deductions')
-                                ->description(fn (ViewEmployee $livewire): string => "Taken from the leave balances in {$livewire->overview['year']}, newest first.")
-                                ->icon(Heroicon::OutlinedMinusCircle)
+                                ->icon(Heroicon::OutlinedCircleStack)
+                                ->iconColor('primary')
                                 ->compact()
                                 ->visible(fn (ViewEmployee $livewire): bool => $livewire->overview['earns'])
                                 ->schema([

@@ -36,14 +36,14 @@ class AdminPanelProvider extends PanelProvider
             ->path('')
             ->brandName('DTR System')
             ->brandLogo(fn (): View => view('filament.brand'))
-            ->brandLogoHeight('2.25rem')
+            ->brandLogoHeight('3rem')
             // Search on the topbar's left. The user sits at the sidebar's foot with
-            // no menu to open (filament.sidebar-user), and light or dark is switched
-            // beside the brand (filament.theme-toggle), as HR asked on 2026-11-10.
+            // no menu to open (filament.sidebar-user), as HR asked on 2026-11-10.
             ->globalSearchKeyBindings(['ctrl+k', 'command+k'])
             ->globalSearchFieldKeyBindingSuffix()
             ->userMenu(false)
-            ->renderHook(PanelsRenderHook::SIDEBAR_LOGO_AFTER, fn (): View => view('filament.theme-toggle'))
+            // Light only (HR, 2026-11-23).
+            ->darkMode(false)
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): View => view('filament.sidebar-user'))
             // The DTR list's Month and Needs an employee filters, in its toolbar right of the search.
             ->renderHook(TablesRenderHook::TOOLBAR_SEARCH_AFTER, fn (): View => view('filament.dtr-uploads.toolbar-filters'), scopes: ListDtrUploads::class)
@@ -61,7 +61,9 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->profile(ChangePassword::class, isSimple: false)
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
+                // The Sick card's lavender on an employee's page (HR's reference, 2026-11-23).
+                'violet' => Color::Violet,
             ])
             // One panel for everyone: HR's screens, and under Filament/Employee
             // the screens of an account linked to an employee. Each screen

@@ -82,12 +82,14 @@ class ViewEmployee extends ViewRecord
 
     protected function getHeaderActions(): array
     {
+        // Outlined, each with its icon, after HR's reference (2026-11-23).
         return [
             // The same width as New employee.
             EditAction::make()
+                ->outlined()
+                ->icon(Heroicon::Pencil)
                 ->modalWidth(Width::SixExtraLarge),
-            // Outlined, so Edit is the one that stands out.
-            DeleteAction::make()->outlined(),
+            DeleteAction::make()->outlined()->icon(Heroicon::Trash),
             RestoreAction::make()->outlined(),
         ];
     }

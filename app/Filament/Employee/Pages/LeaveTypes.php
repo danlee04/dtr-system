@@ -19,7 +19,7 @@ class LeaveTypes extends Page
 {
     protected string $view = 'filament.employee.pages.leave-types';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInformationCircle;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::InformationCircle;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::MyLeave;
 

@@ -10,10 +10,12 @@ use App\Models\LeaveApplication;
 use App\Services\DashboardFigures;
 use App\Services\Leave\LeaveLedger;
 use App\Services\Leave\LeavePosting;
+use BackedEnum;
 use Carbon\CarbonImmutable;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 /**
@@ -24,6 +26,9 @@ use UnitEnum;
 class Dashboard extends BaseDashboard
 {
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Overview;
+
+    /** Solid, as every icon in the navy sidebar (HR's reference, 2026-11-23). */
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Home;
 
     /** "Y-m", from the month picker over the staff dashboard. */
     public string $month = '';

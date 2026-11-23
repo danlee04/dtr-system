@@ -26,7 +26,7 @@ class History extends Page implements HasTable
 
     protected string $view = 'filament.employee.pages.history';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Clock;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::MyLeave;
 

@@ -7,7 +7,14 @@
         $totals[$code] = bcadd($totals[$code] ?? '0.000', $deduction['days'], 3);
     }
 @endphp
-{{-- This year's deductions, in the Name card's place (HR, 2026-11-23): one line each, the leave and days at the end in red. --}}
+{{--
+    This year's deductions, in the Name card's place (HR, 2026-11-23), after HR's reference:
+    a blue note on what the list is, a line each with the leave and days in red, then the total.
+--}}
+<p class="dtr-deductions-note">
+    <x-filament::icon :icon="\Filament\Support\Icons\Heroicon::InformationCircle" class="dtr-deductions-note-icon" />
+    Taken from the leave balances in {{ $year }}, newest first.
+</p>
 @if ($deductions === [])
     <p class="dtr-deductions-empty">No deductions in {{ $year }}.</p>
 @else
@@ -17,7 +24,7 @@
                 <span class="dtr-deduction-what">
                     <span class="dtr-deduction-title">{{ $deduction['title'] }}</span>
                     @if (filled($deduction['detail']))
-                        <span class="dtr-deduction-detail">{{ $deduction['detail'] }}</span>
+                        <span class="dtr-deduction-detail">({{ $deduction['detail'] }})</span>
                     @endif
                 </span>
                 <span class="dtr-deduction-days">{{ $deduction['leave_type']->value }} {{ $minus }}{{ ltrim($deduction['days'], '-') }}</span>

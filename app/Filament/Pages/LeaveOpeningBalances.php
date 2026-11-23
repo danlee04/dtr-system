@@ -37,7 +37,7 @@ class LeaveOpeningBalances extends Page
 
     protected string $view = 'filament.pages.leave-opening-balances';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Scale;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Leave;
 

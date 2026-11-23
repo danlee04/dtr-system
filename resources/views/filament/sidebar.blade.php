@@ -1,28 +1,32 @@
 {{--
     The panel's frame: the sidebar, the topbar and every page's heading.
-    The sidebar and topbar follow HR's references. The sidebar: on desktop a white card
-    standing a little in from the screen's edges, with the brand at its top, the menu
-    with a light grey fill for the page that is open, small grey headings in sentence
-    case, and the signed-in user at its foot. The topbar: on desktop it blends into the
+    The sidebar and topbar follow HR's references. The sidebar (HR's reference,
+    2026-11-23): a navy gradient down the screen's left edge, with the brand at its top in
+    white, the menu in white with a lighter blue pill for the page that is open, small
+    pale headings in sentence case, and the signed-in user at its foot in a pale pill. The topbar: on desktop it blends into the
     page, with the search on the left and, on the right, white cards for what is
     waiting for HR and the upload (filament.topbar-actions). Phones keep Filament's
     topbar and slide-out sidebar. The width is set in AdminPanelProvider (sidebarWidth).
     Filament's own styles sit in a cascade layer; these do not, so they win without
     !important.
-    On white: grey 700 labels and grey 500 headings pass 4.5:1, grey 500 icons 3:1.
-    On grey 900: grey 200 labels, grey 400 headings and icons.
+    On the navy: white labels and icons, and headings in white at 65%, pass 4.5:1.
 --}}
 {{-- shortcut: inline styles because the panel has no custom theme; move them to one when a later plan adds a theme. --}}
 <style>
     :root {
-        --dtr-sidebar: var(--color-white);
+        --dtr-sidebar: linear-gradient(180deg, var(--primary-900) 0%, color-mix(in oklab, var(--primary-900) 50%, var(--primary-950)) 50%, var(--primary-950) 100%);
         --dtr-line: color-mix(in oklab, var(--gray-950) 8%, transparent);
         --dtr-hover: var(--gray-50);
         --dtr-current: var(--gray-100);
+        --dtr-side-line: color-mix(in oklab, var(--color-white) 12%, transparent);
+        --dtr-side-hover: color-mix(in oklab, var(--color-white) 8%, transparent);
+        --dtr-side-current: linear-gradient(90deg, var(--primary-600), var(--primary-500));
+        --dtr-side-text: color-mix(in oklab, var(--color-white) 90%, transparent);
+        --dtr-side-muted: color-mix(in oklab, var(--color-white) 65%, transparent);
     }
 
     .dark {
-        --dtr-sidebar: var(--gray-900);
+        --dtr-sidebar: linear-gradient(180deg, var(--primary-950) 0%, color-mix(in oklab, var(--primary-950) 60%, var(--gray-950)) 100%);
         --dtr-line: color-mix(in oklab, var(--color-white) 10%, transparent);
         --dtr-hover: color-mix(in oklab, var(--color-white) 5%, transparent);
         --dtr-current: color-mix(in oklab, var(--color-white) 10%, transparent);
@@ -152,8 +156,33 @@
         color: var(--gray-400);
     }
 
+    /* On the navy sidebar (HR's reference, 2026-11-23): a 48px seal on a white disc, the name bold and white (the sign-in page keeps the dark brand). */
+    .fi-sidebar .dtr-brand {
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .fi-sidebar .dtr-brand-mark {
+        width: calc(var(--spacing) * 12);
+        height: calc(var(--spacing) * 12);
+        background-color: var(--color-white);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-white) 35%, transparent);
+    }
+
+    .fi-sidebar .dtr-brand-name {
+        font-size: var(--text-base);
+        line-height: var(--text-base--line-height);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-white);
+    }
+
+    .fi-sidebar .dtr-brand-sub {
+        font-size: var(--text-sm);
+        line-height: var(--text-sm--line-height);
+        color: var(--dtr-side-muted);
+    }
+
     .fi-sidebar {
-        background-color: var(--dtr-sidebar);
+        background: var(--dtr-sidebar);
     }
 
     .fi-sidebar-header {
@@ -162,9 +191,9 @@
     }
 
     @media (min-width: 64rem) {
-        /* The topbar starts where the sidebar card ends, as the content does; the brand stays in the sidebar. */
+        /* The topbar starts where the sidebar ends, as the content does; the brand stays in the sidebar. */
         .fi-body-has-topbar .fi-topbar-ctn {
-            margin-inline-start: calc(var(--sidebar-width) + var(--spacing) * 2);
+            margin-inline-start: var(--sidebar-width);
         }
 
         .fi-body-has-topbar .fi-topbar-start {
@@ -196,18 +225,18 @@
             width: min(28rem, 40vw);
         }
 
-        /* A card 0.5rem in from the edges. Nothing is clipped: the user menu opens inside it. */
+        /* Down the screen's whole left edge (HR's reference, 2026-11-23). */
         .fi-body-has-topbar .fi-main-sidebar {
             position: fixed;
-            top: calc(var(--spacing) * 2);
-            inset-inline-start: calc(var(--spacing) * 2);
-            height: calc(100dvh - var(--spacing) * 4);
-            border: 1px solid var(--dtr-line);
-            border-radius: 0.75rem;
+            top: 0;
+            inset-inline-start: 0;
+            height: 100dvh;
+            border: 0;
+            border-radius: 0;
         }
 
         .fi-body-has-topbar .fi-main-ctn {
-            margin-inline-start: calc(var(--sidebar-width) + var(--spacing) * 2);
+            margin-inline-start: var(--sidebar-width);
         }
 
         .fi-body-has-topbar .fi-sidebar-header {
@@ -304,9 +333,9 @@
     */
     .fi-sidebar-header {
         height: auto;
-        margin: calc(var(--spacing) * 3) calc(var(--spacing) * 3) 0;
-        padding: 0 calc(var(--spacing) * 1.5) 0 0;
-        border: 1px solid var(--dtr-line);
+        margin: calc(var(--spacing) * 4) calc(var(--spacing) * 3) 0;
+        padding: 0;
+        border: 0;
         border-radius: 0.625rem;
     }
 
@@ -315,14 +344,16 @@
         min-width: 0;
     }
 
+    /* The brand centred in the sidebar (HR, 2026-11-23). */
     .fi-sidebar-header-logo-ctn > a {
         display: flex;
+        justify-content: center;
         padding: calc(var(--spacing) * 2);
         border-radius: calc(0.625rem - 1px);
     }
 
     .fi-sidebar-header-logo-ctn > a:hover {
-        background-color: var(--dtr-hover);
+        background-color: var(--dtr-side-hover);
     }
 
     .fi-sidebar-header .fi-logo {
@@ -356,15 +387,15 @@
         border-radius: 0.5rem;
     }
 
-    /* 20px icons beside 14px text. */
+    /* 20px icons beside 14px text, white on the navy. */
     .fi-sidebar .fi-sidebar-item-icon {
         width: calc(var(--spacing) * 5);
         height: calc(var(--spacing) * 5);
-        color: var(--gray-500);
+        color: var(--dtr-side-text);
     }
 
     .fi-sidebar .fi-sidebar-item-label {
-        color: var(--gray-700);
+        color: var(--dtr-side-text);
     }
 
     /* A heading, not a link: small and grey, in sentence case. */
@@ -373,44 +404,50 @@
     }
 
     .fi-sidebar .fi-sidebar-group-label {
-        color: var(--gray-500);
-        font-size: var(--text-xs);
-        line-height: var(--text-xs--line-height);
-        font-weight: var(--font-weight-medium);
+        color: var(--dtr-side-muted);
+        font-size: var(--text-sm);
+        line-height: var(--text-sm--line-height);
+        font-weight: var(--font-weight-normal);
     }
 
     .fi-sidebar .fi-sidebar-item-btn:hover,
     .fi-sidebar .fi-sidebar-item-btn:focus-visible {
-        background-color: var(--dtr-hover);
+        background-color: var(--dtr-side-hover);
     }
 
-    /* Filament marks keyboard focus with a fill alone, the same as hover here; a ring tells them apart. */
+    /* Filament marks keyboard focus with a fill alone, the same as hover here; a white ring tells them apart. */
     .fi-sidebar .fi-sidebar-item-btn:focus-visible,
     .fi-sidebar-header-logo-ctn > a:focus-visible,
     .dtr-sidebar-user-link:focus-visible {
-        outline: 2px solid var(--gray-500);
+        outline: 2px solid var(--color-white);
         outline-offset: -2px;
     }
 
-    /* The page that is open: a light grey fill and dark text, no colour. */
+    /* The page that is open: a bright blue pill, white words, a shadow under it. */
     .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-        background-color: var(--dtr-current);
+        background: var(--dtr-side-current);
+        box-shadow: 0 2px 8px color-mix(in oklab, var(--primary-950) 45%, transparent);
     }
 
     .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
-        color: var(--gray-950);
-        font-weight: var(--font-weight-medium);
+        color: var(--color-white);
+        font-weight: var(--font-weight-semibold);
     }
 
     .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
-        color: var(--gray-950);
+        color: var(--color-white);
     }
 
-    /* Light or dark (filament.theme-toggle), inside the brand card at its right. */
-    .dtr-theme-toggle {
-        display: flex;
-        flex: none;
-        align-items: center;
+    /* Sign out, white on the navy; round, so its hover fits the pill's round end. */
+    .fi-sidebar .dtr-sidebar-user .fi-icon-btn {
+        margin: 0;
+        border-radius: 9999px;
+        color: var(--dtr-side-text);
+    }
+
+    .fi-sidebar .dtr-sidebar-user .fi-icon-btn:hover {
+        background-color: var(--dtr-side-hover);
+        color: var(--color-white);
     }
 
     /*
@@ -421,8 +458,10 @@
         display: flex;
         align-items: center;
         gap: calc(var(--spacing) * 1);
-        padding: calc(var(--spacing) * 3);
-        border-top: 1px solid var(--dtr-line);
+        margin: calc(var(--spacing) * 3);
+        padding: calc(var(--spacing) * 1);
+        border-radius: 9999px;
+        background-color: var(--dtr-side-hover);
     }
 
     .dtr-sidebar-user-link {
@@ -431,12 +470,12 @@
         align-items: center;
         gap: calc(var(--spacing) * 2.5);
         min-width: 0;
-        padding: calc(var(--spacing) * 2);
-        border-radius: 0.5rem;
+        padding: calc(var(--spacing) * 1);
+        border-radius: 9999px;
     }
 
     .dtr-sidebar-user-link:hover {
-        background-color: var(--dtr-hover);
+        background-color: var(--dtr-side-hover);
     }
 
     /* A table cell that may wrap on a laptop or tablet keeps to one line from 1280px. */
@@ -455,29 +494,11 @@
         white-space: nowrap;
         font-size: var(--text-sm);
         font-weight: var(--font-weight-medium);
-        color: var(--gray-950);
+        color: var(--color-white);
     }
 
-    .dark .fi-sidebar .fi-sidebar-group-label,
-    .dark .fi-sidebar .fi-sidebar-item-icon,
     .dark .fi-topbar .fi-global-search-field .fi-input-wrp-suffix .fi-input-wrp-label {
         color: var(--gray-400);
-    }
-
-    .dark .fi-sidebar .fi-sidebar-item-label {
-        color: var(--gray-200);
-    }
-
-    .dark .fi-sidebar .fi-sidebar-item-btn:focus-visible,
-    .dark .fi-sidebar-header-logo-ctn > a:focus-visible,
-    .dark .dtr-sidebar-user-link:focus-visible {
-        outline-color: var(--gray-400);
-    }
-
-    .dark .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label,
-    .dark .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon,
-    .dark .dtr-sidebar-user-name {
-        color: var(--color-white);
     }
 </style>
 

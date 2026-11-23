@@ -32,7 +32,7 @@ class MonthlySummary extends Page
 
     protected string $view = 'filament.pages.monthly-summary';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentChartBar;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentChartBar;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
 

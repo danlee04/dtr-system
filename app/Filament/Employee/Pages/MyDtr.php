@@ -21,7 +21,7 @@ class MyDtr extends Page
 {
     protected string $view = 'filament.employee.pages.my-dtr';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentCheck;
 
     protected static ?string $navigationLabel = 'My DTR';
 

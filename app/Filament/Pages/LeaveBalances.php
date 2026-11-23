@@ -33,7 +33,7 @@ class LeaveBalances extends Page
 
     protected string $view = 'filament.pages.leave-balances';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Scale;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Leave;
 

@@ -23,7 +23,7 @@ class HabitualTardiness extends Page
 {
     protected string $view = 'filament.pages.habitual-tardiness';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::ExclamationTriangle;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
 

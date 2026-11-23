@@ -23,7 +23,7 @@ class DtrUploadResource extends Resource
 {
     protected static ?string $model = DtrUpload::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentArrowUp;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentArrowUp;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
 

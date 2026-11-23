@@ -68,7 +68,7 @@ class EmployeeOverviewTest extends TestCase
         return $this->get(EmployeeResource::getUrl('view', ['record' => $employee]))->assertOk();
     }
 
-    public function test_the_overview_shows_last_months_lates_the_balances_the_schedule_and_the_details(): void
+    public function test_the_overview_shows_last_months_lates_the_balances_and_the_details(): void
     {
         $employee = $this->settled(['date_hired' => '2022-03-14']);
         $this->lates($employee, '2026-10', 3);
@@ -76,18 +76,18 @@ class EmployeeOverviewTest extends TestCase
         $this->page($employee)->assertSeeInOrder([
             'October', '3 lates', '15 min late',
             'Vacation', '12.500', 'Sick', '0.000', 'Special privilege', '0.000', 'Wellness', '0.000',
-            'Schedule', 'REG', '8:00 AM – 12:00 PM, 1:00 PM – 5:00 PM',
-            'Job details', $employee->employee_number, 'Mar 14, 2022 · 4 years 7 months',
+            // The schedule left the cards for the Schedules tab (HR's reference, 2026-11-23).
+            'Job Details', $employee->employee_number, 'Mar 14, 2022 · 4 years 7 months',
         ]);
     }
 
-    public function test_staff_who_earn_no_leave_see_only_their_schedule(): void
+    public function test_staff_who_earn_no_leave_have_no_cards(): void
     {
         $employee = $this->settled(['employment_status' => EmploymentStatus::JobOrder]);
         $this->lates($employee, '2026-10', 3);
 
         $this->page($employee)
-            ->assertSee('REG')
+            ->assertDontSee('class="dtr-emp-cards"', escape: false)
             ->assertDontSee('days left')
             ->assertDontSee('3 lates');
     }

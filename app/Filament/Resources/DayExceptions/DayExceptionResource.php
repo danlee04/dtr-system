@@ -22,7 +22,7 @@ class DayExceptionResource extends Resource
 {
     protected static ?string $model = DayException::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Briefcase;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
 

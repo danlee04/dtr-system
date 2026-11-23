@@ -19,19 +19,179 @@
     }
 
     /*
-     * An employee's page, after HR's reference: a large photo, or their initials,
-     * beside their name, then their position, office and chips.
+     * An employee's page, after HR's reference (2026-11-23): one white panel under the
+     * breadcrumbs with a soft blue wash at its top right; a large round photo (or the
+     * initials) with a pencil for Edit, the name, chips, and the tabs beside it; then
+     * the cards and the sections. Below 768px the photo shrinks back beside the name.
      */
+    .fi-resource-employees.fi-resource-view-record-page {
+        --dtr-emp-pad: calc(var(--spacing) * 4);
+        --dtr-emp-photo: calc(var(--spacing) * 14);
+        --dtr-emp-indent: 0px;
+    }
+
+    @media (min-width: 48rem) {
+        .fi-resource-employees.fi-resource-view-record-page {
+            --dtr-emp-pad: calc(var(--spacing) * 6);
+            --dtr-emp-photo: 8rem;
+            --dtr-emp-indent: calc(8rem + var(--spacing) * 7);
+        }
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
+        position: relative;
+        isolation: isolate;
+        padding: 0 var(--dtr-emp-pad) var(--dtr-emp-pad);
+    }
+
+    /* The panel starts under the breadcrumbs: their line, then 16px. */
+    .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: calc(1.25rem + var(--spacing) * 4) 0 0;
+        border-radius: 1rem;
+        background:
+            radial-gradient(45% 60% at 100% 0%, color-mix(in oklab, var(--primary-200) 75%, transparent), transparent 75%),
+            radial-gradient(35% 45% at 72% 0%, color-mix(in oklab, var(--primary-100) 80%, transparent), transparent 75%),
+            var(--color-white);
+        box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--gray-950) 5%, transparent);
+    }
+
+    .dark .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn::before {
+        background:
+            radial-gradient(45% 60% at 100% 0%, color-mix(in oklab, var(--primary-500) 22%, transparent), transparent 75%),
+            radial-gradient(35% 45% at 72% 0%, color-mix(in oklab, var(--primary-400) 12%, transparent), transparent 75%),
+            var(--gray-900);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+
+    /* A phone shows no breadcrumbs: the panel starts at the top, 16px above the name. */
+    @media (max-width: 39.99rem) {
+        .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
+            padding-top: var(--dtr-emp-pad);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn::before {
+            inset: 0;
+        }
+    }
+
+    /* The breadcrumbs above the panel, then the panel's 24px before the name. */
+    .fi-resource-employees.fi-resource-view-record-page .fi-breadcrumbs {
+        margin-bottom: calc(var(--spacing) * 4 + var(--dtr-emp-pad));
+    }
+
     .dtr-person {
         display: inline-flex;
         align-items: center;
         gap: calc(var(--spacing) * 3);
     }
 
+    .dtr-person-photo {
+        position: relative;
+        flex: none;
+    }
+
     .dtr-person-avatar {
-        width: calc(var(--spacing) * 14);
-        height: calc(var(--spacing) * 14);
+        width: var(--dtr-emp-photo, calc(var(--spacing) * 14));
+        height: var(--dtr-emp-photo, calc(var(--spacing) * 14));
         object-fit: cover;
+        box-shadow: 0 0 0 4px var(--color-white), 0 8px 24px color-mix(in oklab, var(--primary-600) 22%, transparent);
+    }
+
+    .dark .dtr-person-avatar {
+        box-shadow: 0 0 0 4px var(--gray-900);
+    }
+
+    /* The pencil on the photo: a blue round button, 32px, with a white ring. */
+    .dtr-person-edit {
+        position: absolute;
+        inset-inline-end: 0;
+        bottom: 0;
+        display: grid;
+        place-items: center;
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        border-radius: 9999px;
+        background-color: var(--primary-600);
+        box-shadow: 0 0 0 3px var(--color-white);
+        color: var(--color-white);
+    }
+
+    .dtr-person-edit:hover {
+        background-color: var(--primary-700);
+    }
+
+    .dtr-person-edit:focus-visible {
+        outline: 2px solid var(--primary-600);
+        outline-offset: 3px;
+    }
+
+    .dark .dtr-person-edit {
+        background-color: var(--primary-500);
+        box-shadow: 0 0 0 3px var(--gray-900);
+    }
+
+    .dtr-person-edit-icon {
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .dtr-person-name {
+        font-size: var(--text-2xl);
+        line-height: 1.2;
+        font-weight: var(--font-weight-bold);
+        color: var(--gray-950);
+    }
+
+    .dark .fi-resource-employees.fi-resource-view-record-page .dtr-person-name {
+        color: var(--color-white);
+    }
+
+    /*
+     * From 768px the photo stands at the panel's top left, as tall as the name, the chips
+     * and the tabs together, and they line up to its right.
+     */
+    @media (min-width: 48rem) {
+        .fi-resource-employees.fi-resource-view-record-page .dtr-person-name {
+            font-size: 2rem;
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .dtr-person-photo {
+            position: absolute;
+            top: calc(1.25rem + var(--spacing) * 4 + var(--dtr-emp-pad));
+            inset-inline-start: var(--dtr-emp-pad);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-heading,
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-subheading,
+        .fi-resource-employees.fi-resource-view-record-page .fi-page-content .fi-sc-tabs > .fi-tabs {
+            margin-inline-start: var(--dtr-emp-indent);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-subheading {
+            margin-top: calc(var(--spacing) * 2);
+        }
+
+        /* Edit and Delete stay at the panel's top right, level with the name, never under the photo. */
+        .fi-resource-employees.fi-resource-view-record-page .fi-header {
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: calc(var(--spacing) * 4);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header > div:first-child {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-actions-ctn {
+            flex: none;
+            align-self: flex-start;
+            margin-top: calc(1.25rem + var(--spacing) * 4 + var(--dtr-emp-pad));
+        }
     }
 
     .dtr-person-chips {
@@ -50,36 +210,56 @@
         color: var(--gray-400);
     }
 
-    /* Room under the breadcrumbs before the photo and name: twice Filament's 8px. */
-    .fi-resource-employees.fi-resource-view-record-page .fi-breadcrumbs {
-        margin-bottom: calc(var(--spacing) * 4);
+    /* A chip under the name: a soft fill, an icon or a dot, the words on one line. */
+    .dtr-chip {
+        --chip: var(--gray-500);
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+        min-height: calc(var(--spacing) * 8);
+        padding-inline: calc(var(--spacing) * 3);
+        border-radius: 9999px;
+        background-color: color-mix(in oklab, var(--chip) 12%, var(--color-white));
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: color-mix(in oklab, var(--chip) 55%, var(--gray-950));
+        white-space: nowrap;
     }
 
-    @media (min-width: 40rem) {
-        .fi-resource-employees .dtr-person-name {
-            font-size: 1.75rem;
-            line-height: 1.3;
-        }
-
-        /* The photo sits centred on the name (HR, 2026-11-10); the chips line up under the name. */
-        .fi-resource-employees .fi-header-subheading {
-            margin-top: calc(var(--spacing) * 1);
-            margin-inline-start: calc(var(--spacing) * 17);
-        }
+    .dark .dtr-chip {
+        background-color: color-mix(in oklab, var(--chip) 20%, var(--gray-900));
+        color: color-mix(in oklab, var(--chip) 45%, var(--color-white));
     }
 
-    /* Its tabs as pills on a grey track, from the start, the open one amber. Amber takes dark text. */
+    .dtr-chip.is-office { --chip: var(--primary-600); }
+    .dtr-chip.is-success { --chip: var(--success-600); }
+    .dtr-chip.is-danger { --chip: var(--danger-600); }
+    .dtr-chip.is-gray { --chip: var(--gray-500); }
+
+    .dtr-chip-icon {
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+    }
+
+    .dtr-chip-dot {
+        width: calc(var(--spacing) * 2);
+        height: calc(var(--spacing) * 2);
+        border-radius: 9999px;
+        background-color: var(--chip);
+    }
+
+    /* The tabs as a white pill track, the open one navy with white words. */
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs:not(.fi-contained) {
         width: fit-content;
-        margin-inline: 0;
         padding: calc(var(--spacing) * 1);
         border-radius: 9999px;
-        background-color: var(--gray-100);
-        box-shadow: none;
+        background-color: var(--color-white);
+        box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent);
     }
 
     .dark .fi-resource-employees.fi-resource-view-record-page .fi-tabs:not(.fi-contained) {
         background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-white) 10%, transparent);
     }
 
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item {
@@ -87,19 +267,126 @@
         border-radius: 9999px;
     }
 
-    /* Filament marks a focused tab by its fill alone, which the amber one hides. */
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item:focus-visible {
-        outline: 2px solid var(--gray-500);
+        outline: 2px solid var(--primary-600);
         outline-offset: 2px;
     }
 
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active {
-        background-color: var(--primary-400);
+        background-color: var(--primary-800);
     }
 
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active .fi-tabs-item-label,
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active > .fi-icon {
+        color: var(--color-white);
+    }
+
+    .dark .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active {
+        background-color: var(--primary-600);
+    }
+
+    /* Job Details' rows tighter, as in HR's reference: 10px above and below each fact. */
+    .fi-resource-employees.fi-resource-view-record-page .fi-section.fi-divided > .fi-section-content-ctn > .fi-section-content > .fi-grid-col {
+        padding-block: calc(var(--spacing) * 2.5);
+    }
+
+    /*
+     * The Overview's five cards: a soft gradient in each one's colour, a small icon, the
+     * label, the figure, and a large faint icon in the top right corner. Five across from
+     * 1280px; below that, as many as fit at 10rem.
+     */
+    .dtr-emp-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+        gap: calc(var(--spacing) * 4);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-emp-cards {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+    }
+
+    .dtr-emp-card {
+        --tone: var(--primary-500);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) * 0.5);
+        overflow: hidden;
+        padding: calc(var(--spacing) * 5);
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, color-mix(in oklab, var(--tone) 18%, var(--color-white)), color-mix(in oklab, var(--tone) 6%, var(--color-white)));
+        box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--tone) 18%, transparent);
+    }
+
+    .dark .dtr-emp-card {
+        background: linear-gradient(135deg, color-mix(in oklab, var(--tone) 24%, var(--gray-900)), color-mix(in oklab, var(--tone) 8%, var(--gray-900)));
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--tone) 25%, transparent);
+    }
+
+    .dtr-emp-card.is-tardiness { --tone: var(--primary-500); }
+    .dtr-emp-card.is-vacation { --tone: var(--success-500); }
+    .dtr-emp-card.is-sick { --tone: var(--violet-500); }
+    .dtr-emp-card.is-special { --tone: var(--warning-400); }
+    .dtr-emp-card.is-wellness { --tone: var(--danger-400); }
+
+    .dtr-emp-card-icon {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+        margin-bottom: calc(var(--spacing) * 3);
+        color: color-mix(in oklab, var(--tone) 70%, var(--gray-950));
+    }
+
+    .dark .dtr-emp-card-icon {
+        color: color-mix(in oklab, var(--tone) 70%, var(--color-white));
+    }
+
+    .dtr-emp-card-art {
+        position: absolute;
+        top: calc(var(--spacing) * 4);
+        inset-inline-end: calc(var(--spacing) * 4);
+        width: 3.5rem;
+        height: 3.5rem;
+        color: var(--tone);
+        opacity: 0.3;
+    }
+
+    .dtr-emp-card-label {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--gray-700);
+    }
+
+    .dtr-emp-card-value {
+        font-size: 1.375rem;
+        line-height: 1.15;
+        font-weight: var(--font-weight-bold);
+        font-variant-numeric: tabular-nums;
         color: var(--gray-950);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-emp-card-value {
+            font-size: 1.75rem;
+        }
+    }
+
+    .dtr-emp-card-detail {
+        font-size: var(--text-xs);
+        color: var(--gray-600);
+    }
+
+    .dark .dtr-emp-card-label {
+        color: var(--gray-200);
+    }
+
+    .dark .dtr-emp-card-value {
+        color: var(--color-white);
+    }
+
+    .dark .dtr-emp-card-detail {
+        color: var(--gray-300);
     }
 
     /*
@@ -660,9 +947,39 @@
 
     .dtr-deduction-days {
         flex: none;
-        font-weight: var(--font-weight-medium);
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-bold);
         font-variant-numeric: tabular-nums;
-        color: var(--danger-700);
+        color: var(--danger-600);
+    }
+
+    /* What the list is, in a soft blue box with an info icon (HR's reference, 2026-11-23). */
+    .dtr-deductions-note {
+        display: flex;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 2);
+        margin-bottom: calc(var(--spacing) * 2);
+        padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
+        border-radius: var(--radius-lg);
+        background-color: var(--primary-50);
+        font-size: var(--text-xs);
+        color: var(--gray-700);
+    }
+
+    .dtr-deductions-note-icon {
+        flex: none;
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+        color: var(--primary-600);
+    }
+
+    .dark .dtr-deductions-note {
+        background-color: color-mix(in oklab, var(--primary-400) 12%, transparent);
+        color: var(--gray-200);
+    }
+
+    .dark .dtr-deductions-note-icon {
+        color: var(--primary-400);
     }
 
     .dtr-deductions-total {

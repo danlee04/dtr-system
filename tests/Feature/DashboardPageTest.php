@@ -37,14 +37,17 @@ class DashboardPageTest extends TestCase
             ->assertSee(['Late and undertime', 'Leave to approve', 'Quick actions', 'Out today', 'Recent leave', 'Dela Cruz, Juan']);
     }
 
-    public function test_the_sidebar_has_the_overview_group_a_theme_switch_and_the_user_with_sign_out(): void
+    public function test_the_sidebar_has_the_overview_group_and_the_user_with_sign_out_and_no_dark_mode(): void
     {
         $this->actingAs(User::factory()->create(['name' => 'Ana Santos']));
 
+        // Light only (HR, 2026-11-23): no switch, and no dark mode to switch to.
         $this->get('/')
             ->assertOk()
             ->assertSeeInOrder(['Overview', 'Dashboard'])
-            ->assertSee(['Switch to dark mode', 'Ana Santos', 'Sign out', route('filament.admin.auth.profile'), route('filament.admin.auth.logout')]);
+            ->assertSee(['Ana Santos', 'Sign out', route('filament.admin.auth.profile'), route('filament.admin.auth.logout')])
+            ->assertDontSee('Switch to dark mode');
+        $this->assertFalse(filament()->getPanel('admin')->hasDarkMode());
 
         // The button beside the name signs out, with no menu to open first.
         $this->post(route('filament.admin.auth.logout'))->assertRedirect();

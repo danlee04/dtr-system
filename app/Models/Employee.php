@@ -82,8 +82,8 @@ class Employee extends Model
         $initials = mb_strtoupper(mb_substr($this->first_name, 0, 1).mb_substr($this->last_name, 0, 1));
 
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">'
-            .'<rect width="64" height="64" fill="#fef3c7"/>'
-            .'<text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#92400e">'
+            .'<rect width="64" height="64" fill="#dbeafe"/>'
+            .'<text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#1e40af">'
             .htmlspecialchars($initials, ENT_XML1)
             .'</text></svg>';
 

@@ -34,7 +34,7 @@ class DutyRoster extends Page
 
     protected string $view = 'filament.pages.duty-roster';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::CalendarDays;
 
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::TimeAndAttendance;
 

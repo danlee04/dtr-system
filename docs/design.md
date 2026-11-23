@@ -10,9 +10,13 @@ few Blade partials in `resources/views/filament/` (see **Where the styles live**
 
 ## 1. Concept
 
-- **A quiet frame, the data first.** Surfaces are neutral greys and white. Amber
-  (the primary colour) marks the one main action of a view and things that need a
-  look; every other colour on screen is a status or a data series.
+- **A quiet frame, the data first.** Surfaces are neutral greys and white. Blue
+  (the primary colour since HR's reference of 2026-11-23; amber before) marks the
+  one main action of a view and things that need a look, and a navy gradient runs
+  down the sidebar; every other colour on screen is a status or a data series.
+  Where this guide still says amber for something drawn in the primary colour (the
+  employee form's section bar, the quick-action icons, the Needs a look card, the
+  current grid row), it is now blue. Amber stays for warnings.
 - **Filament first.** Use Filament's components (sections, tables, buttons,
   badges, modals, empty states, notifications) as they are. Write our own markup
   only for the data-entry grids, the dashboard and the frame.
@@ -23,7 +27,8 @@ few Blade partials in `resources/views/filament/` (see **Where the styles live**
   breadcrumbs and sections say the rest; each page's `h1` stays for screen
   readers. An employee's page is the exception: its heading (initials and name)
   says whose page it is.
-- **Light and dark.** Every colour is defined for both; check both.
+- **Light only** (HR, 2026-11-23): dark mode is off (`darkMode(false)`) and its
+  switch is gone. The `.dark` rules left in the partials no longer apply.
 
 ## 2. Tokens
 
@@ -32,14 +37,16 @@ variable, never the raw value (see **Rules**).
 
 ### 2.1 Colour
 
-The panel's palette: **primary = amber**, **gray = zinc**, and Filament's status
-colours (success = green, warning = amber, danger = red, info = blue).
+The panel's palette: **primary = blue** (2026-11-23), **gray = zinc**, Filament's status
+colours (success = green, warning = amber, danger = red, info = blue), and **violet**,
+registered for the Sick card on an employee's page.
 
 | Role | Light | Dark | Used for |
 |---|---|---|---|
 | Primary | `--primary-500` fill, `--primary-700` text | `--primary-400` text | The main button of a view; links; the count on the topbar bell; the initials avatars (`--primary-100` / `--primary-800`); on an employee's page, the open tab, the lead card and the Needs a look card |
 | Secondary | Filament `gray` buttons (white, thin ring) | same, dark | Every action that is not the main one |
-| Accent | none | none | There is no separate accent hue: colour beyond amber is status or data only |
+| Accent | none | none | There is no separate accent hue: colour beyond blue is status or data only |
+| Sidebar | navy gradient, `--primary-900` to `--primary-950` | `--primary-950` into `--gray-950` | The sidebar, with white words and icons, headings in white at 65%, and a `--primary-500` at 55% pill for the open page |
 | Page background | `--gray-50` | `--gray-950` | Behind cards; the topbar on desktop |
 | Card, sidebar | `--color-white` | `--gray-900` | Sections, tables, grids, dashboard cards, the sidebar |
 | Text | `--gray-950` | `--color-white` | Values, names, titles |
@@ -114,7 +121,8 @@ One unit, `--spacing`, is 4px. Use its multiples: 4, 8, 12, 16, 20, 24, 32.
 
 - **Lines:** 1px, at the line colour above. No heavy shadows: Filament's own card
   shadow at most.
-- **Icons:** Heroicons, outlined. 20px in navigation and actions, 16px inline
+- **Icons:** Heroicons, outlined, except the sidebar's, which are solid (HR's
+  reference, 2026-11-23). 20px in navigation and actions, 16px inline
   (the lock), 24px in empty states.
 - **Control height:** 40px for topbar cards and main controls; quick-action tiles 44px.
 
@@ -126,12 +134,14 @@ decoration.
 ## 3. Layout
 
 - **Frame (desktop, 1024px and up).**
-  - **Sidebar:** 16rem wide, a white card set 8px in from the screen's edges. It
-    holds the brand card (seal, "DTR System", "DTRC Caraga") with the light or
-    dark switch inside it at its right (a moon, or a sun in dark mode;
-    `filament.theme-toggle`); 20px under it, the groups, **Overview** first (the Dashboard, and
+  - **Sidebar:** 16rem wide, down the screen's whole left edge in a navy gradient
+    (HR's reference, 2026-11-23; a white card set 8px in before), with white words
+    and solid icons, headings in 14px, and a bright blue gradient pill
+    (`--primary-600` to `--primary-500`) for the open page. It holds the brand, centred: a
+    48px seal on a white disc, "DTR System" bold and white, "DTRC Caraga" under it;
+    20px under it, the groups, **Overview** first (the Dashboard, and
     an employee's My DTR), so no item stands outside a group; and at its foot,
-    under a rule, the signed-in user with no menu to open: their photo and name
+    in a pale pill, the signed-in user with no menu to open: their photo and name
     lead to the Profile, and a Sign out icon button sits beside them
     (`filament.sidebar-user`).
   - **Topbar:** it blends into the page. Search sits on its left (Ctrl+K). On its
@@ -178,7 +188,7 @@ decoration.
 
 | Variant | Use for | Example |
 |---|---|---|
-| Primary (amber, filled) | The one main action of a view | Save roster, New employee, Download Excel |
+| Primary (blue, filled, white text) | The one main action of a view | Save roster, New employee, Download Excel |
 | Gray | Secondary actions | Upload DTRs in the topbar, Import CSV |
 | Outlined | A secondary action beside the primary | Delete and Restore on an employee's page |
 | Danger | Confirming a destructive action | Filament's delete confirmation |
@@ -442,10 +452,25 @@ Filament notifications:
 
 Laid out after a reference HR chose, and the only page with a heading on screen.
 
-- **Heading:** 16px under the breadcrumbs, a 56px round photo (their initials
-  without one) centred on the name, and the name 28px from 640px. Under the name,
-  lined up with it: the position and office in grey, then chips for the status,
-  the employment status and the number.
+- **Panel** (HR's reference, 2026-11-23): under the breadcrumbs, the heading, tabs,
+  cards and sections sit in one white panel (16px corners) with a soft blue wash at
+  its top right; 24px inside from 768px.
+- **Heading:** a 128px round photo (their initials without one) with a white ring at
+  the panel's top left, and on it a 32px blue pencil that opens Edit for those who
+  may edit; beside it the name, 32px bold; under the name, chips: the office (blue,
+  a briefcase), where they stand (a dot, green when active), and the number; then
+  the tabs. Edit (outlined blue, a pencil) and Delete (outlined red, a trash can)
+  stay at the top right, level with the name. Below 768px the photo is 56px beside
+  the name and everything stacks.
+- **Tabs:** a white pill track, the open tab navy (`--primary-800`) with white words.
+- **Cards** (`.dtr-emp-cards`): five, Tardiness for last month then Vacation, Sick,
+  Special privilege and Wellness, each a soft gradient in its colour (blue, green,
+  violet, amber, red) with a small icon, the label, the figure in bold, a grey line,
+  and a large faint icon in the top right corner. Five across from 1280px. The
+  schedule left the cards for the Schedules tab; those who earn no leave have none.
+- **Sections:** Job Details (title case, blue icon, tighter rows, the employment
+  status as a green badge, icons on the hire date and biometric ID) and Deductions
+  (blue coins icon, a soft blue note on what the list is).
 - **Photo:** Filament's round uploader with its cropper, in the employee form for
   HR and on the Profile page for the employee.
 - **Employee form** (the modal): Name first, the photo (a wide rounded box with a
@@ -548,10 +573,11 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 | `--gray-400` on `--gray-900` | ≈ 7:1 |
 | `--gray-700` on white | ≈ 10:1 |
 | `--primary-700` link on white | ≈ 5:1 |
-| `--gray-950` on `--primary-500` | ≈ 9:1 |
+| White on `--primary-600` (Filament's blue buttons) | ≈ 5.2:1 |
+| White on the navy sidebar (`--primary-900`) | ≈ 13:1 |
 
-  Don't use `--gray-400` text on white (about 2.5:1). Amber fills take dark text,
-  never white.
+  Don't use `--gray-400` text on white (about 2.5:1). Blue fills take white text;
+  amber (warning) fills take dark text.
 - **Keyboard:**
   - Every action can be reached with Tab and run with Enter or Space.
   - Esc closes modals and menus (Filament).
@@ -597,7 +623,6 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 | `resources/views/filament/employee/dashboard.blade.php` | An employee's dashboard's cards |
 | `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/brand.blade.php` | The brand |
-| `resources/views/filament/theme-toggle.blade.php` | The light or dark switch beside the brand (its styles are in `sidebar.blade.php`) |
 | `resources/views/filament/sidebar-user.blade.php` | The signed-in user and Sign out at the sidebar's foot (its styles are in `sidebar.blade.php`) |
 
 ### Writing styles
@@ -618,7 +643,7 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 
 ### Before shipping a screen
 
-- Light and dark.
+- Light only.
 - 1536, 1366, 1280, 1024 and 768px with no sideways scroll, and a phone.
 - A keyboard-only pass.
 - Contrast of any new colour pair.
@@ -636,5 +661,6 @@ Intentional exceptions:
 
 - **Paper documents** (the HRM-07 leave form) use raw hex and Arial: they are
   printed forms, not screens.
-- **The initials avatar** on an employee's page is an SVG with amber hex values:
-  an image cannot read CSS variables.
+- **The initials avatar** on an employee's page is an SVG with blue hex values
+  (`#dbeafe` / `#1e40af`, `--primary-100` / `--primary-800`): an image cannot read
+  CSS variables.
