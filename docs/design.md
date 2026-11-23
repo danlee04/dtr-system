@@ -145,7 +145,13 @@ decoration.
     lead to the Profile, and a Sign out icon button sits beside them
     (`filament.sidebar-user`).
   - **Topbar:** it blends into the page. Search sits on its left (Ctrl+K). On its
-    right, staff see the "Waiting for you" bell and **Upload DTRs**.
+    right, staff see the "Waiting for you" bell, **New** and **Upload DTRs**
+    (2026-11-23). The bell (`WaitingForHr`, counted each page load, "99+" past 99)
+    lists leave to approve, DTRs that need an employee, DTRs not final yet, then
+    staff with no schedule (the Employees list's "No schedule" filter) and staff
+    with no opening balance (Opening Balances). New is a menu of what HR files
+    most: File leave, OB, TO or gate pass, and Employee, each shown only to those
+    who may, each opening its form on its own page (`?action=`).
   - **Phones** keep Filament's topbar and slide-out sidebar.
 - **Content** runs the full width of the screen (`maxContentWidth(Width::Full)`),
   except the Profile: a few fields, at `FourExtraLarge`, so they read as one column.

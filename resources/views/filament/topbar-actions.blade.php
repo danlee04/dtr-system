@@ -1,15 +1,29 @@
 {{--
     The topbar's right side, after the search, for staff only (AdminPanelProvider):
-    a bell for what is waiting for HR, counted on each page load, and the month's main
-    job. The bell's count is said in its label too, not by the badge alone.
+    a bell for what is waiting for HR (WaitingForHr, counted on each page load), New for
+    what HR files most, and the month's main job. The bell's count is said in its label
+    too, not by the badge alone. Each New item opens its form on its own page.
 --}}
 @php
     use App\Enums\LeaveApplicationStatus;
+    use App\Filament\Pages\LeaveOpeningBalances;
+    use App\Filament\Resources\DayExceptions\DayExceptionResource;
     use App\Filament\Resources\DtrUploads\DtrUploadResource;
+    use App\Filament\Resources\Employees\EmployeeResource;
     use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
+    use App\Models\DayException;
+    use App\Models\Employee;
+    use App\Models\LeaveApplication;
     use Filament\Support\Icons\Heroicon;
 
-    $waiting = $pendingLeave + $unmatchedDtrs;
+    $waiting = $pendingLeave + $unmatchedDtrs + $dtrsNotFinal + $withoutSchedule + $withoutOpenings;
+    $user = auth()->user();
+    // What HR files most, each offered only to those who may (HR, 2026-11-23).
+    $new = array_filter([
+        $user->can('create', LeaveApplication::class) ? ['File leave', Heroicon::OutlinedDocumentPlus, LeaveApplicationResource::getUrl('index', ['action' => 'fileLeave'])] : null,
+        $user->can('create', DayException::class) ? ['OB, TO or gate pass', Heroicon::OutlinedBriefcase, DayExceptionResource::getUrl('index', ['action' => 'create'])] : null,
+        $user->can('create', Employee::class) ? ['Employee', Heroicon::OutlinedUserPlus, EmployeeResource::getUrl('index', ['action' => 'create'])] : null,
+    ]);
 @endphp
 
 <div class="dtr-topbar-actions">
@@ -18,7 +32,7 @@
             <button type="button" class="dtr-topbar-btn" aria-label="Waiting for you: {{ $waiting }}">
                 <x-filament::icon :icon="Heroicon::OutlinedBell" class="dtr-topbar-btn-icon" />
                 @if ($waiting > 0)
-                    <span class="dtr-topbar-count" aria-hidden="true">{{ $waiting }}</span>
+                    <span class="dtr-topbar-count" aria-hidden="true">{{ $waiting > 99 ? '99+' : $waiting }}</span>
                 @endif
             </button>
         </x-slot>
@@ -43,8 +57,55 @@
             >
                 DTRs that need an employee
             </x-filament::dropdown.list.item>
+
+            <x-filament::dropdown.list.item
+                tag="a"
+                :href="DtrUploadResource::getUrl('index', ['filters' => ['not_final' => ['isActive' => true]]])"
+                :icon="Heroicon::OutlinedLockOpen"
+                :badge="$dtrsNotFinal"
+            >
+                DTRs not final yet
+            </x-filament::dropdown.list.item>
+        </x-filament::dropdown.list>
+
+        <x-filament::dropdown.list>
+            <x-filament::dropdown.list.item
+                tag="a"
+                :href="EmployeeResource::getUrl('index', ['filters' => ['no_schedule' => ['isActive' => true]]])"
+                :icon="Heroicon::OutlinedClock"
+                :badge="$withoutSchedule"
+            >
+                Staff with no schedule
+            </x-filament::dropdown.list.item>
+
+            <x-filament::dropdown.list.item
+                tag="a"
+                :href="LeaveOpeningBalances::getUrl()"
+                :icon="Heroicon::OutlinedScale"
+                :badge="$withoutOpenings"
+            >
+                Staff with no opening balance
+            </x-filament::dropdown.list.item>
         </x-filament::dropdown.list>
     </x-filament::dropdown>
+
+    @if ($new !== [])
+        <x-filament::dropdown placement="bottom-end" teleport>
+            <x-slot name="trigger">
+                <x-filament::button color="gray" :icon="Heroicon::OutlinedPlus" labeled-from="sm" aria-label="New">
+                    New
+                </x-filament::button>
+            </x-slot>
+
+            <x-filament::dropdown.header>New</x-filament::dropdown.header>
+
+            <x-filament::dropdown.list>
+                @foreach ($new as [$label, $icon, $url])
+                    <x-filament::dropdown.list.item tag="a" :href="$url" :icon="$icon">{{ $label }}</x-filament::dropdown.list.item>
+                @endforeach
+            </x-filament::dropdown.list>
+        </x-filament::dropdown>
+    @endif
 
     {{-- Opens the upload on the DTR Uploads page. --}}
     <x-filament::button

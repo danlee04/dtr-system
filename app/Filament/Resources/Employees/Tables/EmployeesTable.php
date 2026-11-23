@@ -5,10 +5,13 @@ namespace App\Filament\Resources\Employees\Tables;
 use App\Enums\EmploymentStatus;
 use App\Filament\Resources\Employees\Actions\AssignScheduleBulkAction;
 use App\Models\Employee;
+use App\Services\WaitingForHr;
+use Carbon\CarbonImmutable;
 use Filament\Actions\EditAction;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -66,6 +69,10 @@ class EmployeesTable
                     ->nullable()
                     ->trueLabel('Has an ID')
                     ->falseLabel('No ID yet'),
+                // Where the topbar bell's "Staff with no schedule" leads (HR, 2026-11-23).
+                Filter::make('no_schedule')
+                    ->label('No schedule')
+                    ->query(fn (Builder $query): Builder => WaitingForHr::withoutSchedule($query, CarbonImmutable::today())),
                 TrashedFilter::make(),
             ])
             ->recordActions([

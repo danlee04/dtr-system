@@ -62,14 +62,21 @@ class EmployeeAccessTest extends TestCase
 
     public function test_the_topbar_shows_what_is_waiting_to_staff_only(): void
     {
-        // A pending application and a DTR whose name matched nobody.
+        // A pending application by someone with no schedule and no opening balance yet, and a DTR whose name matched nobody.
         LeaveApplication::factory()->create();
         DtrUpload::factory()->unmatched()->create();
 
+        // The bell lists each kind; New opens File leave, OB/TO/gate pass and New employee on their pages (HR, 2026-11-23).
         $this->actingAs(User::factory()->create())
             ->get('/')
             ->assertOk()
-            ->assertSee('Waiting for you: 2')
+            ->assertSee('Waiting for you: 4')
+            ->assertSee(['Leave applications to approve', 'DTRs that need an employee', 'DTRs not final yet', 'Staff with no schedule', 'Staff with no opening balance'])
+            ->assertSee([
+                LeaveApplicationResource::getUrl('index', ['action' => 'fileLeave']),
+                DayExceptionResource::getUrl('index', ['action' => 'create']),
+                EmployeeResource::getUrl('index', ['action' => 'create']),
+            ])
             ->assertSee('Upload DTRs');
 
         $this->actingAs(User::factory()->employee()->create())

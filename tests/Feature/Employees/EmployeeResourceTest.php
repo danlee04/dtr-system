@@ -9,6 +9,7 @@ use App\Filament\Resources\Employees\Pages\ViewEmployee;
 use App\Filament\Resources\Offices\Pages\ListOffices;
 use App\Models\Employee;
 use App\Models\Office;
+use App\Models\ScheduleAssignment;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
@@ -56,6 +57,20 @@ class EmployeeResourceTest extends TestCase
 
         Livewire::test(ListEmployees::class)
             ->assertCanSeeTableRecords($employees);
+    }
+
+    public function test_the_no_schedule_filter_lists_staff_still_at_work_with_none(): void
+    {
+        // Where the bell's "Staff with no schedule" leads (HR, 2026-11-23).
+        $scheduled = Employee::factory()->create();
+        ScheduleAssignment::factory()->for($scheduled)->create(['effective_from' => '2026-01-01']);
+        $unscheduled = Employee::factory()->create();
+        $inactive = Employee::factory()->create(['is_active' => false]);
+
+        Livewire::test(ListEmployees::class)
+            ->filterTable('no_schedule')
+            ->assertCanSeeTableRecords([$unscheduled])
+            ->assertCanNotSeeTableRecords([$scheduled, $inactive]);
     }
 
     public function test_the_employees_are_listed_by_last_name_then_first_name(): void
