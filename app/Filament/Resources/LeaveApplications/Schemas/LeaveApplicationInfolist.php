@@ -6,9 +6,10 @@ use App\Enums\LedgerKind;
 use App\Models\LeaveApplication;
 use App\Models\LeaveLedgerEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
 
 /**
@@ -22,39 +23,46 @@ class LeaveApplicationInfolist
     {
         return $schema
             ->components([
-                Grid::make(['default' => 2, 'lg' => 4])
-                    ->columnSpanFull()
-                    ->schema([
-                        TextEntry::make('status')
-                            ->badge(),
-                        TextEntry::make('charged_to')
-                            ->label('Charged to')
-                            ->state(fn (LeaveApplication $record): ?string => self::chargedTo($record))
-                            ->placeholder('Nothing: all without pay'),
-                        TextEntry::make('filed')
-                            ->label('Filed')
-                            ->icon(Heroicon::OutlinedDocumentPlus)
-                            ->iconColor('gray')
-                            ->state(fn (LeaveApplication $record): string => self::byLine($record->filedBy?->name, $record->created_at)),
-                        TextEntry::make('approved')
-                            ->label('Approved')
-                            ->icon(Heroicon::OutlinedCheckCircle)
-                            ->iconColor('success')
-                            ->state(fn (LeaveApplication $record): ?string => $record->approved_at === null ? null : self::byLine($record->approvedBy?->name, $record->approved_at))
-                            ->visible(fn (LeaveApplication $record): bool => $record->approved_at !== null),
-                        TextEntry::make('cancelled')
-                            ->label('Cancelled')
-                            ->icon(Heroicon::OutlinedXCircle)
-                            ->iconColor('danger')
-                            ->state(fn (LeaveApplication $record): ?string => $record->cancelled_at === null ? null : self::byLine($record->cancelledBy?->name, $record->cancelled_at)." — {$record->cancel_reason}")
-                            ->visible(fn (LeaveApplication $record): bool => $record->cancelled_at !== null),
-                        TextEntry::make('disapproved')
-                            ->label('Disapproved')
-                            ->icon(Heroicon::OutlinedHandThumbDown)
-                            ->iconColor('danger')
-                            ->state(fn (LeaveApplication $record): ?string => $record->disapproved_at === null ? null : self::byLine($record->disapprovedBy?->name, $record->disapproved_at)." — {$record->disapproval_reason}")
-                            ->visible(fn (LeaveApplication $record): bool => $record->disapproved_at !== null),
-                    ]),
+                // One row spread across the modal (HR, 2026-11-23): each entry keeps its own width, so a
+                // name and its time stay on one line; a cancel or disapproval reason may wrap.
+                Flex::make([
+                    TextEntry::make('status')
+                        ->badge()
+                        ->grow(false),
+                    TextEntry::make('charged_to')
+                        ->label('Charged to')
+                        ->state(fn (LeaveApplication $record): ?string => self::chargedTo($record))
+                        ->placeholder('Nothing: all without pay')
+                        ->grow(false),
+                    TextEntry::make('filed')
+                        ->label('Filed')
+                        ->icon(Heroicon::OutlinedDocumentPlus)
+                        ->iconColor('gray')
+                        ->state(fn (LeaveApplication $record): string => self::byLine($record->filedBy?->name, $record->created_at))
+                        ->grow(false),
+                    TextEntry::make('approved')
+                        ->label('Approved')
+                        ->icon(Heroicon::OutlinedCheckCircle)
+                        ->iconColor('success')
+                        ->state(fn (LeaveApplication $record): ?string => $record->approved_at === null ? null : self::byLine($record->approvedBy?->name, $record->approved_at))
+                        ->visible(fn (LeaveApplication $record): bool => $record->approved_at !== null)
+                        ->grow(false),
+                    TextEntry::make('cancelled')
+                        ->label('Cancelled')
+                        ->icon(Heroicon::OutlinedXCircle)
+                        ->iconColor('danger')
+                        ->state(fn (LeaveApplication $record): ?string => $record->cancelled_at === null ? null : self::byLine($record->cancelledBy?->name, $record->cancelled_at)." — {$record->cancel_reason}")
+                        ->visible(fn (LeaveApplication $record): bool => $record->cancelled_at !== null),
+                    TextEntry::make('disapproved')
+                        ->label('Disapproved')
+                        ->icon(Heroicon::OutlinedHandThumbDown)
+                        ->iconColor('danger')
+                        ->state(fn (LeaveApplication $record): ?string => $record->disapproved_at === null ? null : self::byLine($record->disapprovedBy?->name, $record->disapproved_at)." — {$record->disapproval_reason}")
+                        ->visible(fn (LeaveApplication $record): bool => $record->disapproved_at !== null),
+                ])
+                    ->from('md')
+                    ->alignment(Alignment::Between)
+                    ->columnSpanFull(),
                 View::make('filament.leave-applications.form')
                     ->viewData(fn (LeaveApplication $record): array => ['html' => view('leave.print', [
                         'application' => $record->load(['employee.office', 'ledgerEntries']),

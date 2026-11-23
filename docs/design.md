@@ -232,7 +232,9 @@ decoration.
   "Disapproved due to", which prints in 7.D, and leaves 7.C blank.
   The application's view (5xl modal) shows the form itself, HRM-07 as printed
   with the names (HR, 2026-11-23), under one row of what the paper does not
-  say: Status, Charged to, Filed, and Approved, Cancelled or Disapproved
+  say: Status, Charged to, Filed, and Approved, Cancelled or Disapproved,
+  spread across the modal (`Flex`, `Alignment::Between`, each entry its own
+  width so a name and its time stay on one line; a reason may wrap)
   (`filament.leave-applications.form`). It is the `leave.print` view with
   `embedded` (no toolbar, 16px around the sheet, the sheet zoomed to 0.9,
   0.82 or 0.74 when the frame is under 860, 780 or 715px), in an iframe with
