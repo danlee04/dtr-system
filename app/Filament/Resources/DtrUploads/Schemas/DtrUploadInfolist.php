@@ -193,10 +193,14 @@ class DtrUploadInfolist
                     'printed' => self::clock($day?->{$slot->value}),
                     'filled' => self::clock($tap?->time),
                     'fillable' => in_array($slot, $result->fillable ?? [], true),
-                    // On an OB or travel order, a blank shows the schedule's time, tagged OB or TO.
+                    // On an OB, travel order or gate pass, a blank shows the schedule's time, tagged OB, TO or GP.
                     'away' => $away === null ? null : [
                         'time' => self::clock($away['time']),
-                        'tag' => $away['status'] === AttendanceStatus::TravelOrder ? 'TO' : 'OB',
+                        'tag' => match ($away['status']) {
+                            AttendanceStatus::TravelOrder => 'TO',
+                            AttendanceStatus::GatePass => 'GP',
+                            default => 'OB',
+                        },
                         'label' => $away['status']->getLabel(),
                     ],
                 ];

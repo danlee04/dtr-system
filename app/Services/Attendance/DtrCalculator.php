@@ -194,6 +194,7 @@ final class DtrCalculator
         }
 
         $scheduledHalves = count($taps);
+        $scheduled = $this->scheduleTimes($halves, $scheduledHalves);
         $tapped = array_filter(array_keys($halves), fn (int $index): bool => $taps[$index][0] !== null || $taps[$index][1] !== null);
 
         if ($tapped === []) {
@@ -202,7 +203,7 @@ final class DtrCalculator
             // Undertime for all the hours not covered, 8 on 8–5, 10 on the four-day week (HR, 2026-11-18); that part of the CSC days comes off SL first, then VL (HR, 2026-11-19).
             $minutes = array_sum(array_map(fn (array $half): int => $half['out'] - $half['in'], $halves));
 
-            return new ComputedDay(AttendanceStatus::Absent, undertime: $minutes, undertimeCount: 1, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable, awayTimes: $away, absentMinutes: $minutes);
+            return new ComputedDay(AttendanceStatus::Absent, undertime: $minutes, undertimeCount: 1, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable, awayTimes: $away, absentMinutes: $minutes, scheduleTimes: $scheduled);
         }
 
         [$late, $lateCount, $undertime, $undertimeCount, $missing, $fillable] = [0, 0, 0, 0, [], []];
@@ -236,13 +237,34 @@ final class DtrCalculator
             }
         }
 
-        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note, fillable: $fillable, awayTimes: $away);
+        return new ComputedDay(AttendanceStatus::Present, $late, $lateCount, $undertime, $undertimeCount, missing: $missing, note: $note, fillable: $fillable, awayTimes: $away, scheduleTimes: $scheduled);
     }
 
     /**
-     * The schedule's times for each part of the day on an OB or travel order,
-     * which the DTR shows in its blanks, as the paper form does (HR,
-     * 2026-11-19). Leave and a gate pass get none: the employee was not at work.
+     * The schedule's time for each slot of the halves left to judge, the
+     * departure being the time out due (on flexitime, or cut by a suspension).
+     *
+     * @param  array<int, array{in: int, out: int, dueOut?: int}>  $halves
+     * @return array<string, string>
+     */
+    private function scheduleTimes(array $halves, int $scheduledHalves): array
+    {
+        $times = [];
+
+        foreach ($halves as $index => $half) {
+            [$inSlot, $outSlot] = self::SLOTS[$scheduledHalves][$index];
+            $times[$inSlot->value] = self::time($half['in']);
+            $times[$outSlot->value] = self::time($half['dueOut'] ?? $half['out']);
+        }
+
+        return $times;
+    }
+
+    /**
+     * The schedule's times for each part of the day on an OB, travel order or
+     * gate pass, which the DTR shows in its blanks, as the paper form does
+     * (HR, 2026-11-19; a gate pass too, 2026-11-23). Leave gets none: the
+     * employee was not at work.
      *
      * @param  array<int, array{in: int, out: int}>  $halves
      * @param  array<int, AttendanceStatus>  $covered
@@ -253,7 +275,7 @@ final class DtrCalculator
         $away = [];
 
         foreach ($covered as $index => $status) {
-            if (! in_array($status, [AttendanceStatus::OfficialBusiness, AttendanceStatus::TravelOrder], true)) {
+            if (! in_array($status, [AttendanceStatus::OfficialBusiness, AttendanceStatus::TravelOrder, AttendanceStatus::GatePass], true)) {
                 continue;
             }
 

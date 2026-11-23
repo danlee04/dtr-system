@@ -148,7 +148,7 @@
                 <span><span class="dtr-grid-ob dtr-grid-edit"><x-filament::icon :icon="\Filament\Support\Icons\Heroicon::OutlinedPencilSquare" /> Edit</span> change or remove an OB, travel order, leave or gate pass recorded by mistake</span>
             @endif
             <span><span class="dtr-grid-hr-tag">HR</span> a time HR copied in</span>
-            <span><span class="dtr-grid-hr-tag">OB</span> <span class="dtr-grid-hr-tag">TO</span> the schedule's time on an OB or travel order</span>
+            <span><span class="dtr-grid-hr-tag">OB</span> <span class="dtr-grid-hr-tag">TO</span> <span class="dtr-grid-hr-tag">GP</span> the schedule's time on an OB, travel order or gate pass</span>
             <span><span class="dtr-record-swatch" aria-hidden="true"></span> not a work date</span>
         </div>
     @endunless

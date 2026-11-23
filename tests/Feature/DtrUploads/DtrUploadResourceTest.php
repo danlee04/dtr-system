@@ -565,8 +565,9 @@ class DtrUploadResourceTest extends TestCase
 
         $this->assertSame(['17:10:00', ManualTapReason::OfficialBusiness, $hr->id], [$tap->fresh()->time, $tap->fresh()->reason, $tap->fresh()->filled_by_user_id]);
 
+        // The reason first: picking OB fills a blank with the schedule's time, which HR then clears.
         Livewire::test(ListDtrUploads::class)
-            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['pm_departure' => null, 'reason' => ManualTapReason::OfficialBusiness->value])
+            ->callAction($this->fillIn($upload, '2026-10-02'), data: ['reason' => ManualTapReason::OfficialBusiness->value, 'pm_departure' => null])
             ->assertNotified('HR times removed');
 
         $this->assertModelMissing($tap);
@@ -617,6 +618,36 @@ class DtrUploadResourceTest extends TestCase
             ->mountAction(TestAction::make('view')->table($upload))
             ->assertMountedActionModalSeeHtml('<span class="dtr-grid-time">8:00 AM</span> <span class="dtr-grid-hr-tag">OB</span>')
             ->assertMountedActionModalSeeHtml('aria-label="Change or remove the official business, Oct 29, 2026"');
+    }
+
+    public function test_a_day_on_a_gate_pass_shows_the_schedules_times_marked_gp(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        DayException::factory()->for($upload->employee)->create(['type' => ExceptionType::GatePass, 'date_from' => '2026-10-29', 'date_to' => '2026-10-29']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction(TestAction::make('view')->table($upload))
+            ->assertMountedActionModalSeeHtml('<span class="dtr-grid-time">5:00 PM</span> <span class="dtr-grid-hr-tag">GP</span>');
+    }
+
+    public function test_a_gate_pass_or_ob_fills_the_blanks_with_the_schedules_times(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+
+        // October 2 has no time out; the printed times stay as they are (HR, 2026-11-23).
+        foreach ([ManualTapReason::GatePass, ManualTapReason::OfficialBusiness] as $reason) {
+            Livewire::test(ListDtrUploads::class)
+                ->mountAction($this->fillIn($upload, '2026-10-02'))
+                ->fillForm(['reason' => $reason->value])
+                ->assertActionDataSet(['pm_departure' => '17:00', 'am_arrival' => '07:47']);
+        }
+
+        Livewire::test(ListDtrUploads::class)
+            ->mountAction($this->fillIn($upload, '2026-10-02'))
+            ->fillForm(['reason' => ManualTapReason::DeviceError->value])
+            ->assertActionDataSet(['pm_departure' => null]);
     }
 
     public function test_hr_marks_leave_for_an_absent_day_from_the_dtr_without_an_application(): void

@@ -341,17 +341,20 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   "Official business: Oct 5–6, 2026", the same form filled in, with **Save**
   and an outlined red **Remove**. Leave filed as an application is not listed:
   it is changed on the leave screens.
-- **On an OB or travel order** a blank of the covered day or half shows the
-  schedule's time with an "OB" or "TO" tag, as the paper form does; it is shown,
-  not stored, so removing the entry removes the times. Leave and a gate pass
-  show none.
-- **Legend** under the grid for + Add, + OB/Leave, Edit, HR, OB and TO, and
-  the grey rows.
+- **On an OB, travel order or gate pass** a blank of the covered day or half
+  shows the schedule's time with an "OB", "TO" or "GP" tag, as the paper form
+  does; it is shown, not stored, so removing the entry removes the times. Leave
+  shows none. (A gate pass showed none until HR asked, 2026-11-23.)
+- **Legend** under the grid for + Add, + OB/Leave, Edit, HR, OB, TO and GP,
+  and the grey rows.
 - **Fill-in modal:** "Fill in Fri, Oct 2", the date's four slots in a row
   (printed times as read-only text marked Printed, the blanks and HR's times as
-  time inputs, the clicked one focused), the reason as two radio choices, an
+  time inputs, the clicked one focused), the reason as radio choices, an
   optional note; Save, Cancel, and an outlined danger "Remove HR times" when the
-  date has any.
+  date has any. Picking Gate pass or Out on official business fills each empty
+  input with the schedule's time, the time out being the flexi time out due;
+  printed and typed times stay, and HR may change or clear what was filled
+  (HR, 2026-11-23).
 - **My DTR** shows the same view to the employee, read-only (`viewData(mine: true)`,
   no fill-in action registered): a section headed with the month, the schedule
   and printed name as its description, a Month picker in `afterHeader`, then a

@@ -18,6 +18,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Enums\Size;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
@@ -148,7 +149,7 @@ class FillDayAction extends Action
      * times HR filled.
      *
      * @param  array<string, mixed>  $arguments
-     * @return array{date: CarbonImmutable, row: ?DtrDay, filled: Collection<string, ManualTap>, editable: list<DtrSlot>}|null
+     * @return array{date: CarbonImmutable, row: ?DtrDay, filled: Collection<string, ManualTap>, editable: list<DtrSlot>, schedule: array<string, string>}|null
      */
     public static function day(DtrUpload $record, array $arguments): ?array
     {
@@ -168,7 +169,7 @@ class FillDayAction extends Action
             fn (DtrSlot $slot): bool => $row?->{$slot->value} !== null || in_array($slot, $result->fillable, true) || $filled->has($slot->value),
         ));
 
-        return $editable === [] ? null : ['date' => $date, 'row' => $row, 'filled' => $filled, 'editable' => $editable];
+        return $editable === [] ? null : ['date' => $date, 'row' => $row, 'filled' => $filled, 'editable' => $editable, 'schedule' => $result->scheduleTimes];
     }
 
     /** @param  array<string, mixed>  $arguments */
@@ -296,7 +297,22 @@ class FillDayAction extends Action
             Radio::make('reason')
                 ->options(ManualTapReason::class)
                 ->inline()
-                ->required(),
+                ->required()
+                // On a gate pass or OB, the blanks take the schedule's times; HR may still change them (HR, 2026-11-23).
+                ->live()
+                ->afterStateUpdated(function (mixed $state, Get $get, Set $set) use ($day): void {
+                    $reason = $state instanceof ManualTapReason ? $state : ManualTapReason::tryFrom((string) $state);
+
+                    if (! in_array($reason, [ManualTapReason::GatePass, ManualTapReason::OfficialBusiness], true)) {
+                        return;
+                    }
+
+                    foreach ($day['editable'] as $slot) {
+                        if (blank($get($slot->value)) && isset($day['schedule'][$slot->value])) {
+                            $set($slot->value, $day['schedule'][$slot->value]);
+                        }
+                    }
+                }),
             TextInput::make('remarks')
                 ->label('Note')
                 ->maxLength(255),

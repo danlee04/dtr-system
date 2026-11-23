@@ -202,15 +202,20 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([[], 'Official business (afternoon)'], [$day->missing, $day->note]);
     }
 
-    public function test_the_parts_of_a_day_on_an_ob_or_travel_order_take_the_schedules_times(): void
+    public function test_the_parts_of_a_day_on_an_ob_travel_order_or_gate_pass_take_the_schedules_times(): void
     {
         $employee = $this->regular();
         DayException::factory()->for($employee)->create(['type' => ExceptionType::TravelOrder, 'date_from' => '2026-10-14', 'date_to' => '2026-10-14']);
         DayException::factory()->for($employee)->create(['date_from' => '2026-10-13', 'date_to' => '2026-10-13', 'coverage' => LeaveCoverage::SecondHalf]);
-        // Leave and a gate pass are excused too, but the employee was not at work: no times.
+        // A gate pass shows them too (HR, 2026-11-23).
+        DayException::factory()->for($employee)->create(['type' => ExceptionType::GatePass, 'date_from' => '2026-10-16', 'date_to' => '2026-10-16', 'coverage' => LeaveCoverage::SecondHalf]);
+        // Leave is excused too, but the employee was not at work: no times.
         DayException::factory()->for($employee)->create(['type' => ExceptionType::Leave, 'date_from' => '2026-10-15', 'date_to' => '2026-10-15']);
 
-        $days = $this->compute($employee, ['2026-10-13' => ['am_arrival' => '08:05', 'am_departure' => '12:00']])->days;
+        $days = $this->compute($employee, [
+            '2026-10-13' => ['am_arrival' => '08:05', 'am_departure' => '12:00'],
+            '2026-10-16' => ['am_arrival' => '07:55', 'am_departure' => '12:00'],
+        ])->days;
 
         $away = fn (string $date): array => array_map(fn (array $slot): array => [$slot['time'], $slot['status']], $days[$date]->awayTimes);
         $this->assertSame([
@@ -224,7 +229,21 @@ class DtrCalculatorTest extends TestCase
             'pm_arrival' => ['13:00', AttendanceStatus::OfficialBusiness],
             'pm_departure' => ['17:00', AttendanceStatus::OfficialBusiness],
         ], $away('2026-10-13'));
+        $this->assertSame([
+            'pm_arrival' => ['13:00', AttendanceStatus::GatePass],
+            'pm_departure' => ['17:00', AttendanceStatus::GatePass],
+        ], $away('2026-10-16'));
         $this->assertSame([], $days['2026-10-15']->awayTimes);
+    }
+
+    public function test_a_day_carries_the_schedules_time_for_each_slot_and_the_flexi_time_out_due(): void
+    {
+        $regular = $this->compute($this->regular(), ['2026-10-02' => ['am_arrival' => '07:47', 'am_departure' => '12:05', 'pm_arrival' => '12:58']])->days['2026-10-02'];
+        $flexi = $this->compute($this->regular(['flexitime' => true]), ['2026-10-02' => ['am_arrival' => '09:00', 'am_departure' => '12:05', 'pm_arrival' => '12:58']])->days['2026-10-02'];
+
+        $this->assertSame(['am_arrival' => '08:00', 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00'], $regular->scheduleTimes);
+        // In at 9:00 on flexitime, 6:00 is due.
+        $this->assertSame('18:00', $flexi->scheduleTimes['pm_departure']);
     }
 
     public function test_leave_or_a_gate_pass_hr_marks_covers_its_part_of_the_day_like_an_ob(): void
