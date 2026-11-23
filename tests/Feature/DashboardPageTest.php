@@ -34,7 +34,16 @@ class DashboardPageTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get('/')
             ->assertOk()
-            ->assertSee(['Late and undertime', 'Leave to approve', 'Quick actions', 'Out today', 'Recent leave', 'Dela Cruz, Juan']);
+            ->assertSee(['Late and undertime', 'Leave to approve', 'Quick Actions', 'Out today', 'Recent leave', 'Dela Cruz, Juan']);
+    }
+
+    public function test_the_quick_actions_are_the_four_tiles_of_hrs_reference(): void
+    {
+        // Upload DTRs, File Leave, Add Employee and Duty Roster; the summary is in the sidebar (HR, 2026-11-23).
+        $this->actingAs(User::factory()->create())
+            ->get('/')
+            ->assertSeeInOrder(['Quick Actions', 'Upload DTRs', 'File Leave', 'Add Employee', 'Duty Roster', 'DTRs for'])
+            ->assertDontSeeHtml('class="dtr-dash-action-label">Summary');
     }
 
     public function test_the_sidebar_has_the_overview_group_and_the_user_with_sign_out_and_no_dark_mode(): void

@@ -717,4 +717,225 @@
     .dtr-dash-action.is-main:focus-visible .dtr-dash-action-icon {
         background-color: var(--primary-500);
     }
+
+    /*
+     * The staff dashboard after HR's second reference (2026-11-23): a soft blue page with
+     * pale waves at its top, white cards with rounder corners and a soft blue shadow,
+     * figures in solid tinted circles with a faint wave each, icons on the card titles,
+     * links with an arrow, and the next step as a wide blue button. An employee's own
+     * dashboard (.is-mine) keeps the plainer look.
+     */
+    body:has(.dtr-dash.is-staff) .fi-main-ctn {
+        background:
+            radial-gradient(130% 70% at 100% -12%, transparent 46%, color-mix(in oklab, var(--primary-100) 75%, transparent) 47%, transparent 58%),
+            radial-gradient(110% 60% at 85% -18%, transparent 50%, color-mix(in oklab, var(--primary-200) 45%, transparent) 51%, transparent 60%),
+            radial-gradient(60% 40% at 90% 0%, color-mix(in oklab, var(--primary-200) 55%, transparent), transparent 70%),
+            linear-gradient(180deg, color-mix(in oklab, var(--primary-50) 80%, var(--color-white)) 0%, color-mix(in oklab, var(--primary-50) 35%, var(--gray-50)) 45%, var(--gray-50) 100%);
+    }
+
+    /* The topbar lets the page's blue through, frosted, so cards scrolling under it stay soft. */
+    @media (min-width: 64rem) {
+        body:has(.dtr-dash.is-staff) .fi-topbar {
+            background-color: color-mix(in oklab, var(--primary-50) 55%, transparent);
+            backdrop-filter: blur(10px);
+        }
+    }
+
+    .dtr-dash.is-staff .dtr-dash-card {
+        border-radius: 1rem;
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 4%, transparent),
+            0 12px 32px -20px color-mix(in oklab, var(--primary-800) 45%, transparent);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-heading {
+        font-size: 1.75rem;
+        font-weight: var(--font-weight-bold);
+        letter-spacing: -0.01em;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-month {
+        inline-size: 13rem;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-month .fi-input-wrp {
+        border-radius: 0.75rem;
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent),
+            0 6px 16px -10px color-mix(in oklab, var(--primary-800) 40%, transparent);
+    }
+
+    /* K: the figure over a faint wave in the card's colour; the icon solid in a tinted circle. */
+    .dtr-dash.is-staff .dtr-dash-kpi {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-kpi.is-primary { --tone: var(--primary-500); }
+    .dtr-dash.is-staff .dtr-dash-kpi.is-success { --tone: var(--success-500); }
+    .dtr-dash.is-staff .dtr-dash-kpi.is-warning { --tone: var(--warning-500); }
+    .dtr-dash.is-staff .dtr-dash-kpi.is-violet { --tone: var(--violet-500); }
+
+    .dtr-dash.is-staff .dtr-dash-kpi-icon {
+        position: relative;
+        z-index: 1;
+        width: calc(var(--spacing) * 14);
+        height: calc(var(--spacing) * 14);
+        background-color: color-mix(in oklab, var(--tone) 16%, var(--color-white));
+        color: var(--tone);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-kpi-icon > svg {
+        width: calc(var(--spacing) * 7);
+        height: calc(var(--spacing) * 7);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-kpi-text {
+        position: relative;
+        z-index: 1;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-num {
+        font-weight: var(--font-weight-bold);
+    }
+
+    .dtr-dash-wave {
+        position: absolute;
+        inset-inline-end: 0;
+        bottom: 0;
+        width: 55%;
+        height: 70%;
+        fill: color-mix(in oklab, var(--tone) 24%, transparent);
+        -webkit-mask-image: linear-gradient(to bottom, black 25%, transparent);
+        mask-image: linear-gradient(to bottom, black 25%, transparent);
+        pointer-events: none;
+    }
+
+    /* D: View all stays at the title's right, as in the reference. */
+    .dtr-dash.is-staff .dtr-dash-d .dtr-dash-head {
+        flex-wrap: nowrap;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-head > .dtr-dash-link {
+        flex: none;
+        white-space: nowrap;
+    }
+
+    /* Links end in an arrow. */
+    .dtr-dash.is-staff .dtr-dash-link {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .dtr-dash-link-arrow {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    /* Card titles: a navy icon before each, the quick actions' bolt in blue. */
+    .dtr-dash.is-staff .dtr-dash-title-icon {
+        color: var(--primary-800);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-title-icon.is-accent {
+        color: var(--primary-600);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-key {
+        border-radius: 9999px;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-track {
+        border-radius: 0.375rem;
+        background-color: var(--gray-100);
+    }
+
+    /* C: four tiles, two by two, the icon blue and large over a bold label. */
+    .dtr-dash.is-staff .dtr-dash-actions.is-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action {
+        gap: calc(var(--spacing) * 2.5);
+        border-radius: 0.875rem;
+        background-color: var(--color-white);
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent),
+            0 8px 20px -16px color-mix(in oklab, var(--primary-800) 45%, transparent);
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-800);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
+    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        background-color: var(--primary-50);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        outline-color: var(--primary-600);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action-icon > svg {
+        width: calc(var(--spacing) * 7);
+        height: calc(var(--spacing) * 7);
+    }
+
+    /* D and H: the bars a little thicker. */
+    .dtr-dash.is-staff .dtr-dash-progress {
+        height: 0.625rem;
+    }
+
+    .dtr-dash.is-staff .dtr-dash-progress.is-thin {
+        height: 0.375rem;
+    }
+
+    /* E: the note in an amber box with a warning icon, its count in amber, then the wide button. */
+    .dtr-dash.is-staff .dtr-dash-note {
+        align-items: flex-start;
+        background-color: color-mix(in oklab, var(--warning-400) 14%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--warning-400) 35%, transparent);
+        color: var(--gray-800);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-note strong {
+        font-weight: var(--font-weight-semibold);
+        color: var(--warning-700);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-note.is-done {
+        background-color: color-mix(in oklab, var(--success-400) 12%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--success-400) 35%, transparent);
+    }
+
+    .dtr-dash-warn {
+        display: grid;
+        flex: none;
+        place-items: center;
+        color: var(--warning-600);
+    }
+
+    .dtr-dash-note.is-done .dtr-dash-warn {
+        color: var(--success-600);
+    }
+
+    .dtr-dash-warn > svg {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash.is-staff .dtr-dash-step {
+        width: 100%;
+        min-height: calc(var(--spacing) * 12);
+        margin-top: auto;
+        border-radius: 0.75rem;
+    }
+
+    /* G: a thicker gauge. */
+    .dtr-dash.is-staff .dtr-dash-gauge path {
+        stroke-width: 18;
+    }
 </style>

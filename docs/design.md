@@ -414,6 +414,18 @@ Filament notifications:
 
 ### Dashboard pieces
 
+- **The staff dashboard's look** (HR's second reference, 2026-11-23; `.dtr-dash.is-staff`,
+  so an employee's own dashboard keeps the plainer look): a soft blue page with pale
+  arcs at its top (on `.fi-main-ctn`, the topbar frosted over it), the heading 28px
+  bold, the month select with a calendar icon, white cards with 16px corners and a
+  soft blue shadow; the four figures with the icon solid in a tinted circle (blue
+  calendar, green people, amber document, violet check) and a faint wave in the same
+  colour at the card's right (`.dtr-dash-wave`, SVG); a navy icon before each card
+  title, "Attendance Overview" and "Quick Actions" in title case, round legend dots;
+  four quick actions two by two (Upload DTRs, File Leave, Add Employee, Duty Roster;
+  the Summary tile left, 2026-11-23); links ending in an arrow; Upload the rest's note
+  in an amber box with a warning icon and its count in amber, then the step as a wide
+  blue button (`.dtr-dash-step`).
 - **The staff dashboard's layout** (HR's reference, 2026-11-20): a visible
   "Dashboard" heading (`.dtr-dash-heading`, no amber mark; the page's own h1
   stays for screen readers) with a month select at the right (Livewire `month`: last month and the months with a DTR, as DTR Uploads lists them;

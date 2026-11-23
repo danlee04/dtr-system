@@ -1,9 +1,10 @@
 {{--
-    The staff dashboard, laid out after HR's reference (2026-11-20): a heading with the
-    month picker, four figures, the week's chart beside the quick actions, then the month's
-    progress, and today's leave at the foot. The page (App\Filament\Pages\Dashboard) hands
-    over the figures DashboardFigures works out. The bars and the gauge are plain HTML and
-    SVG, so no chart library is loaded, and every figure is also written out in words.
+    The staff dashboard, laid out after HR's reference (2026-11-20), restyled after HR's
+    second reference (2026-11-23): a soft blue page, a heading with the month picker, four
+    figures with a faint wave each, the week's chart beside four quick actions, then the
+    month's progress, and today's leave at the foot. The page (App\Filament\Pages\Dashboard)
+    hands over the figures DashboardFigures works out. The bars, the waves and the gauge are
+    plain HTML and SVG, so no chart library is loaded, and every figure is also written out in words.
 --}}
 @php
     use App\Enums\LeaveApplicationStatus;
@@ -25,24 +26,24 @@
     $weekdays = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
     $tallest = max(1, ...array_map(fn (array $minutes): int => $minutes['late'] + $minutes['undertime'], $month['byWeekday']));
     $leaveColors = ['Vacation' => 'var(--success-500)', 'Sick' => 'var(--info-500)', 'Special privilege' => 'var(--warning-400)', 'Wellness' => 'var(--danger-400)', 'Others' => 'var(--gray-400)'];
+    // Four, two by two, as HR's reference (2026-11-23); the Monthly Summary is in the sidebar.
     $actions = [
         ['Upload DTRs', Heroicon::OutlinedArrowUpTray, $uploadUrl],
-        ['File leave', Heroicon::OutlinedDocumentPlus, LeaveApplicationResource::getUrl('index', ['action' => 'fileLeave'])],
-        ['Add employee', Heroicon::OutlinedUserPlus, EmployeeResource::getUrl('index', ['action' => 'create'])],
-        ['Duty roster', Heroicon::OutlinedCalendarDays, DutyRoster::getUrl()],
-        ['Summary', Heroicon::OutlinedDocumentChartBar, MonthlySummary::getUrl()],
+        ['File Leave', Heroicon::OutlinedDocumentText, LeaveApplicationResource::getUrl('index', ['action' => 'fileLeave'])],
+        ['Add Employee', Heroicon::OutlinedUserPlus, EmployeeResource::getUrl('index', ['action' => 'create'])],
+        ['Duty Roster', Heroicon::OutlinedCalendarDays, DutyRoster::getUrl()],
     ];
     $figures = [
-        ['k1', Heroicon::OutlinedClock, 'is-info', $month['dayEquivalent'], 'days', "Late and undertime in {$lastMonth->format('F Y')}", null, null],
-        ['k2', Heroicon::OutlinedUserMinus, 'is-success', (string) $month['absent'], 'days', "Absences in {$monthName}", null, null],
-        ['k3', Heroicon::OutlinedDocumentCheck, 'is-warning', (string) $pending, null, 'Leave to approve', 'Review them', LeaveApplicationResource::getUrl('index', ['filters' => ['status' => ['value' => LeaveApplicationStatus::Pending->value]]])],
-        ['k4', Heroicon::OutlinedMapPin, 'is-primary', (string) count($outToday), null, 'Out today', 'See who', '#dash-o'],
+        ['k1', Heroicon::CalendarDays, 'is-primary', $month['dayEquivalent'], 'days', "Late and undertime in {$lastMonth->format('F Y')}", null, null],
+        ['k2', Heroicon::Users, 'is-success', (string) $month['absent'], 'days', "Absences in {$monthName}", null, null],
+        ['k3', Heroicon::DocumentText, 'is-warning', (string) $pending, null, 'Leave to approve', 'Review them', LeaveApplicationResource::getUrl('index', ['filters' => ['status' => ['value' => LeaveApplicationStatus::Pending->value]]])],
+        ['k4', Heroicon::CheckCircle, 'is-violet', (string) count($outToday), null, 'Out today', 'See who', '#dash-o'],
     ];
 @endphp
 
 @include('filament.dashboard-styles')
 
-<div class="dtr-dash">
+<div class="dtr-dash is-staff">
     {{-- The heading HR sees; the page's own h1 stays for screen readers, so this one is not read twice. --}}
     <div class="dtr-dash-top">
         <div class="dtr-dash-stack">
@@ -52,7 +53,7 @@
         <label class="dtr-dash-month">
             <span class="fi-sr-only">Month shown</span>
             {{-- The months there is something to show for, as DTR Uploads' month filter lists them. --}}
-            <x-filament::input.wrapper>
+            <x-filament::input.wrapper :prefix-icon="Heroicon::OutlinedCalendar" inline-prefix>
                 <x-filament::input.select wire:model.live="month">
                     @foreach ($months as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
@@ -62,17 +63,20 @@
         </label>
     </div>
 
-    {{-- K: four figures. --}}
+    {{-- K: four figures, each with a faint wave in its colour at the right. --}}
     @foreach ($figures as [$key, $icon, $tone, $value, $unit, $label, $link, $url])
-        <section class="dtr-dash-card dtr-dash-kpi dtr-dash-{{ $key }}" aria-labelledby="dash-{{ $key }}">
-            <span class="dtr-dash-kpi-icon {{ $tone }}" aria-hidden="true"><x-filament::icon :icon="$icon" /></span>
+        <section class="dtr-dash-card dtr-dash-kpi dtr-dash-{{ $key }} {{ $tone }}" aria-labelledby="dash-{{ $key }}">
+            <span class="dtr-dash-kpi-icon" aria-hidden="true"><x-filament::icon :icon="$icon" /></span>
             <div class="dtr-dash-kpi-text">
                 <p class="dtr-dash-num">{{ $value }} @if ($unit)<small>{{ $unit }}</small>@endif</p>
                 <h2 id="dash-{{ $key }}" class="dtr-dash-sub">{{ $label }}</h2>
                 @if ($link)
-                    <a class="dtr-dash-link" href="{{ $url }}">{{ $link }}</a>
+                    <a class="dtr-dash-link" href="{{ $url }}">{{ $link }} <x-filament::icon :icon="Heroicon::ArrowRight" class="dtr-dash-link-arrow" /></a>
                 @endif
             </div>
+            <svg class="dtr-dash-wave" viewBox="0 0 160 64" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 52 C 22 50, 30 30, 52 34 S 84 46, 104 28 S 140 12, 160 6 L 160 64 L 0 64 Z" />
+            </svg>
         </section>
     @endforeach
 
@@ -80,9 +84,9 @@
     <section class="dtr-dash-card dtr-dash-a" aria-labelledby="dash-a">
         <div class="dtr-dash-head">
             <div class="dtr-dash-titled">
-                <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedChartBar" /></span>
+                <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::ChartBar" /></span>
                 <div>
-                    <h2 id="dash-a" class="dtr-dash-title">Attendance overview</h2>
+                    <h2 id="dash-a" class="dtr-dash-title">Attendance Overview</h2>
                     <p class="dtr-dash-sub">Late and undertime in {{ $lastMonth->format('F Y') }}, by weekday</p>
                 </div>
             </div>
@@ -120,17 +124,17 @@
         <p class="dtr-dash-muted">{{ $month['dayEquivalent'] }} days of leave by the CSC table, from {{ $month['dtrs'] }} of {{ $month['staff'] }} staff's DTRs. The figures refresh every 10 minutes.</p>
     </section>
 
-    {{-- C: quick actions. --}}
+    {{-- C: quick actions, two by two. --}}
     <section class="dtr-dash-card dtr-dash-c" aria-labelledby="dash-c">
         <div class="dtr-dash-titled">
-            <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedBolt" /></span>
-            <h2 id="dash-c" class="dtr-dash-title">Quick actions</h2>
+            <span class="dtr-dash-title-icon is-accent" aria-hidden="true"><x-filament::icon :icon="Heroicon::Bolt" /></span>
+            <h2 id="dash-c" class="dtr-dash-title">Quick Actions</h2>
         </div>
         <div class="dtr-dash-actions is-tiles">
             @foreach ($actions as [$label, $icon, $url])
                 <a class="dtr-dash-action" href="{{ $url }}">
                     <span class="dtr-dash-action-icon"><x-filament::icon :icon="$icon" /></span>
-                    {{ $label }}
+                    <span class="dtr-dash-action-label">{{ $label }}</span>
                 </a>
             @endforeach
         </div>
@@ -139,11 +143,14 @@
     {{-- D: the month's DTRs uploaded, and marked final. --}}
     <section class="dtr-dash-card dtr-dash-d" aria-labelledby="dash-d">
         <div class="dtr-dash-head">
-            <div>
-                <h2 id="dash-d" class="dtr-dash-title">DTRs for {{ $monthName }}</h2>
-                <p class="dtr-dash-sub">Staff who earn leave credits</p>
+            <div class="dtr-dash-titled">
+                <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::ClipboardDocumentList" /></span>
+                <div>
+                    <h2 id="dash-d" class="dtr-dash-title">DTRs for {{ $monthName }}</h2>
+                    <p class="dtr-dash-sub">Staff who earn leave credits</p>
+                </div>
             </div>
-            <a class="dtr-dash-link" href="{{ DtrUploadResource::getUrl('index') }}">View all</a>
+            <a class="dtr-dash-link" href="{{ DtrUploadResource::getUrl('index') }}">View all <x-filament::icon :icon="Heroicon::ArrowRight" class="dtr-dash-link-arrow" /></a>
         </div>
         {{-- Each bar under its label and count; the second is closing the month, the uploaded HR has marked final. --}}
         <div class="dtr-dash-meters">
@@ -168,40 +175,52 @@
         </div>
     </section>
 
-    {{-- E: what to do next. --}}
+    {{-- E: what to do next: a note in amber, then the step as a wide blue button. --}}
     <section class="dtr-dash-card dtr-dash-e" aria-labelledby="dash-e">
         @switch ($nextStep['step'])
             @case('opening-balances')
-                <h2 id="dash-e" class="dtr-dash-title">Opening balances</h2>
-                <div class="dtr-dash-note">
-                    <span class="dtr-dash-bulb" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedLightBulb" /></span>
-                    <p>{{ $nextStep['done'] }} of {{ $nextStep['of'] }} staff have theirs. The system starts counting leave on {{ $takeover->format('F j') }}, from these balances.</p>
+                <div class="dtr-dash-titled">
+                    <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::Scale" /></span>
+                    <h2 id="dash-e" class="dtr-dash-title">Opening balances</h2>
                 </div>
-                <a class="dtr-dash-link" href="{{ LeaveOpeningBalances::getUrl() }}">Open Opening Balances</a>
+                <div class="dtr-dash-note">
+                    <span class="dtr-dash-warn" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedExclamationCircle" /></span>
+                    <p><strong>{{ $nextStep['done'] }} of {{ $nextStep['of'] }}</strong> staff have theirs. The system starts counting leave on {{ $takeover->format('F j') }}, from these balances.</p>
+                </div>
+                <x-filament::button tag="a" :href="LeaveOpeningBalances::getUrl()" size="lg" :icon="Heroicon::Scale" class="dtr-dash-step">Open Opening Balances</x-filament::button>
                 @break
             @case('uploads')
-                <h2 id="dash-e" class="dtr-dash-title">Upload the rest</h2>
-                <div class="dtr-dash-note">
-                    <span class="dtr-dash-bulb" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedLightBulb" /></span>
-                    <p>{{ $nextStep['done'] }} of {{ $nextStep['of'] }} staff have a DTR for {{ $monthName }}. Their late, undertime and absences count only once it is in.</p>
+                <div class="dtr-dash-titled">
+                    <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::CloudArrowUp" /></span>
+                    <h2 id="dash-e" class="dtr-dash-title">Upload the rest</h2>
                 </div>
-                <a class="dtr-dash-link" href="{{ $uploadUrl }}">Upload DTRs</a>
+                <div class="dtr-dash-note">
+                    <span class="dtr-dash-warn" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedExclamationCircle" /></span>
+                    <p><strong>{{ $nextStep['done'] }} of {{ $nextStep['of'] }}</strong> staff have a DTR for {{ $monthName }}. Their late, undertime and absences count only once it is in.</p>
+                </div>
+                <x-filament::button tag="a" :href="$uploadUrl" size="lg" :icon="Heroicon::CloudArrowUp" class="dtr-dash-step">Upload DTRs</x-filament::button>
                 @break
             @default
-                <h2 id="dash-e" class="dtr-dash-title">All caught up</h2>
-                <div class="dtr-dash-note">
-                    <span class="dtr-dash-bulb" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedLightBulb" /></span>
+                <div class="dtr-dash-titled">
+                    <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::CheckBadge" /></span>
+                    <h2 id="dash-e" class="dtr-dash-title">All caught up</h2>
+                </div>
+                <div class="dtr-dash-note is-done">
+                    <span class="dtr-dash-warn" aria-hidden="true"><x-filament::icon :icon="Heroicon::OutlinedCheckCircle" /></span>
                     <p>Every DTR for {{ $monthName }} is in. The Monthly Summary has the month's totals.</p>
                 </div>
-                <a class="dtr-dash-link" href="{{ MonthlySummary::getUrl() }}">Open Monthly Summary</a>
+                <x-filament::button tag="a" :href="MonthlySummary::getUrl()" size="lg" :icon="Heroicon::DocumentChartBar" class="dtr-dash-step">Open Monthly Summary</x-filament::button>
         @endswitch
     </section>
 
     {{-- G: the share of days at work begun on time. --}}
     <section class="dtr-dash-card dtr-dash-g" aria-labelledby="dash-g">
-        <div>
-            <h2 id="dash-g" class="dtr-dash-title">On time</h2>
-            <p class="dtr-dash-sub">Days at work in {{ $monthName }} with no late arrival</p>
+        <div class="dtr-dash-titled">
+            <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::Clock" /></span>
+            <div>
+                <h2 id="dash-g" class="dtr-dash-title">On time</h2>
+                <p class="dtr-dash-sub">Days at work in {{ $monthName }} with no late arrival</p>
+            </div>
         </div>
 
         @if ($month['onTimeRate'] === null)
@@ -219,9 +238,12 @@
 
     {{-- H: the offices whose month is not closed, a DTR not uploaded or not final, furthest behind first. --}}
     <section class="dtr-dash-card dtr-dash-h" aria-labelledby="dash-h">
-        <div>
-            <h2 id="dash-h" class="dtr-dash-title">Offices not done</h2>
-            <p class="dtr-dash-sub">{{ $lastMonth->format('F Y') }}, furthest behind first</p>
+        <div class="dtr-dash-titled">
+            <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::BuildingOffice2" /></span>
+            <div>
+                <h2 id="dash-h" class="dtr-dash-title">Offices not done</h2>
+                <p class="dtr-dash-sub">{{ $lastMonth->format('F Y') }}, furthest behind first</p>
+            </div>
         </div>
 
         {{-- Three, so the card is no taller than the ones beside it; View all lists the rest. --}}
@@ -247,15 +269,18 @@
                     + {{ count($officesNotDone) - 3 }} more {{ str('office')->plural(count($officesNotDone) - 3) }}
                 @endif
             </span>
-            <a class="dtr-dash-link" href="{{ DtrUploadResource::getUrl('index', ['filters' => ['not_final' => ['isActive' => true]]]) }}">View all</a>
+            <a class="dtr-dash-link" href="{{ DtrUploadResource::getUrl('index', ['filters' => ['not_final' => ['isActive' => true]]]) }}">View all <x-filament::icon :icon="Heroicon::ArrowRight" class="dtr-dash-link-arrow" /></a>
         </div>
     </section>
 
     {{-- O: who is out today. --}}
     <section id="dash-o" class="dtr-dash-card dtr-dash-o" aria-labelledby="dash-o-title">
-        <div>
-            <h2 id="dash-o-title" class="dtr-dash-title">Out today</h2>
-            <p class="dtr-dash-sub">On leave, official business or travel</p>
+        <div class="dtr-dash-titled">
+            <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::UserGroup" /></span>
+            <div>
+                <h2 id="dash-o-title" class="dtr-dash-title">Out today</h2>
+                <p class="dtr-dash-sub">On leave, official business or travel</p>
+            </div>
         </div>
         @if ($outToday === [])
             <div class="dtr-dash-empty">
@@ -276,9 +301,12 @@
 
     {{-- F: this year's leave by type. --}}
     <section class="dtr-dash-card dtr-dash-f" aria-labelledby="dash-f">
-        <div>
-            <h2 id="dash-f" class="dtr-dash-title">Leave in {{ now()->year }}</h2>
-            <p class="dtr-dash-sub">Days filed, by type</p>
+        <div class="dtr-dash-titled">
+            <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::ChartPie" /></span>
+            <div>
+                <h2 id="dash-f" class="dtr-dash-title">Leave in {{ now()->year }}</h2>
+                <p class="dtr-dash-sub">Days filed, by type</p>
+            </div>
         </div>
         <p class="dtr-dash-num">{{ $days($leave['total']) }} <small>days</small></p>
 
@@ -305,8 +333,11 @@
     {{-- I: the newest leave applications. --}}
     <section class="dtr-dash-card dtr-dash-i" aria-labelledby="dash-i">
         <div class="dtr-dash-head">
-            <h2 id="dash-i" class="dtr-dash-title">Recent leave</h2>
-            <a class="dtr-dash-link" href="{{ LeaveApplicationResource::getUrl('index') }}">See all</a>
+            <div class="dtr-dash-titled">
+                <span class="dtr-dash-title-icon" aria-hidden="true"><x-filament::icon :icon="Heroicon::DocumentText" /></span>
+                <h2 id="dash-i" class="dtr-dash-title">Recent leave</h2>
+            </div>
+            <a class="dtr-dash-link" href="{{ LeaveApplicationResource::getUrl('index') }}">See all <x-filament::icon :icon="Heroicon::ArrowRight" class="dtr-dash-link-arrow" /></a>
         </div>
 
         @if ($recent->isEmpty())

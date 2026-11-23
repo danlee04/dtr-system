@@ -64,7 +64,7 @@
         Every table's search at its left (HR, 2026-11-10), where the eye starts; the
         filter and column buttons stay at its right. Filament pushes the whole group right.
     */
-    .fi-ta-header-toolbar > :nth-child(2) {
+    .fi-ta-header-toolbar> :nth-child(2) {
         flex: 1;
         margin-inline-start: 0;
     }
@@ -94,7 +94,7 @@
         No toolbar action showing (none, or bulk actions hidden until rows are picked):
         no empty slot, and no gap, before the search, so it lines up with the table.
     */
-    .fi-ta-header-toolbar > .fi-ta-actions:not(:has(> :not([style*="display: none"]))) {
+    .fi-ta-header-toolbar>.fi-ta-actions:not(:has(> :not([style*="display: none"]))) {
         display: none;
     }
 
@@ -191,6 +191,7 @@
     }
 
     @media (min-width: 64rem) {
+
         /* The topbar starts where the sidebar ends, as the content does; the brand stays in the sidebar. */
         .fi-body-has-topbar .fi-topbar-ctn {
             margin-inline-start: var(--sidebar-width);
@@ -217,7 +218,7 @@
             margin-inline-start: 0;
         }
 
-        .fi-topbar-end > .fi-global-search-ctn {
+        .fi-topbar-end>.fi-global-search-ctn {
             margin-inline-end: auto;
         }
 
@@ -345,14 +346,14 @@
     }
 
     /* The brand centred in the sidebar (HR, 2026-11-23). */
-    .fi-sidebar-header-logo-ctn > a {
+    .fi-sidebar-header-logo-ctn>a {
         display: flex;
         justify-content: center;
         padding: calc(var(--spacing) * 2);
         border-radius: calc(0.625rem - 1px);
     }
 
-    .fi-sidebar-header-logo-ctn > a:hover {
+    .fi-sidebar-header-logo-ctn>a:hover {
         background-color: var(--dtr-side-hover);
     }
 
@@ -417,19 +418,19 @@
 
     /* Filament marks keyboard focus with a fill alone, the same as hover here; a white ring tells them apart. */
     .fi-sidebar .fi-sidebar-item-btn:focus-visible,
-    .fi-sidebar-header-logo-ctn > a:focus-visible,
+    .fi-sidebar-header-logo-ctn>a:focus-visible,
     .dtr-sidebar-user-link:focus-visible {
         outline: 2px solid var(--color-white);
         outline-offset: -2px;
     }
 
     /* The page that is open: a bright blue pill, white words, a shadow under it. */
-    .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    .fi-sidebar .fi-sidebar-item.fi-active>.fi-sidebar-item-btn {
         background: var(--dtr-side-current);
         box-shadow: 0 2px 8px color-mix(in oklab, var(--primary-950) 45%, transparent);
     }
 
-    .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+    .fi-sidebar .fi-sidebar-item.fi-active>.fi-sidebar-item-btn>.fi-sidebar-item-label {
         color: var(--color-white);
         font-weight: var(--font-weight-semibold);
     }
