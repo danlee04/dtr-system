@@ -444,9 +444,19 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* Room between a day's status badge and its "+ OB/TO" button. */
+    /*
+     * Room between a day's status badge and its "+ OB/Leave" or "Edit" button, on one line
+     * from a laptop's width (HR, 2026-11-23). On a portrait tablet they may wrap: one line
+     * there scrolls the grid sideways, and an OB row is two lines tall there anyway.
+     */
     .dtr-record-days .dtr-grid-badges {
         gap: calc(var(--spacing) * 2);
+    }
+
+    @media (min-width: 64rem) {
+        .dtr-record-days .dtr-grid-badges {
+            flex-wrap: nowrap;
+        }
     }
 
     /* A time HR may click reads at the grid's size, not the link's own, so its column is no wider than a printed one. */
@@ -476,6 +486,31 @@
             gap: calc(var(--spacing) * 1);
             padding-inline: 0.5rem;
         }
+    }
+
+    /* "+ Add", "+ OB/Leave" and "Edit" read a size under the grid's text, as tall as a badge (HR, 2026-11-23). */
+    .dtr-record-days .dtr-grid-add,
+    .dtr-record-days .dtr-grid-ob,
+    .dtr-record-legend .dtr-grid-add,
+    .dtr-record-legend .dtr-grid-ob {
+        font-size: var(--text-xs);
+        line-height: var(--text-xs--line-height);
+    }
+
+    .dtr-record-days .dtr-grid-add > .fi-icon,
+    .dtr-record-days .dtr-grid-ob > .fi-icon,
+    .dtr-record-legend .dtr-grid-ob > .fi-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    /* "Edit" on a day an entry covers: the box of "+ OB/Leave" with less room around the word. */
+    .dtr-grid-edit,
+    .dtr-record-days .dtr-grid-edit {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 0.5);
+        padding: 0.125rem 0.375rem;
     }
 
     /* A narrow column wraps the badges onto lines; it never cuts "Official business" short. */

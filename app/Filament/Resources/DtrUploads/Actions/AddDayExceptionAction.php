@@ -46,7 +46,7 @@ class AddDayExceptionAction extends Action
             ->authorize(fn (DtrUpload $record): bool => (auth()->user()?->can('create', DayException::class) ?? false) && auth()->user()->can('update', $record))
             ->visible(fn (DtrUpload $record, array $arguments): bool => self::day($record, $arguments) !== null)
             ->modalHeading(fn (DtrUpload $record, array $arguments): string => 'OB, TO, leave or gate pass from '.(self::day($record, $arguments)['date'] ?? null)?->format('D, M j'))
-            ->modalDescription('From the signed paper. Leave marked here takes no credits. It is kept on the OB, TO, leave & gate pass screen too, where it can be changed or removed.')
+            ->modalDescription('From the signed paper. Leave marked here takes no credits. It can be changed or removed later, here or on the OB, TO, leave & gate pass screen.')
             ->modalWidth(Width::TwoExtraLarge)
             ->modalSubmitActionLabel('Save')
             ->fillForm(fn (DtrUpload $record, array $arguments): array => [

@@ -240,6 +240,11 @@ decoration.
 | `tr.is-absent` | An absent date: a faint red tint, always with its Absent badge |
 | `.dtr-grid-add` | A blank HR may fill: a dashed amber box ("+ Add") on a Filament link action |
 | `.dtr-grid-ob` | "+ OB/Leave" beside a day's status badge: the dashed box of `.dtr-grid-add`, in the info blue of the OB and travel order badges |
+| `.dtr-grid-edit` | With `.dtr-grid-ob`: the "Edit" of an entry already recorded, with less room around the word |
+
+In the DTR modal and its legend, "+ Add", "+ OB/Leave" and "Edit" use xs text
+and a 14px icon, as tall as the badges beside them (HR, 2026-11-23: the
+grid's own size made them loud).
 | `.dtr-grid-hr` / `.dtr-grid-hr-tag` | A time HR copied in: the time as text, then a blue "HR" tag |
 | `.dtr-grid-printed` | A printed time HR may correct: plain text on a Filament link action, a dotted underline on hover or focus |
 
@@ -303,7 +308,7 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   what it deducts, or why nothing, and how many blanks are still empty) or
   **Reopen** (one click, no reason and no confirmation, HR 2026-11-20; it can
   be marked final again). While final, + Add, the printed-time links,
-  + OB/Leave and Delete are gone.
+  + OB/Leave, Edit and Delete are gone.
 - **Days:** a grid with A.M. and P.M. as group headings over Arrival and
   Departure, as on the paper form. Grey rows are not work dates, red-tinted rows
   are absent, and Notes say what is missing in amber. An absent day shows its
@@ -319,11 +324,21 @@ month. Its pieces, top to bottom (`filament/dtr-uploads/dtr.blade.php`):
   or a half with both taps blank), with an `aria-label` naming the date. It opens
   "OB, TO, leave or gate pass from Fri, Oct 16": the OB, Leave & Gate Pass form
   without its employee, three across, the date and the untapped part filled in.
+- **Edit** (pencil icon and the word only, `.dtr-grid-ob.dtr-grid-edit`: the
+  same box a size smaller, as tall as the badge) beside the status of each day
+  an entry covers, one link per entry, on the badge's line from 1024 px; a
+  tooltip and `aria-label` name the entry and its dates, "Change or remove the
+  official business, Oct 5–6, 2026" (HR, 2026-11-23: a mistake made from the
+  DTR must be fixable there; "Edit OB" was too big and broke the line). It opens
+  "Official business: Oct 5–6, 2026", the same form filled in, with **Save**
+  and an outlined red **Remove**. Leave filed as an application is not listed:
+  it is changed on the leave screens.
 - **On an OB or travel order** a blank of the covered day or half shows the
   schedule's time with an "OB" or "TO" tag, as the paper form does; it is shown,
   not stored, so removing the entry removes the times. Leave and a gate pass
   show none.
-- **Legend** under the grid for + Add, HR, OB and TO, and the grey rows.
+- **Legend** under the grid for + Add, + OB/Leave, Edit, HR, OB and TO, and
+  the grey rows.
 - **Fill-in modal:** "Fill in Fri, Oct 2", the date's four slots in a row
   (printed times as read-only text marked Printed, the blanks and HR's times as
   time inputs, the clicked one focused), the reason as two radio choices, an

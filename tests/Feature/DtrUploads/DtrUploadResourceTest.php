@@ -615,7 +615,8 @@ class DtrUploadResourceTest extends TestCase
 
         Livewire::test(ListDtrUploads::class)
             ->mountAction(TestAction::make('view')->table($upload))
-            ->assertMountedActionModalSeeHtml('<span class="dtr-grid-time">8:00 AM</span> <span class="dtr-grid-hr-tag">OB</span>');
+            ->assertMountedActionModalSeeHtml('<span class="dtr-grid-time">8:00 AM</span> <span class="dtr-grid-hr-tag">OB</span>')
+            ->assertMountedActionModalSeeHtml('aria-label="Change or remove the official business, Oct 29, 2026"');
     }
 
     public function test_hr_marks_leave_for_an_absent_day_from_the_dtr_without_an_application(): void
@@ -666,6 +667,56 @@ class DtrUploadResourceTest extends TestCase
             ->assertHasFormErrors(['date_from']);
 
         $this->assertSame(1, DayException::query()->count());
+    }
+
+    /** @return list<TestAction> the DTR's view, then the form of an OB, travel order, leave or gate pass already recorded */
+    private function editException(DtrUpload $upload, DayException $exception): array
+    {
+        return [
+            TestAction::make('view')->table($upload),
+            TestAction::make('editDayException')->schemaComponent('dtr')->arguments(['exception' => $exception->getKey()]),
+        ];
+    }
+
+    public function test_hr_changes_an_ob_recorded_by_mistake_from_the_dtr(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $exception = DayException::factory()->for($upload->employee)->create(['type' => ExceptionType::OfficialBusiness, 'date_from' => '2026-10-29', 'date_to' => '2026-10-29', 'coverage' => LeaveCoverage::WholeDay]);
+
+        // Saved over its own dates: the entry being changed is no overlap.
+        Livewire::test(ListDtrUploads::class)
+            ->callAction($this->editException($upload, $exception), data: ['type' => ExceptionType::Leave->value, 'remarks' => 'Sick'])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Leave updated: Oct 29, 2026');
+
+        $this->assertSame([ExceptionType::Leave, '2026-10-29', 'Sick'], [$exception->fresh()->type, $exception->fresh()->date_from->toDateString(), $exception->fresh()->remarks]);
+    }
+
+    public function test_hr_removes_an_ob_recorded_by_mistake_from_the_dtr(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $exception = DayException::factory()->for($upload->employee)->create(['type' => ExceptionType::OfficialBusiness, 'date_from' => '2026-10-29', 'date_to' => '2026-10-29']);
+
+        Livewire::test(ListDtrUploads::class)
+            ->callAction([...$this->editException($upload, $exception), TestAction::make('removeDayException')])
+            ->assertNotified('Official business removed: Oct 29, 2026')
+            ->assertMountedActionModalSee('OB/Leave');
+
+        $this->assertModelMissing($exception);
+    }
+
+    public function test_only_this_dtrs_entries_can_be_changed_from_it(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = $this->uploadWithoutTimeOut();
+        $someoneElses = DayException::factory()->create(['date_from' => '2026-10-29', 'date_to' => '2026-10-29']);
+        $december = DayException::factory()->for($upload->employee)->create(['date_from' => '2026-12-01', 'date_to' => '2026-12-01']);
+
+        foreach ([$someoneElses, $december] as $exception) {
+            Livewire::test(ListDtrUploads::class)->assertActionHidden($this->editException($upload, $exception));
+        }
     }
 
     public function test_days_with_taps_in_each_half_or_off_work_offer_no_ob(): void
@@ -747,7 +798,8 @@ class DtrUploadResourceTest extends TestCase
         config(['leave.start_date' => '2026-10-01']);
         $this->actingAs(User::factory()->create());
         $upload = $this->uploadWithoutTimeOut();
-        $locked = [$this->fillIn($upload, '2026-10-02'), $this->addException($upload, '2026-10-29'), TestAction::make('delete')->table($upload), $this->footer($upload, 'finalize')];
+        $exception = DayException::factory()->for($upload->employee)->create(['date_from' => '2026-10-28', 'date_to' => '2026-10-28']);
+        $locked = [$this->fillIn($upload, '2026-10-02'), $this->addException($upload, '2026-10-29'), $this->editException($upload, $exception), TestAction::make('delete')->table($upload), $this->footer($upload, 'finalize')];
 
         $open = Livewire::test(ListDtrUploads::class)->assertActionHidden($this->footer($upload, 'reopen'));
         foreach ($locked as $action) {

@@ -4,6 +4,7 @@
     // Only HR's view registers these; on My DTR there are none, for anyone.
     $fill = $getAction('fillDay');
     $addException = $getAction('addDayException');
+    $editException = $getAction('editDayException');
 @endphp
 @include('filament.entry-grid')
 
@@ -115,6 +116,12 @@
                                 @if ($exceptionTrigger?->isVisible())
                                     {{ $exceptionTrigger }}
                                 @endif
+                                @foreach ($editException ? $row['exceptions'] : [] as $exceptionId)
+                                    @php($editTrigger = $editException(['exception' => $exceptionId]))
+                                    @if ($editTrigger->isVisible())
+                                        {{ $editTrigger }}
+                                    @endif
+                                @endforeach
                             </span>
                         </td>
                         <td class="dtr-record-notes">
@@ -135,6 +142,9 @@
             @endif
             @if ($addException)
                 <span><span class="dtr-grid-ob">+ OB/Leave</span> an OB, travel order, leave or gate pass for a day with no tap</span>
+            @endif
+            @if ($editException)
+                <span><span class="dtr-grid-ob dtr-grid-edit"><x-filament::icon :icon="\Filament\Support\Icons\Heroicon::OutlinedPencilSquare" /> Edit</span> change or remove an OB, travel order, leave or gate pass recorded by mistake</span>
             @endif
             <span><span class="dtr-grid-hr-tag">HR</span> a time HR copied in</span>
             <span><span class="dtr-grid-hr-tag">OB</span> <span class="dtr-grid-hr-tag">TO</span> the schedule's time on an OB or travel order</span>

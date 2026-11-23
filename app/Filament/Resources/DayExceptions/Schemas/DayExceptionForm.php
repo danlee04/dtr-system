@@ -34,12 +34,13 @@ class DayExceptionForm
 
     /**
      * The entry's own fields: here, and on a DTR's view, where the employee is
-     * the DTR's. $employeeId says whose entries the dates may not overlap.
+     * the DTR's. $employeeId says whose entries the dates may not overlap;
+     * $editing is the entry changed from a DTR's view, which overlaps nothing.
      *
      * @param  Closure(Get): mixed  $employeeId
      * @return array<int, DatePicker|Select|TextInput>
      */
-    public static function fields(Closure $employeeId): array
+    public static function fields(Closure $employeeId, ?DayException $editing = null): array
     {
         return [
             Select::make('type')
@@ -51,9 +52,9 @@ class DayExceptionForm
                 ->required()
                 ->rules([
                     // On a DTR's view the record is the DTR, so only an entry being edited is left out.
-                    fn (Get $get, mixed $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $record, $employeeId): void {
+                    fn (Get $get, mixed $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $record, $employeeId, $editing): void {
                         $employee = $employeeId($get);
-                        $record = $record instanceof DayException ? $record : null;
+                        $record = $record instanceof DayException ? $record : $editing;
 
                         if (blank($employee) || blank($get('date_to'))) {
                             return;

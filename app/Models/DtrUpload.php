@@ -32,6 +32,9 @@ class DtrUpload extends Model
     /** @var Collection<string, ManualTap>|null */
     private ?Collection $filledTimes = null;
 
+    /** @var Collection<int, DayException>|null */
+    private ?Collection $dayExceptions = null;
+
     /** The DTR judged against the app's schedules, worked out once per request; see DtrCalculator. */
     public function computed(): ComputedDtr
     {
@@ -52,6 +55,27 @@ class DtrUpload extends Model
             ->with('filledBy')
             ->get()
             ->keyBy(fn (ManualTap $tap): string => "{$tap->date->toDateString()} {$tap->slot->value}");
+    }
+
+    /**
+     * The OBs, travel orders, leave and gate passes HR recorded for this DTR's
+     * employee that touch its dates, keyed by id.
+     *
+     * @return Collection<int, DayException>
+     */
+    public function dayExceptions(): Collection
+    {
+        if ($this->employee_id === null) {
+            return new Collection;
+        }
+
+        return $this->dayExceptions ??= DayException::query()
+            ->where('employee_id', $this->employee_id)
+            ->whereDate('date_from', '<=', $this->period_end)
+            ->whereDate('date_to', '>=', $this->period_start)
+            ->orderBy('date_from')
+            ->get()
+            ->keyBy('id');
     }
 
     /**
@@ -78,6 +102,7 @@ class DtrUpload extends Model
     {
         $this->computed = null;
         $this->filledTimes = null;
+        $this->dayExceptions = null;
     }
 
     /**

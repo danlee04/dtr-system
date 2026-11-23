@@ -6,7 +6,9 @@ use App\Enums\AttendanceStatus;
 use App\Enums\DayKind;
 use App\Enums\DtrSlot;
 use App\Filament\Resources\DtrUploads\Actions\AddDayExceptionAction;
+use App\Filament\Resources\DtrUploads\Actions\EditDayExceptionAction;
 use App\Filament\Resources\DtrUploads\Actions\FillDayAction;
+use App\Models\DayException;
 use App\Models\DtrDay;
 use App\Models\DtrUpload;
 use App\Models\ManualTap;
@@ -46,7 +48,7 @@ class DtrUploadInfolist
             ->components([
                 View::make('filament.dtr-uploads.dtr')
                     ->key('dtr')
-                    ->registerActions([FillDayAction::make(), AddDayExceptionAction::make()])
+                    ->registerActions([FillDayAction::make(), AddDayExceptionAction::make(), EditDayExceptionAction::make()])
                     ->viewData(fn (DtrUpload $record): array => self::viewData($record))
                     ->columnSpanFull(),
             ]);
@@ -213,6 +215,11 @@ class DtrUploadInfolist
                 'status' => $result?->status,
                 // A part of the day with no tap, which an OB, travel order, leave or gate pass could cover.
                 'untapped' => $result?->untappedCoverage() !== null,
+                // The OBs, travel orders, leave and gate passes on this date, which HR may change or remove.
+                'exceptions' => $computed === null ? [] : $record->dayExceptions()
+                    ->filter(fn (DayException $exception): bool => $exception->date_from->toDateString() <= $key && $exception->date_to->toDateString() >= $key)
+                    ->keys()
+                    ->all(),
                 // Each note with whether it needs a look.
                 'notes' => array_values(array_filter([
                     $result?->note !== null ? [$result->note, false] : null,
