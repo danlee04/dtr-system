@@ -5,6 +5,8 @@
     $certification = $application->certification();
     $filedOn = $application->created_at->format('F j, Y');
     $disapproved = $application->status === \App\Enums\LeaveApplicationStatus::Disapproved;
+    // Shown inside the application's view (filament.leave-applications.form), which has its own Print button.
+    $embedded ??= false;
 
     // The thirteen types on CS Form No. 6, Revised 2020, in the form's order.
     $types = [
@@ -340,6 +342,32 @@
             margin-top: 0;
         }
 
+        /*
+         * In the application's view the frame is the viewport: a little room around the
+         * sheet, and on a narrow screen the sheet a size smaller rather than scrolled.
+         */
+        .is-embedded .scroller {
+            padding: 16px;
+        }
+
+        @media (max-width: 860px) {
+            .is-embedded .sheet {
+                zoom: 0.9;
+            }
+        }
+
+        @media (max-width: 780px) {
+            .is-embedded .sheet {
+                zoom: 0.82;
+            }
+        }
+
+        @media (max-width: 715px) {
+            .is-embedded .sheet {
+                zoom: 0.74;
+            }
+        }
+
         @media print {
             html {
                 background: none;
@@ -364,11 +392,13 @@
     </style>
 </head>
 
-<body>
-    <div class="toolbar">
-        <button type="button" onclick="window.print()">Print</button>
-        <span>Print on A4, then have it signed.</span>
-    </div>
+<body @class(['is-embedded' => $embedded])>
+    @unless ($embedded)
+        <div class="toolbar">
+            <button type="button" onclick="window.print()">Print</button>
+            <span>Print on A4, then have it signed.</span>
+        </div>
+    @endunless
 
     <div class="scroller">
         <main class="sheet">

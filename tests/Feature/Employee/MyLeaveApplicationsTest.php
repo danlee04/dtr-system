@@ -86,9 +86,8 @@ class MyLeaveApplicationsTest extends TestCase
 
         Livewire::test(ListMyLeaveApplications::class)
             ->mountAction(TestAction::make('view')->table($application))
-            ->assertMountedActionModalSee(['Tue, Nov 3, 2026', 'VL 1.000'])
-            // Their own leave: no need to name them.
-            ->assertMountedActionModalDontSee('Dela Cruz');
+            // Their own form, as printed (HR, 2026-11-23).
+            ->assertMountedActionModalSee(['VL 1.000', 'LEAVE APPLICATION', 'Dela Cruz']);
 
         Livewire::test(ListMyLeaveApplications::class)
             ->callAction([TestAction::make('view')->table($application), TestAction::make('cancelLeave')], ['cancel_reason' => 'Plans changed']);

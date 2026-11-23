@@ -9,6 +9,7 @@ use App\Filament\Resources\LeaveApplications\Actions\PrintLeaveApplicationAction
 use App\Models\LeaveApplication;
 use Filament\Actions\ViewAction;
 use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -49,6 +50,8 @@ class MyLeaveApplicationsTable
             ->recordActions([
                 ViewAction::make()
                     ->modalHeading('Leave Application')
+                    // Wide enough for the A4 form inside it.
+                    ->modalWidth(Width::FiveExtraLarge)
                     ->extraModalFooterActions([
                         PrintLeaveApplicationAction::make(),
                         EditLeaveApplicationAction::make()->cancelParentActions(),

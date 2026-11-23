@@ -73,6 +73,14 @@ class PrintLeaveApplicationTest extends TestCase
             ->assertSeeInOrder(['7.C APPROVED FOR:', '<span class="short"></span> days with pay', '7.D DISAPPROVED DUE TO:', 'No medical certificate'], escape: false);
     }
 
+    public function test_the_printed_page_has_its_print_button_and_the_framed_copy_has_none(): void
+    {
+        $this->get(route('leave-applications.print', $this->application))->assertSee('onclick="window.print()"', escape: false);
+
+        $framed = view('leave.print', ['application' => $this->application, 'form' => config('leave.form'), 'embedded' => true])->render();
+        $this->assertStringNotContainsString('window.print()', $framed);
+    }
+
     public function test_wellness_leave_prints_under_others(): void
     {
         $wellness = LeaveApplication::factory()->for($this->employee)->create(['leave_type' => LeaveType::Wellness]);

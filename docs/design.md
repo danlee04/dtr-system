@@ -230,6 +230,15 @@ decoration.
   1024px screen with a long name. Edit opens the filing form filled in
   ("Change Leave", "Print the form again after the change."); Disapprove asks
   "Disapproved due to", which prints in 7.D, and leaves 7.C blank.
+  The application's view (5xl modal) shows the form itself, HRM-07 as printed
+  with the names (HR, 2026-11-23), under one row of what the paper does not
+  say: Status, Charged to, Filed, and Approved, Cancelled or Disapproved
+  (`filament.leave-applications.form`). It is the `leave.print` view with
+  `embedded` (no toolbar, 16px around the sheet, the sheet zoomed to 0.9,
+  0.82 or 0.74 when the frame is under 860, 780 or 715px), in an iframe with
+  `srcdoc` and `sandbox`: the form's page styles stay in it, no script runs,
+  and the app's `frame-ancestors 'none'` needs no exception. The day-by-day
+  breakdown left the view; the form's 6.C and 7.C carry the totals.
 - **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
 
 | Class | Use |

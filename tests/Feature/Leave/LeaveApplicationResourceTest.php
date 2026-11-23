@@ -89,13 +89,15 @@ class LeaveApplicationResourceTest extends TestCase
             ->assertActionHidden([TestAction::make('view')->table($application), TestAction::make('cancelLeave')]);
     }
 
-    public function test_viewing_shows_each_date_in_a_modal(): void
+    public function test_viewing_shows_the_form_as_printed(): void
     {
         $application = $this->fileOneDay();
 
+        // The form itself, as printed, in a frame no script runs in (HR, 2026-11-23); above it what the paper does not say.
         Livewire::test(ListLeaveApplications::class)
             ->mountAction(TestAction::make('view')->table($application))
-            ->assertMountedActionModalSee(['Tue, Nov 3, 2026', 'Dela Cruz, Juan S.', 'Charged to', 'VL 1.000']);
+            ->assertMountedActionModalSee(['Pending', 'Charged to', 'VL 1.000', 'LEAVE APPLICATION', 'Dela Cruz', '6. DETAILS OF APPLICATION'])
+            ->assertMountedActionModalSeeHtml('sandbox');
     }
 
     public function test_hr_approves_from_the_view_modal(): void
