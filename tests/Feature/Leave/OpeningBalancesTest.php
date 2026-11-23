@@ -81,12 +81,42 @@ class OpeningBalancesTest extends TestCase
         $this->assertSame(1, $this->save([$this->juan->id => ['VL' => '10']]));
     }
 
-    public function test_a_resave_is_refused_once_the_employee_has_other_rows(): void
+    public function test_once_the_employee_has_other_rows_a_change_posts_an_adjustment_for_the_difference(): void
     {
+        $this->travelTo('2026-11-23 09:00');
         $this->save([$this->juan->id => ['VL' => '10']]);
-        LeaveLedgerEntry::factory()->for($this->juan)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-12-01']);
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['leave_type' => 'VL', 'days' => '1.250', 'kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-11-01']);
 
-        $this->assertSaveRefused([$this->juan->id => ['VL' => '11']], "rows.{$this->juan->id}.VL");
+        // The opening row stays as it was, so what was charged against it still adds up (HR, 2026-11-23).
+        $this->assertSame(2, $this->save([$this->juan->id => ['VL' => '12', 'SL' => '3']]));
+
+        $this->assertSame('10.000', $this->juan->leaveLedgerEntries()->where('kind', LedgerKind::Opening)->sole()->days);
+        $fixes = $this->juan->leaveLedgerEntries()->where('kind', LedgerKind::Adjustment)->get()->keyBy(fn (LeaveLedgerEntry $row): string => $row->leave_type->value);
+        $this->assertSame(['2.000', 'Opening balance corrected from 10.000 to 12.000', '2026-11-23'], [$fixes['VL']->days, $fixes['VL']->remarks, $fixes['VL']->posted_on->toDateString()]);
+        $this->assertSame(['3.000', 'Opening balance corrected from 0.000 to 3.000'], [$fixes['SL']->days, $fixes['SL']->remarks]);
+        $this->assertSame(['VL' => '13.250', 'SL' => '3.000', 'SPL' => '0.000', 'WL' => '0.000'], app(LeaveLedger::class)->balances($this->juan));
+
+        // The grid reads the corrected openings, so saving them again changes nothing.
+        $this->assertSame(['12.000', '3.000'], [$this->read()['VL'], $this->read()['SL']]);
+        $this->assertSame(0, $this->save([$this->juan->id => ['VL' => '12', 'SL' => '3.000']]));
+    }
+
+    public function test_a_correction_that_would_take_the_balance_below_zero_is_refused(): void
+    {
+        $this->save([$this->juan->id => ['VL' => '2']]);
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['leave_type' => 'VL', 'days' => '-2.000', 'kind' => LedgerKind::DtrDeduction, 'posted_on' => '2026-11-20']);
+
+        $this->assertSaveRefused([$this->juan->id => ['VL' => '1']], "rows.{$this->juan->id}.VL");
+        $this->assertSame(0, $this->juan->leaveLedgerEntries()->where('kind', LedgerKind::Adjustment)->count());
+    }
+
+    public function test_taken_this_year_cannot_change_once_the_employee_has_other_rows(): void
+    {
+        // Not a balance, so there is nothing to adjust.
+        $this->save([$this->juan->id => ['VL' => '10', 'FL' => '2']]);
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-11-01']);
+
+        $this->assertSaveRefused([$this->juan->id => ['FL' => '3']], "rows.{$this->juan->id}.FL");
     }
 
     public function test_employees_outside_the_office_or_without_credits_are_ignored(): void
@@ -113,6 +143,12 @@ class OpeningBalancesTest extends TestCase
     private function save(array $rows): int
     {
         return app(OpeningBalances::class)->save($this->office, CarbonImmutable::parse('2026-11-01'), $rows);
+    }
+
+    /** @return array<string, string> Juan's row as the grid reads it */
+    private function read(): array
+    {
+        return app(OpeningBalances::class)->read($this->office)[$this->juan->id];
     }
 
     /** @param  array<int, array<string, string>>  $rows */

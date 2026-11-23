@@ -3,6 +3,7 @@
 namespace Tests\Feature\Leave;
 
 use App\Enums\LedgerKind;
+use App\Filament\Pages\LeaveBalances;
 use App\Filament\Pages\LeaveOpeningBalances;
 use App\Models\Employee;
 use App\Models\LeaveLedgerEntry;
@@ -31,18 +32,52 @@ class LeaveOpeningBalancesPageTest extends TestCase
         $this->juan = Employee::factory()->for($this->office)->create(['last_name' => 'Dela Cruz', 'first_name' => 'Juan', 'middle_name' => 'Santos']);
     }
 
-    public function test_an_employee_whose_opening_balance_can_no_longer_change_is_shown_locked(): void
+    public function test_a_balance_already_in_use_stays_open_but_taken_this_year_locks(): void
     {
         $pedro = Employee::factory()->for($this->office)->create();
-        LeaveLedgerEntry::factory()->for($this->juan)->create(['kind' => LedgerKind::Opening, 'posting_key' => "opening:{$this->juan->id}:VL", 'days' => '10.000', 'posted_on' => '2026-10-31']);
-        LeaveLedgerEntry::factory()->for($this->juan)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-12-01']);
+        $this->openWithCredit();
         // Credits alone do not lock: a first save is accepted at any time.
         LeaveLedgerEntry::factory()->for($pedro)->create(['kind' => LedgerKind::MonthlyCredit, 'posted_on' => '2026-12-01']);
 
         Livewire::test(LeaveOpeningBalances::class)
-            ->assertSeeText('Locked')
-            ->assertDontSeeHtml("rows.{$this->juan->id}.VL")
-            ->assertSeeHtml("rows.{$pedro->id}.VL");
+            ->assertSeeText('a change is saved as an adjustment')
+            ->assertSeeHtml("rows.{$this->juan->id}.VL")
+            ->assertDontSeeHtml("rows.{$this->juan->id}.FL")
+            ->assertSeeHtml("rows.{$pedro->id}.FL");
+    }
+
+    public function test_a_change_to_a_balance_already_in_use_asks_first_then_posts_an_adjustment(): void
+    {
+        $this->travelTo('2026-11-23 09:00');
+        $this->openWithCredit();
+
+        Livewire::test(LeaveOpeningBalances::class)
+            ->set("rows.{$this->juan->id}.VL", '12')
+            ->mountAction('save')
+            ->assertMountedActionModalSee(['1 balance already in use will be corrected with an adjustment dated Nov 23, 2026', 'Dela Cruz, Juan S.: VL 10.000 to 12.000'])
+            ->callMountedAction()
+            ->assertNotified('Opening balances saved: 1 change')
+            ->assertRedirect(LeaveBalances::getUrl());
+
+        $this->assertSame('2.000', $this->juan->leaveLedgerEntries()->where('kind', LedgerKind::Adjustment)->sole()->days);
+    }
+
+    public function test_a_save_that_touches_no_balance_in_use_does_not_ask(): void
+    {
+        $this->openWithCredit();
+        $maria = Employee::factory()->for($this->office)->create();
+
+        Livewire::test(LeaveOpeningBalances::class)
+            ->set("rows.{$maria->id}.VL", '5')
+            ->callAction('save')
+            ->assertNotified('Opening balances saved: 1 change');
+    }
+
+    /** Juan's VL opening of 10, and a credit after it: the opening is in use. */
+    private function openWithCredit(): void
+    {
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['leave_type' => 'VL', 'kind' => LedgerKind::Opening, 'posting_key' => "opening:{$this->juan->id}:VL", 'days' => '10.000', 'posted_on' => '2026-10-31']);
+        LeaveLedgerEntry::factory()->for($this->juan)->create(['leave_type' => 'VL', 'kind' => LedgerKind::MonthlyCredit, 'days' => '1.250', 'posted_on' => '2026-11-01']);
     }
 
     public function test_hr_opens_the_page_and_sees_the_as_of_date(): void
@@ -73,29 +108,39 @@ class LeaveOpeningBalancesPageTest extends TestCase
             ->assertSee('Dela Cruz, Juan S.')
             ->assertDontSee('Santos, Maria')
             ->assertSee('1 unsaved change')
-            ->call('save')
+            ->callAction('save')
             ->assertNotified('Opening balances saved: 1 change');
 
         $this->assertSame('5.000', $maria->leaveLedgerEntries()->sole()->days);
     }
 
-    public function test_saving_the_grid_writes_the_rows(): void
+    public function test_saving_the_grid_writes_the_rows_and_goes_back_to_balances(): void
     {
         Livewire::test(LeaveOpeningBalances::class)
             ->set("rows.{$this->juan->id}.SL", '7.5')
-            ->call('save')
+            ->callAction('save')
             ->assertHasNoErrors()
-            ->assertNotified('Opening balances saved: 1 change');
+            ->assertNotified('Opening balances saved: 1 change')
+            ->assertRedirect(LeaveBalances::getUrl());
 
         $this->assertSame('7.500', $this->juan->leaveLedgerEntries()->sole()->days);
+    }
+
+    public function test_a_save_with_nothing_changed_stays_on_the_grid(): void
+    {
+        Livewire::test(LeaveOpeningBalances::class)
+            ->callAction('save')
+            ->assertNotified('No changes to save')
+            ->assertNoRedirect();
     }
 
     public function test_a_bad_cell_is_marked(): void
     {
         Livewire::test(LeaveOpeningBalances::class)
             ->set("rows.{$this->juan->id}.SL", 'abc')
-            ->call('save')
-            ->assertHasErrors(["rows.{$this->juan->id}.SL"]);
+            ->callAction('save')
+            ->assertHasErrors(["rows.{$this->juan->id}.SL"])
+            ->assertNoRedirect();
 
         $this->assertSame(0, LeaveLedgerEntry::count());
     }
@@ -123,7 +168,7 @@ class LeaveOpeningBalancesPageTest extends TestCase
 
         Livewire::test(LeaveOpeningBalances::class)
             ->set("rows.{$this->juan->id}.SL", '7.5')
-            ->call('save');
+            ->callAction('save');
 
         $this->assertSame(0, LeaveLedgerEntry::count());
     }

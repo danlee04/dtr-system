@@ -68,15 +68,17 @@
                                     {{ $employee->full_name }}
                                     <span class="dtr-grid-sub">{{ $employee->employee_number }} · {{ $employee->office->name }}</span>
                                     @if ($isLocked)
+                                        {{-- Still typed in; Save asks, then posts the difference (HR, 2026-11-23). --}}
                                         <span class="dtr-grid-lock">
                                             <x-filament::icon :icon="\Filament\Support\Icons\Heroicon::LockClosed" :size="\Filament\Support\Enums\IconSize::Small" />
-                                            Locked: credits have posted since. Use an adjustment on the Leave tab.
+                                            In use: a change is saved as an adjustment dated today.
                                         </span>
                                     @endif
                                 </th>
                                 @foreach ($columns as $code => $heading)
                                     @php($cell = "rows.{$employee->id}.{$code}")
-                                    @if ($isLocked)
+                                    {{-- Taken this year is no balance, so nothing can adjust it. --}}
+                                    @if ($isLocked && $code === 'FL')
                                         <td @class(['dtr-grid-value', 'dtr-grid-divider' => $code === 'FL'])>{{ $rows[$employee->id][$code] ?? '' }}</td>
                                     @else
                                         <td @class(['dtr-grid-divider' => $code === 'FL'])>
@@ -110,7 +112,7 @@
             />
 
             <div class="dtr-grid-bar">
-                <x-filament::button wire:click="save">Save opening balances</x-filament::button>
+                {{ $this->saveAction }}
                 {{-- Counted on the server too: a cell typed on another page is off the screen, where the browser no longer marks it. --}}
                 @if ($unsaved !== [])
                     <x-filament::badge color="warning">{{ count($unsaved) }} unsaved {{ str('change')->plural(count($unsaved)) }}</x-filament::badge>

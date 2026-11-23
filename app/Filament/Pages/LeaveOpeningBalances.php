@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\LeaveType;
 use App\Enums\NavigationGroup;
 use App\Models\Employee;
 use App\Models\LeaveLedgerEntry;
@@ -9,6 +10,7 @@ use App\Models\Office;
 use App\Services\Leave\LeavePosting;
 use App\Services\Leave\OpeningBalances;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -82,7 +84,31 @@ class LeaveOpeningBalances extends Page
         $this->resetPage();
     }
 
-    public function save(OpeningBalances $openings): void
+    /**
+     * Save, which asks first when a change corrects a balance already in use
+     * with an adjustment (HR, 2026-11-23); any other save goes straight in.
+     */
+    public function saveAction(): Action
+    {
+        return Action::make('save')
+            ->label('Save opening balances')
+            ->authorize(fn (): bool => Gate::allows('create', LeaveLedgerEntry::class))
+            ->requiresConfirmation(fn (): bool => $this->corrections() !== [])
+            ->modalHeading('Correct balances already in use?')
+            ->modalDescription(function (): string {
+                $lines = $this->corrections();
+                $count = count($lines);
+                $more = $count > 5 ? ' and '.($count - 5).' more' : '';
+
+                return "{$count} ".str('balance')->plural($count).' already in use will be corrected with '.($count === 1 ? 'an adjustment' : 'adjustments')
+                    .' dated '.today()->format('M j, Y').': '.implode('; ', array_slice($lines, 0, 5)).$more.'.';
+            })
+            ->modalSubmitActionLabel('Save')
+            ->action(fn (OpeningBalances $openings) => $this->save($openings));
+    }
+
+    /** Private, so the browser reaches it only through Save and its question. */
+    private function save(OpeningBalances $openings): void
     {
         Gate::authorize('create', LeaveLedgerEntry::class);
 
@@ -100,6 +126,13 @@ class LeaveOpeningBalances extends Page
             ->success()
             ->title($changes === 0 ? 'No changes to save' : "Opening balances saved: {$changes} ".str('change')->plural($changes))
             ->send();
+
+        // Back to Balances once something is saved (HR, 2026-11-23); with nothing saved the grid stays.
+        if ($changes > 0) {
+            $this->redirect(LeaveBalances::getUrl());
+
+            return;
+        }
 
         $this->loadRows();
     }
@@ -137,6 +170,34 @@ class LeaveOpeningBalances extends Page
         }
 
         return $unsaved;
+    }
+
+    /**
+     * The unsaved balances of employees whose openings are in use, which Save
+     * corrects with adjustments.
+     *
+     * @return list<string> "Dela Cruz, Juan S.: VL 10.000 to 12.000"
+     */
+    private function corrections(): array
+    {
+        $cells = array_keys($this->unsavedCells());
+        $locked = app(OpeningBalances::class)->locked(array_values(array_unique(array_map(fn (string $cell): int => (int) $cell, $cells))));
+        $names = Employee::query()->whereKey($locked)->get()->mapWithKeys(fn (Employee $employee): array => [$employee->id => $employee->full_name]);
+        $lines = [];
+
+        foreach ($cells as $cell) {
+            [$employeeId, $code] = explode('.', $cell, 2);
+
+            if (! isset($names[(int) $employeeId]) || LeaveType::tryFrom($code)?->isTracked() !== true) {
+                continue;
+            }
+
+            $typed = is_scalar($this->rows[$employeeId][$code] ?? null) ? trim((string) $this->rows[$employeeId][$code]) : '';
+            $to = $typed === '' ? '0.000' : (preg_match('/^\d+(\.\d+)?\z/', $typed) === 1 ? bcadd($typed, '0', 3) : $typed);
+            $lines[] = "{$names[(int) $employeeId]}: {$code} ".(($this->saved[$employeeId][$code] ?? '') ?: '0.000')." to {$to}";
+        }
+
+        return $lines;
     }
 
     /** @return array<string, mixed> */

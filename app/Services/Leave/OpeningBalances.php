@@ -12,12 +12,16 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
  * The balances HR copies from its own records on the day the system takes
- * over. They are the only ledger rows that can change:
- * a typo is fixed by saving again, until the employee has any other row.
+ * over. They are the only ledger rows that can change: a typo is fixed by
+ * saving again, until the employee has any other row. From then on the
+ * opening row stays as it was, so what was charged against it still adds up,
+ * and a change posts an adjustment for the difference, dated today (HR,
+ * 2026-11-23); the grid reads the opening with those corrections in.
  */
 final class OpeningBalances
 {
@@ -62,11 +66,12 @@ final class OpeningBalances
     {
         $employees = $this->employees($office);
         $openings = $this->openings($employees->modelKeys());
+        $corrections = $this->corrections($employees->modelKeys());
         $grid = [];
 
         foreach ($employees as $employee) {
             foreach (array_keys(self::COLUMNS) as $code) {
-                $grid[$employee->id][$code] = $openings->get("opening:{$employee->id}:{$code}")->days ?? '';
+                $grid[$employee->id][$code] = $this->current($openings, $corrections, $employee->id, $code) ?? '';
             }
         }
 
@@ -75,13 +80,15 @@ final class OpeningBalances
 
     /**
      * Saves the cells sent: a number sets the opening row, a blank or zero
-     * removes it. Every cell is checked first, and nothing is saved while one
-     * is wrong. Cells that did not change are skipped, so a locked employee's
-     * row can be sent back as it was; cells for anyone outside the office
-     * (when there is one), inactive, or who earns no credits, are ignored.
+     * removes it; for a locked employee, a change posts an adjustment for the
+     * difference instead, refused when it would take the balance below zero,
+     * and "taken this year", not a balance, no longer changes. Every cell is
+     * checked first, and nothing is saved while one is wrong. Cells that did
+     * not change are skipped; cells for anyone outside the office (when there
+     * is one), inactive, or who earns no credits, are ignored.
      *
      * @param  array<int|string, mixed>  $rows  employee id → leave type code → typed days
-     * @return int the number of rows added, changed or removed
+     * @return int the number of rows added, changed or removed, adjustments included
      *
      * @throws ValidationException keyed rows.{employee id}.{code}
      */
@@ -90,10 +97,13 @@ final class OpeningBalances
         $employees = $this->employees($office)
             ->filter(fn (Employee $employee): bool => is_array($rows[$employee->id] ?? null));
         $openings = $this->openings($employees->modelKeys());
+        $corrections = $this->corrections($employees->modelKeys());
         $locked = $this->locked($employees->modelKeys());
 
         /** @var list<array{Employee, string, string|null, LeaveLedgerEntry|null}> $changes */
         $changes = [];
+        /** @var list<array{Employee, string, string, string}> $fixes employee, code, current, wanted */
+        $fixes = [];
         $errors = [];
 
         foreach ($employees as $employee) {
@@ -122,17 +132,28 @@ final class OpeningBalances
 
                 $existing = $openings->get("opening:{$employee->id}:{$code}");
 
-                if ($existing?->days === $days) {
-                    continue;
-                }
-
-                if (in_array($employee->id, $locked, true)) {
-                    $errors[$cell] = "{$employee->full_name} already has credits or leave after the opening balance; use an adjustment on the Leave tab.";
+                if (! in_array($employee->id, $locked, true)) {
+                    if ($existing?->days !== $days) {
+                        $changes[] = [$employee, $code, $days, $existing];
+                    }
 
                     continue;
                 }
 
-                $changes[] = [$employee, $code, $days, $existing];
+                $current = $this->current($openings, $corrections, $employee->id, $code) ?? '0.000';
+                $wanted = $days ?? '0.000';
+
+                if (bccomp($current, $wanted, 3) === 0) {
+                    continue;
+                }
+
+                if (! LeaveType::from($code)->isTracked()) {
+                    $errors[$cell] = "{$employee->full_name}'s {$heading} can no longer change: credits or leave have posted since.";
+
+                    continue;
+                }
+
+                $fixes[] = [$employee, $code, $current, $wanted];
             }
         }
 
@@ -142,7 +163,38 @@ final class OpeningBalances
 
         // Through the model, one row at a time, so the activity log keeps
         // every value HR typed and every value it replaced.
-        return DB::transaction(function () use ($changes, $start): int {
+        return DB::transaction(function () use ($changes, $fixes, $start): int {
+            // As LeaveLedger::adjust: only a deduction is refused, checked with the employee locked.
+            $errors = [];
+
+            foreach ($fixes as [$employee, $code, $current, $wanted]) {
+                if (bccomp($wanted, $current, 3) < 0) {
+                    Employee::query()->whereKey($employee->getKey())->lockForUpdate()->first();
+                    $result = bcadd(app(LeaveLedger::class)->balance($employee, LeaveType::from($code)), bcsub($wanted, $current, 3), 3);
+
+                    if (bccomp($result, '0', 3) < 0) {
+                        $errors["rows.{$employee->id}.{$code}"] = "Correcting {$employee->full_name}'s {$code} to {$wanted} would leave it at {$result}.";
+                    }
+                }
+            }
+
+            if ($errors !== []) {
+                throw ValidationException::withMessages($errors);
+            }
+
+            foreach ($fixes as [$employee, $code, $current, $wanted]) {
+                $employee->leaveLedgerEntries()->create([
+                    'leave_type' => LeaveType::from($code),
+                    'posted_on' => today(),
+                    'days' => bcsub($wanted, $current, 3),
+                    'kind' => LedgerKind::Adjustment,
+                    // Marks it a correction of the opening, which the grid reads in.
+                    'posting_key' => "opening-fix:{$employee->id}:{$code}:".Str::ulid(),
+                    'remarks' => "Opening balance corrected from {$current} to {$wanted}",
+                    'created_by_user_id' => auth()->id(),
+                ]);
+            }
+
             foreach ($changes as [$employee, $code, $days, $existing]) {
                 match (true) {
                     $days === null => $existing->delete(),
@@ -158,14 +210,15 @@ final class OpeningBalances
                 };
             }
 
-            return count($changes);
+            return count($changes) + count($fixes);
         });
     }
 
     /**
-     * The employees whose opening balances can no longer change: they have
-     * an opening row and a row of any other kind after it. Without an opening
-     * row, a first save is still accepted.
+     * The employees whose opening balances are in use: they have an opening
+     * row and a row of any other kind after it, so a change posts an
+     * adjustment instead. Without an opening row, a first save is still
+     * accepted.
      *
      * @param  list<int>  $employeeIds
      * @return list<int>
@@ -180,6 +233,37 @@ final class OpeningBalances
             ->distinct()
             ->pluck('employee_id')
             ->all();
+    }
+
+    /**
+     * What the corrections of each opening add up to.
+     *
+     * @param  list<int>  $employeeIds
+     * @return array<string, string> "employee id:code" → days
+     */
+    private function corrections(array $employeeIds): array
+    {
+        return LeaveLedgerEntry::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->where('posting_key', 'like', 'opening-fix:%')
+            ->get()
+            ->groupBy(fn (LeaveLedgerEntry $row): string => "{$row->employee_id}:{$row->leave_type->value}")
+            ->map(fn (EloquentCollection $rows): string => $rows->reduce(fn (string $sum, LeaveLedgerEntry $row): string => bcadd($sum, $row->days, 3), '0.000'))
+            ->all();
+    }
+
+    /**
+     * The opening with its corrections in, or null when there is neither.
+     *
+     * @param  EloquentCollection<string, LeaveLedgerEntry>  $openings
+     * @param  array<string, string>  $corrections
+     */
+    private function current(EloquentCollection $openings, array $corrections, int $employeeId, string $code): ?string
+    {
+        $opening = $openings->get("opening:{$employeeId}:{$code}")?->days;
+        $correction = $corrections["{$employeeId}:{$code}"] ?? null;
+
+        return $opening === null && $correction === null ? null : bcadd($opening ?? '0', $correction ?? '0', 3);
     }
 
     /**

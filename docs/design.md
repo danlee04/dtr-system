@@ -455,7 +455,8 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   short amber bar (`.dtr-form-section`), a rule between sections
   (`.dtr-form-section-divided`).
 - **Balances** (Leave; it took Opening Balances' place in the sidebar, which now
-  opens from its "Opening balances" button): the entry grid with Office and Month
+  opens from its "Opening balances" button, and a Save there that changed
+  something comes back here with its notice): the entry grid with Office and Month
   selects (the leave start to this month, last month by default), a row per
   employee, a column per balance (VL, SL, SPL, Wellness): the balance at the
   month's end, and under it in red (`.dtr-grid-taken`) what the month took from
@@ -518,7 +519,8 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 | Unsaved | Amber tint on the cell, and a warning badge "N unsaved changes" counted on the server | Grids; changing the month is refused while any are unsaved |
 | Invalid | Red ring on the field or cell, and the problem in words | Forms and grids |
 | Empty | An empty-state component | Lists and grids with nothing to show |
-| Locked | The value as text, a lock icon, and one line saying why | Opening balances that can no longer change |
+| Locked | The value as text, a lock icon, and one line saying why | "Taken this year" of an opening already in use |
+| In use | Still an input, a lock icon and "In use: a change is saved as an adjustment dated today"; Save asks first, naming each change | Opening balances that credits or leave have posted against |
 | To fill | A dashed amber "+ Add" in the blank, and an amber Blanks to fill card | A DTR's blanks that HR can fill from the signed paper |
 | Filled by HR | The time, then a blue "HR" tag, and the reason in Notes | A time HR copied into a DTR's blank |
 | Stale | A line saying how old the figures are | The dashboard's DTR figures, kept 10 minutes |
