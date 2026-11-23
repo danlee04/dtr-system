@@ -147,7 +147,8 @@ decoration.
     in a pale pill, the signed-in user with no menu to open: their photo and name
     lead to the Profile, and a Sign out icon button sits beside them
     (`filament.sidebar-user`).
-  - **Topbar:** it blends into the page. Search sits on its left (Ctrl+K). On its
+  - **Topbar** (staff only; an employee's pages have none since 2026-11-23, and on a
+    phone Filament's own button opens their sidebar): it blends into the page. Search sits on its left (Ctrl+K). On its
     right, staff see the "Waiting for you" bell and **New** (2026-11-23; Upload
     DTRs had a button of its own until then and is New's first item now). The bell (`WaitingForHr`, counted each page load, "99+" past 99)
     lists leave to approve, DTRs that need an employee, DTRs not final yet, then

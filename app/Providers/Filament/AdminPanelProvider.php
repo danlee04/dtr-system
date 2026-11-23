@@ -41,6 +41,8 @@ class AdminPanelProvider extends PanelProvider
             ->globalSearchKeyBindings(['ctrl+k', 'command+k'])
             ->globalSearchFieldKeyBindingSuffix()
             ->userMenu(false)
+            // Staff only: an employee's pages have no topbar, and on a phone the sidebar's own button (HR, 2026-11-23).
+            ->topbar(fn (): bool => auth()->user()?->isStaff() ?? true)
             // Light only (HR, 2026-11-23).
             ->darkMode(false)
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): View => view('filament.sidebar-user'))

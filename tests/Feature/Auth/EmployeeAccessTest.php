@@ -88,6 +88,20 @@ class EmployeeAccessTest extends TestCase
             ->assertDontSee('Upload DTRs');
     }
 
+    public function test_employees_have_no_topbar_and_staff_keep_theirs(): void
+    {
+        // An employee's pages start at the top, the sidebar's button on a phone (HR, 2026-11-23).
+        $this->actingAs(User::factory()->employee()->create())
+            ->get('/')
+            ->assertOk()
+            ->assertDontSeeHtml('class="fi-topbar')
+            ->assertSeeHtml('fi-layout-sidebar-toggle-btn');
+
+        $this->actingAs(User::factory()->create())
+            ->get('/')
+            ->assertSeeHtml('fi-topbar');
+    }
+
     public function test_who_may_use_the_panel(): void
     {
         $panel = Filament::getPanel('admin');
