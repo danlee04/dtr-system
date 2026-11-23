@@ -150,7 +150,9 @@ decoration.
   scroll at 1536, 1366, 1280, 1024 or 768px. The content is narrowest at
   1024px, about 700px, since the sidebar is still there.
   - Table text and headings wrap (`configureTables()` in `AppServiceProvider`);
-    names and dates keep to one line (`->wrap(false)`).
+    names and dates keep to one line (`->wrap(false)`). On Leave Applications a
+    long name may take two lines below 1280px (`->wrap()` with
+    `dtr-nowrap-from-xl`), so View and Edit stay on a 1024px screen.
   - A table still too wide hides its least-used columns with `->visibleFrom('xl')`
     or `'2xl'`; the search still covers a hidden column.
   - Our grids are tighter below 1280px (smaller padding, inputs and type; a long

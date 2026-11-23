@@ -439,6 +439,13 @@
         background-color: var(--dtr-hover);
     }
 
+    /* A table cell that may wrap on a laptop or tablet keeps to one line from 1280px. */
+    @media (min-width: 80rem) {
+        .fi-ta-text.dtr-nowrap-from-xl {
+            white-space: nowrap;
+        }
+    }
+
     /* One line: a long name ends in "…" rather than pushing sign out off the sidebar. */
     .dtr-sidebar-user-name {
         flex: 1;

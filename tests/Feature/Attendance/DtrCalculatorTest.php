@@ -543,6 +543,22 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame(0, $day->undertime);
     }
 
+    public function test_flexi_with_the_afternoon_on_leave_or_an_ob_is_late_after_eight(): void
+    {
+        $employee = $this->regular(['flexitime' => true]);
+        LeaveApplication::factory()->for($employee)->create(['date_from' => '2026-10-15', 'date_to' => '2026-10-15', 'coverage' => LeaveCoverage::SecondHalf]);
+        DayException::factory()->for($employee)->create(['date_from' => '2026-10-16', 'date_to' => '2026-10-16', 'coverage' => LeaveCoverage::SecondHalf]);
+
+        // In at 9:00 and out at 12:00 on a morning-only day: 60 minutes late, as on 8–5 (HR, 2026-11-23).
+        $days = $this->compute($employee, [
+            '2026-10-15' => ['am_arrival' => '09:00', 'am_departure' => '12:00'],
+            '2026-10-16' => ['am_arrival' => '09:00', 'am_departure' => '12:00'],
+        ])->days;
+
+        $this->assertSame([60, 0], [$days['2026-10-15']->late, $days['2026-10-15']->undertime]);
+        $this->assertSame([60, 0], [$days['2026-10-16']->late, $days['2026-10-16']->undertime]);
+    }
+
     public function test_a_missing_time_in_is_undertime_for_the_morning_until_hr_fills_it(): void
     {
         $employee = $this->regular();

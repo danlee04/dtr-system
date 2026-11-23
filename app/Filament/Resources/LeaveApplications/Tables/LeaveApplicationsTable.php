@@ -34,7 +34,9 @@ class LeaveApplicationsTable
                     ->visibleFrom('xl'),
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
-                    ->wrap(false)
+                    // A long name takes two lines below 1280px, so View and Edit stay on a 1024px screen (2026-11-23).
+                    ->wrap()
+                    ->extraAttributes(['class' => 'dtr-nowrap-from-xl'])
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
                         'employee',
                         fn (Builder $employee): Builder => $employee->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"),

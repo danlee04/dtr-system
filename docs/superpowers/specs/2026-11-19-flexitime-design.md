@@ -34,6 +34,9 @@ which HR does not count.
   12:00 is undertime and lunch in after 1:00 is late, as on 8–5.
 - **No time in** (blank, or the morning on an OB or leave): the time in is
   taken as 8:00, so the time out due is 5:00.
+- **A morning-only day** (the afternoon on leave, an OB, a TO or a gate
+  pass): late after 8:00, as on 8–5; in at 9:00 and out at 12:00 is 60
+  minutes late (HR, 2026-11-23).
 - **A half with no tap** is still 4 hours undertime, and **an absent day**
   still 8 hours, as on 8–5.
 - The DTR's schedule line says "Flexi", so HR sees why the figures differ.
