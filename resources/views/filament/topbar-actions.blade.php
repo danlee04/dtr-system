@@ -1,8 +1,9 @@
 {{--
     The topbar's right side, after the search, for staff only (AdminPanelProvider):
-    a bell for what is waiting for HR (WaitingForHr, counted on each page load), New for
-    what HR files most, and the month's main job. The bell's count is said in its label
-    too, not by the badge alone. Each New item opens its form on its own page.
+    a bell for what is waiting for HR (WaitingForHr, counted on each page load), and New for
+    what HR files most, the month's upload first (it had a button of its own until
+    2026-11-23). The bell's count is said in its label too, not by the badge alone. Each
+    New item opens its form on its own page.
 --}}
 @php
     use App\Enums\LeaveApplicationStatus;
@@ -12,6 +13,7 @@
     use App\Filament\Resources\Employees\EmployeeResource;
     use App\Filament\Resources\LeaveApplications\LeaveApplicationResource;
     use App\Models\DayException;
+    use App\Models\DtrUpload;
     use App\Models\Employee;
     use App\Models\LeaveApplication;
     use Filament\Support\Icons\Heroicon;
@@ -20,6 +22,7 @@
     $user = auth()->user();
     // What HR files most, each offered only to those who may (HR, 2026-11-23).
     $new = array_filter([
+        $user->can('create', DtrUpload::class) ? ['Upload DTRs', Heroicon::OutlinedArrowUpTray, DtrUploadResource::getUrl('index', ['action' => 'uploadDtrs'])] : null,
         $user->can('create', LeaveApplication::class) ? ['File leave', Heroicon::OutlinedDocumentPlus, LeaveApplicationResource::getUrl('index', ['action' => 'fileLeave'])] : null,
         $user->can('create', DayException::class) ? ['OB, TO or gate pass', Heroicon::OutlinedBriefcase, DayExceptionResource::getUrl('index', ['action' => 'create'])] : null,
         $user->can('create', Employee::class) ? ['Employee', Heroicon::OutlinedUserPlus, EmployeeResource::getUrl('index', ['action' => 'create'])] : null,
@@ -106,15 +109,4 @@
             </x-filament::dropdown.list>
         </x-filament::dropdown>
     @endif
-
-    {{-- Opens the upload on the DTR Uploads page. --}}
-    <x-filament::button
-        tag="a"
-        :href="DtrUploadResource::getUrl('index', ['action' => 'uploadDtrs'])"
-        color="gray"
-        :icon="Heroicon::OutlinedArrowUpTray"
-        labeled-from="sm"
-    >
-        Upload DTRs
-    </x-filament::button>
 </div>

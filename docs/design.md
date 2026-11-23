@@ -23,10 +23,13 @@ few Blade partials in `resources/views/filament/` (see **Where the styles live**
 - **Dense where HR types, roomy where HR reads.** The grids (Duty Roster, Opening
   Balances, Monthly Summary, Habitual Tardiness) pack rows tightly for long sessions; the dashboard
   gives each card room. Both use the same tokens.
-- **No titles on screen.** The sidebar marks the page that is open and the
-  breadcrumbs and sections say the rest; each page's `h1` stays for screen
-  readers. An employee's page is the exception: its heading (initials and name)
-  says whose page it is.
+- **Every page after the dashboard** (HR, 2026-11-23): its title on screen (28px
+  bold, `.fi-header-heading`; hidden until then), the soft blue page with pale arcs
+  at its top (`.fi-main-ctn`, behind a frosted topbar), and every section and table
+  a white card with 16px corners and a soft blue shadow, 20px inside, 16px between
+  (`filament.sidebar`). The dashboard draws its own heading beside the month picker,
+  so its `h1` stays for screen readers; an employee's page heading is their photo
+  and name.
 - **Light only** (HR, 2026-11-23): dark mode is off (`darkMode(false)`) and its
   switch is gone. The `.dark` rules left in the partials no longer apply.
 
@@ -47,7 +50,7 @@ registered for the Sick card on an employee's page.
 | Secondary | Filament `gray` buttons (white, thin ring) | same, dark | Every action that is not the main one |
 | Accent | none | none | There is no separate accent hue: colour beyond blue is status or data only |
 | Sidebar | navy gradient, `--primary-900` to `--primary-950` | `--primary-950` into `--gray-950` | The sidebar, with white words and icons, headings in white at 65%, and a `--primary-500` at 55% pill for the open page |
-| Page background | `--gray-50` | `--gray-950` | Behind cards; the topbar on desktop |
+| Page background | `--primary-50` into `--gray-50`, with pale `--primary-100`/`--primary-200` arcs at the top | — | Behind cards; the topbar shows it frosted |
 | Card, sidebar | `--color-white` | `--gray-900` | Sections, tables, grids, dashboard cards, the sidebar |
 | Text | `--gray-950` | `--color-white` | Values, names, titles |
 | Body text in lists | `--gray-700` | `--gray-200` | Sidebar items, tile labels |
@@ -145,12 +148,12 @@ decoration.
     lead to the Profile, and a Sign out icon button sits beside them
     (`filament.sidebar-user`).
   - **Topbar:** it blends into the page. Search sits on its left (Ctrl+K). On its
-    right, staff see the "Waiting for you" bell, **New** and **Upload DTRs**
-    (2026-11-23). The bell (`WaitingForHr`, counted each page load, "99+" past 99)
+    right, staff see the "Waiting for you" bell and **New** (2026-11-23; Upload
+    DTRs had a button of its own until then and is New's first item now). The bell (`WaitingForHr`, counted each page load, "99+" past 99)
     lists leave to approve, DTRs that need an employee, DTRs not final yet, then
     staff with no schedule (the Employees list's "No schedule" filter) and staff
     with no opening balance (Opening Balances). New is a menu of what HR files
-    most: File leave, OB, TO or gate pass, and Employee, each shown only to those
+    most: Upload DTRs, File leave, OB, TO or gate pass, and Employee, each shown only to those
     who may, each opening its form on its own page (`?action=`).
   - **Phones** keep Filament's topbar and slide-out sidebar.
 - **Content** runs the full width of the screen (`maxContentWidth(Width::Full)`),
@@ -158,8 +161,8 @@ decoration.
 - **Breakpoints** (Filament's): 640px, 768px, 1024px (the desktop frame), 1280px
   (the dashboard's four columns).
 - **A page, top to bottom:**
-  1. A hidden `h1`.
-  2. Breadcrumbs, with header actions on the right.
+  1. Breadcrumbs.
+  2. The title, 28px bold, with header actions on the right.
   3. One section or table per job. A section's filters sit in its header
      (`afterHeader`), each with a visible label.
 - **Every screen fits a laptop or a tablet** (HR, 2026-11-18): no sideways

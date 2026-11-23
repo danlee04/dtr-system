@@ -38,10 +38,15 @@
         }
     }
 
+    /* 16px above the breadcrumbs, as on every page; the breadcrumbs at the page's edge, not the panel's. */
     .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
         position: relative;
         isolation: isolate;
-        padding: 0 var(--dtr-emp-pad) var(--dtr-emp-pad);
+        padding: calc(var(--spacing) * 4) var(--dtr-emp-pad) var(--dtr-emp-pad);
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .fi-breadcrumbs {
+        margin-inline-start: calc(var(--dtr-emp-pad) * -1);
     }
 
     /* The panel starts under the breadcrumbs: their line, then 16px. */
@@ -49,7 +54,7 @@
         content: "";
         position: absolute;
         z-index: -1;
-        inset: calc(1.25rem + var(--spacing) * 4) 0 0;
+        inset: calc(var(--spacing) * 4 + 1.25rem + var(--spacing) * 4) 0 0;
         border-radius: 1rem;
         background:
             radial-gradient(45% 60% at 100% 0%, color-mix(in oklab, var(--primary-200) 75%, transparent), transparent 75%),
@@ -160,7 +165,7 @@
 
         .fi-resource-employees.fi-resource-view-record-page .dtr-person-photo {
             position: absolute;
-            top: calc(1.25rem + var(--spacing) * 4 + var(--dtr-emp-pad));
+            top: calc(var(--spacing) * 4 + 1.25rem + var(--spacing) * 4 + var(--dtr-emp-pad));
             inset-inline-start: var(--dtr-emp-pad);
         }
 

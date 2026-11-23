@@ -66,18 +66,20 @@ class EmployeeAccessTest extends TestCase
         LeaveApplication::factory()->create();
         DtrUpload::factory()->unmatched()->create();
 
-        // The bell lists each kind; New opens File leave, OB/TO/gate pass and New employee on their pages (HR, 2026-11-23).
+        // The bell lists each kind; New opens Upload DTRs, File leave, OB/TO/gate pass and New employee on their pages,
+        // and Upload DTRs has no button of its own any more (HR, 2026-11-23).
         $this->actingAs(User::factory()->create())
-            ->get('/')
+            ->get(EmployeeResource::getUrl('index'))
             ->assertOk()
             ->assertSee('Waiting for you: 4')
             ->assertSee(['Leave applications to approve', 'DTRs that need an employee', 'DTRs not final yet', 'Staff with no schedule', 'Staff with no opening balance'])
+            ->assertSeeInOrder(['Waiting for you', 'Upload DTRs', 'File leave', 'OB, TO or gate pass'])
             ->assertSee([
+                DtrUploadResource::getUrl('index', ['action' => 'uploadDtrs']),
                 LeaveApplicationResource::getUrl('index', ['action' => 'fileLeave']),
                 DayExceptionResource::getUrl('index', ['action' => 'create']),
                 EmployeeResource::getUrl('index', ['action' => 'create']),
-            ])
-            ->assertSee('Upload DTRs');
+            ]);
 
         $this->actingAs(User::factory()->employee()->create())
             ->get('/')

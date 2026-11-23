@@ -725,21 +725,7 @@
      * links with an arrow, and the next step as a wide blue button. An employee's own
      * dashboard (.is-mine) keeps the plainer look.
      */
-    body:has(.dtr-dash.is-staff) .fi-main-ctn {
-        background:
-            radial-gradient(130% 70% at 100% -12%, transparent 46%, color-mix(in oklab, var(--primary-100) 75%, transparent) 47%, transparent 58%),
-            radial-gradient(110% 60% at 85% -18%, transparent 50%, color-mix(in oklab, var(--primary-200) 45%, transparent) 51%, transparent 60%),
-            radial-gradient(60% 40% at 90% 0%, color-mix(in oklab, var(--primary-200) 55%, transparent), transparent 70%),
-            linear-gradient(180deg, color-mix(in oklab, var(--primary-50) 80%, var(--color-white)) 0%, color-mix(in oklab, var(--primary-50) 35%, var(--gray-50)) 45%, var(--gray-50) 100%);
-    }
-
-    /* The topbar lets the page's blue through, frosted, so cards scrolling under it stay soft. */
-    @media (min-width: 64rem) {
-        body:has(.dtr-dash.is-staff) .fi-topbar {
-            background-color: color-mix(in oklab, var(--primary-50) 55%, transparent);
-            backdrop-filter: blur(10px);
-        }
-    }
+    /* The page's blue and the frosted topbar are every page's now (filament.sidebar). */
 
     .dtr-dash.is-staff .dtr-dash-card {
         border-radius: 1rem;
@@ -811,9 +797,11 @@
         pointer-events: none;
     }
 
-    /* D: View all stays at the title's right, as in the reference. */
-    .dtr-dash.is-staff .dtr-dash-d .dtr-dash-head {
-        flex-wrap: nowrap;
+    /* D: View all at the title's right, as in the reference, once the card is wide enough (1536px). */
+    @media (min-width: 96rem) {
+        .dtr-dash.is-staff .dtr-dash-d .dtr-dash-head {
+            flex-wrap: nowrap;
+        }
     }
 
     .dtr-dash.is-staff .dtr-dash-head > .dtr-dash-link {

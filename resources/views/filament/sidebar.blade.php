@@ -33,11 +33,11 @@
     }
 
     /*
-        No page title on screen: the sidebar marks the page that is open, and the breadcrumbs
-        and the page's own sections say the rest. The h1 stays for screen readers. An
-        employee's page keeps its heading, their initials and name, since it says whose page it is.
+        Every page shows its title, as the dashboard does (HR, 2026-11-23; hidden before). The
+        dashboard draws its own heading beside the month picker, so its h1 stays for screen
+        readers only.
     */
-    .fi-page:not(.fi-resource-view-record-page) .fi-header-heading {
+    .fi-page:has(.dtr-dash) .fi-header-heading {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -55,8 +55,8 @@
         padding-block: calc(var(--spacing) * 4);
     }
 
-    /* A header left with nothing to show, as the dashboard's, gives back the gap after it. */
-    .fi-page:not(.fi-resource-view-record-page) .fi-header:not(.fi-header-has-breadcrumbs, .fi-header-has-subheading):not(:has(.fi-header-actions-ctn)) {
+    /* The dashboard's header, left with nothing to show, gives back the gap after it. */
+    .fi-page:has(.dtr-dash) .fi-header:not(.fi-header-has-breadcrumbs, .fi-header-has-subheading):not(:has(.fi-header-actions-ctn)) {
         margin-bottom: calc(var(--spacing) * -4);
     }
 
@@ -98,18 +98,53 @@
         display: none;
     }
 
-    /* The headings still shown a step smaller and lighter than Filament's 30px bold. */
+    /* Every page's title as the dashboard's: 28px bold from 640px, 24px on a phone. */
     .fi-header-heading {
-        font-size: var(--text-xl);
-        line-height: var(--text-xl--line-height);
-        font-weight: var(--font-weight-semibold);
+        font-size: var(--text-2xl);
+        line-height: 1.2;
+        font-weight: var(--font-weight-bold);
+        letter-spacing: -0.01em;
+        color: var(--gray-950);
     }
 
     @media (min-width: 40rem) {
         .fi-header-heading {
-            font-size: var(--text-2xl);
-            line-height: var(--text-2xl--line-height);
+            font-size: 1.75rem;
         }
+    }
+
+    /*
+        Every page after the dashboard (HR, 2026-11-23): a soft blue page with pale arcs at its
+        top, white cards with 16px corners and a soft blue shadow, 20px inside them, and 16px
+        between them.
+    */
+    .fi-main-ctn {
+        background:
+            radial-gradient(130% 70% at 100% -12%, transparent 46%, color-mix(in oklab, var(--primary-100) 75%, transparent) 47%, transparent 58%),
+            radial-gradient(110% 60% at 85% -18%, transparent 50%, color-mix(in oklab, var(--primary-200) 45%, transparent) 51%, transparent 60%),
+            radial-gradient(60% 40% at 90% 0%, color-mix(in oklab, var(--primary-200) 55%, transparent), transparent 70%),
+            linear-gradient(180deg, color-mix(in oklab, var(--primary-50) 80%, var(--color-white)) 0%, color-mix(in oklab, var(--primary-50) 35%, var(--gray-50)) 45%, var(--gray-50) 100%);
+        background-attachment: fixed;
+    }
+
+    .fi-page-main .fi-section:not(.fi-section-not-contained),
+    .fi-page-main .fi-ta-ctn {
+        border-radius: 1rem;
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 4%, transparent),
+            0 12px 32px -20px color-mix(in oklab, var(--primary-800) 45%, transparent);
+    }
+
+    .fi-page-main .fi-section:not(.fi-section-not-contained, .fi-compact) > .fi-section-header {
+        padding-inline: calc(var(--spacing) * 5);
+    }
+
+    .fi-page-main .fi-section:not(.fi-section-not-contained, .fi-compact) > .fi-section-content-ctn > .fi-section-content {
+        padding: calc(var(--spacing) * 5);
+    }
+
+    .fi-page-content {
+        row-gap: calc(var(--spacing) * 4);
     }
 
     /* The brand (filament.brand): the seal, the app's name and, under it, whose it is. */
@@ -201,10 +236,11 @@
             display: none;
         }
 
-        /* No white strip: the page's grey, with the search and the cards on the right standing on it. */
+        /* No white strip: the page's blue shows through, frosted, so what scrolls under it stays soft. */
         .fi-topbar {
             padding-inline: calc(var(--spacing) * 8);
-            background-color: var(--gray-50);
+            background-color: color-mix(in oklab, var(--primary-50) 55%, transparent);
+            backdrop-filter: blur(10px);
             box-shadow: none;
         }
 
