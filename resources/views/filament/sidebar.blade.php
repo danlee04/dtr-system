@@ -25,13 +25,6 @@
         --dtr-side-muted: color-mix(in oklab, var(--color-white) 65%, transparent);
     }
 
-    .dark {
-        --dtr-sidebar: linear-gradient(180deg, var(--primary-950) 0%, color-mix(in oklab, var(--primary-950) 60%, var(--gray-950)) 100%);
-        --dtr-line: color-mix(in oklab, var(--color-white) 10%, transparent);
-        --dtr-hover: color-mix(in oklab, var(--color-white) 5%, transparent);
-        --dtr-current: color-mix(in oklab, var(--color-white) 10%, transparent);
-    }
-
     /*
         Every page shows its title, as the dashboard does (HR, 2026-11-23; hidden before). The
         dashboard draws its own heading beside the month picker, so its h1 stays for screen
@@ -183,14 +176,6 @@
         color: var(--gray-500);
     }
 
-    .dark .dtr-brand-name {
-        color: var(--color-white);
-    }
-
-    .dark .dtr-brand-sub {
-        color: var(--gray-400);
-    }
-
     /* On the navy sidebar (HR's reference, 2026-11-23): a 48px seal on a white disc, the name bold and white (the sign-in page keeps the dark brand). */
     .fi-sidebar .dtr-brand {
         gap: calc(var(--spacing) * 3);
@@ -242,10 +227,6 @@
             background-color: color-mix(in oklab, var(--primary-50) 55%, transparent);
             backdrop-filter: blur(10px);
             box-shadow: none;
-        }
-
-        .dark .fi-topbar {
-            background-color: var(--gray-950);
         }
 
         /* The search on the left and everything after it pushed to the right. */
@@ -350,23 +331,8 @@
         border-radius: 0.75rem;
     }
 
-    .dark .dtr-topbar-btn {
-        background-color: var(--gray-900);
-        color: var(--gray-300);
-    }
-
-    .dark .dtr-topbar-btn:hover {
-        background-color: var(--gray-800);
-    }
-
-    .dark .dtr-topbar-btn:focus-visible {
-        outline-color: var(--gray-400);
-    }
-
     /*
-        The brand as a card, lined up with the menu below it: the brand leads home, and the
-        light or dark switch sits inside the card at its right. The card is the header, not
-        the link, since a button cannot go inside a link.
+        The brand, lined up with the menu below it, leads home; the header holds the link.
     */
     .fi-sidebar-header {
         height: auto;
@@ -532,10 +498,6 @@
         font-size: var(--text-sm);
         font-weight: var(--font-weight-medium);
         color: var(--color-white);
-    }
-
-    .dark .fi-topbar .fi-global-search-field .fi-input-wrp-suffix .fi-input-wrp-label {
-        color: var(--gray-400);
     }
 </style>
 

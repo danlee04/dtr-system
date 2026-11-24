@@ -2,7 +2,7 @@
     The read views. Every one of them (the employee's Details tab, the leave application
     modal and the rest) shows its labels in grey and its values in near-black, so the eye
     lands on the values, as on the balance cards. Filament draws both near-black.
-    Grey 500 on white and grey 400 on grey 900 pass 4.5:1, so a placeholder such as
+    Grey 500 on white passes 4.5:1, so a placeholder such as
     "Not set" stays readable. Filament's own grey 400 placeholder does not.
     Also here: an employee's page heading and chips, and the employee's Leave types cards.
 --}}
@@ -11,11 +11,6 @@
     .fi-in-entry-label,
     .fi-in-placeholder {
         color: var(--gray-500);
-    }
-
-    .dark .fi-in-entry-label,
-    .dark .fi-in-placeholder {
-        color: var(--gray-400);
     }
 
     /*
@@ -63,14 +58,6 @@
         box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--gray-950) 5%, transparent);
     }
 
-    .dark .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn::before {
-        background:
-            radial-gradient(45% 60% at 100% 0%, color-mix(in oklab, var(--primary-500) 22%, transparent), transparent 75%),
-            radial-gradient(35% 45% at 72% 0%, color-mix(in oklab, var(--primary-400) 12%, transparent), transparent 75%),
-            var(--gray-900);
-        box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-white) 10%, transparent);
-    }
-
     /* A phone shows no breadcrumbs: the panel starts at the top, 16px above the name. */
     @media (max-width: 39.99rem) {
         .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
@@ -105,10 +92,6 @@
         box-shadow: 0 0 0 4px var(--color-white), 0 8px 24px color-mix(in oklab, var(--primary-600) 22%, transparent);
     }
 
-    .dark .dtr-person-avatar {
-        box-shadow: 0 0 0 4px var(--gray-900);
-    }
-
     /* The pencil on the photo: a blue round button, 32px, with a white ring. */
     .dtr-person-edit {
         position: absolute;
@@ -133,11 +116,6 @@
         outline-offset: 3px;
     }
 
-    .dark .dtr-person-edit {
-        background-color: var(--primary-500);
-        box-shadow: 0 0 0 3px var(--gray-900);
-    }
-
     .dtr-person-edit-icon {
         width: calc(var(--spacing) * 4);
         height: calc(var(--spacing) * 4);
@@ -148,10 +126,6 @@
         line-height: 1.2;
         font-weight: var(--font-weight-bold);
         color: var(--gray-950);
-    }
-
-    .dark .fi-resource-employees.fi-resource-view-record-page .dtr-person-name {
-        color: var(--color-white);
     }
 
     /*
@@ -211,10 +185,6 @@
         color: var(--gray-600);
     }
 
-    .dark .dtr-person-role {
-        color: var(--gray-400);
-    }
-
     /* A chip under the name: a soft fill, an icon or a dot, the words on one line. */
     .dtr-chip {
         --chip: var(--gray-500);
@@ -229,11 +199,6 @@
         font-weight: var(--font-weight-medium);
         color: color-mix(in oklab, var(--chip) 55%, var(--gray-950));
         white-space: nowrap;
-    }
-
-    .dark .dtr-chip {
-        background-color: color-mix(in oklab, var(--chip) 20%, var(--gray-900));
-        color: color-mix(in oklab, var(--chip) 45%, var(--color-white));
     }
 
     .dtr-chip.is-office { --chip: var(--primary-600); }
@@ -262,11 +227,6 @@
         box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent);
     }
 
-    .dark .fi-resource-employees.fi-resource-view-record-page .fi-tabs:not(.fi-contained) {
-        background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
-        box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-white) 10%, transparent);
-    }
-
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item {
         padding-inline: calc(var(--spacing) * 4);
         border-radius: 9999px;
@@ -284,10 +244,6 @@
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active .fi-tabs-item-label,
     .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active > .fi-icon {
         color: var(--color-white);
-    }
-
-    .dark .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active {
-        background-color: var(--primary-600);
     }
 
     /* Job Details' rows tighter, as in HR's reference: 10px above and below each fact. */
@@ -325,11 +281,6 @@
         box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--tone) 18%, transparent);
     }
 
-    .dark .dtr-emp-card {
-        background: linear-gradient(135deg, color-mix(in oklab, var(--tone) 24%, var(--gray-900)), color-mix(in oklab, var(--tone) 8%, var(--gray-900)));
-        box-shadow: 0 0 0 1px color-mix(in oklab, var(--tone) 25%, transparent);
-    }
-
     .dtr-emp-card.is-tardiness { --tone: var(--primary-500); }
     .dtr-emp-card.is-vacation { --tone: var(--success-500); }
     .dtr-emp-card.is-sick { --tone: var(--violet-500); }
@@ -341,10 +292,6 @@
         height: calc(var(--spacing) * 6);
         margin-bottom: calc(var(--spacing) * 3);
         color: color-mix(in oklab, var(--tone) 70%, var(--gray-950));
-    }
-
-    .dark .dtr-emp-card-icon {
-        color: color-mix(in oklab, var(--tone) 70%, var(--color-white));
     }
 
     .dtr-emp-card-art {
@@ -382,18 +329,6 @@
         color: var(--gray-600);
     }
 
-    .dark .dtr-emp-card-label {
-        color: var(--gray-200);
-    }
-
-    .dark .dtr-emp-card-value {
-        color: var(--color-white);
-    }
-
-    .dark .dtr-emp-card-detail {
-        color: var(--gray-300);
-    }
-
     /*
      * The Overview's cards: last month in solid amber, then each balance tinted in
      * its colour on the dashboard's leave chart, then the schedule in grey.
@@ -422,11 +357,6 @@
         color: var(--gray-950);
     }
 
-    .dark .dtr-profile-card {
-        background-color: color-mix(in oklab, var(--tone) 16%, var(--gray-900));
-        color: var(--color-white);
-    }
-
     .dtr-profile-card.is-vacation {
         --tone: var(--success-500);
     }
@@ -443,8 +373,7 @@
         --tone: var(--danger-400);
     }
 
-    .dtr-profile-card.is-main,
-    .dark .dtr-profile-card.is-main {
+    .dtr-profile-card.is-main {
         --tone: var(--gray-950);
         background-color: var(--primary-400);
         color: var(--gray-950);
@@ -461,20 +390,11 @@
         color: color-mix(in oklab, var(--tone) 50%, var(--gray-950));
     }
 
-    .dark .dtr-profile-card-icon {
-        background-color: color-mix(in oklab, var(--gray-950) 40%, transparent);
-        color: color-mix(in oklab, var(--tone) 60%, var(--color-white));
-    }
-
     /* The label in a dark shade of the card's colour: 5:1 or better on its tint. Short, so the values line up. */
     .dtr-profile-card-label {
         font-size: var(--text-xs);
         font-weight: var(--font-weight-medium);
         color: color-mix(in oklab, var(--tone) 50%, var(--gray-950));
-    }
-
-    .dark .dtr-profile-card-label {
-        color: color-mix(in oklab, var(--tone) 60%, var(--color-white));
     }
 
     /* The dashboard's figure size. */
@@ -497,23 +417,12 @@
         color: var(--gray-600);
     }
 
-    .dark .dtr-profile-card-detail {
-        color: var(--gray-300);
-    }
-
-    .dtr-profile-card.is-main .dtr-profile-card-label,
-    .dark .dtr-profile-card.is-main .dtr-profile-card-label,
-    .dark .dtr-profile-card.is-main .dtr-profile-card-icon {
+    .dtr-profile-card.is-main .dtr-profile-card-label {
         color: var(--gray-950);
     }
 
-    .dtr-profile-card.is-main .dtr-profile-card-detail,
-    .dark .dtr-profile-card.is-main .dtr-profile-card-detail {
+    .dtr-profile-card.is-main .dtr-profile-card-detail {
         color: var(--gray-800);
-    }
-
-    .dark .dtr-profile-card.is-main .dtr-profile-card-icon {
-        background-color: color-mix(in oklab, var(--color-white) 75%, transparent);
     }
 
     /*
@@ -558,10 +467,6 @@
         padding-block-start: calc(var(--spacing) * 6);
     }
 
-    .dark .dtr-form-section-divided {
-        border-block-start-color: color-mix(in oklab, var(--color-white) 10%, transparent);
-    }
-
     /* The photo: a wide rounded box with a camera, the full width of its column, a rule between it and the name fields. */
     .dtr-photo-drop.fi-fo-file-upload-avatar .fi-fo-file-upload-input-ctn {
         inline-size: 100%;
@@ -577,11 +482,6 @@
         background-color: var(--gray-50);
     }
 
-    .dark .dtr-photo-drop .filepond--panel-root {
-        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
-        background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
-    }
-
     .dtr-photo-drop .filepond--drop-label svg {
         display: block;
         inline-size: 1.5rem;
@@ -594,10 +494,6 @@
         .dtr-form-names {
             border-inline-start: 1px solid var(--gray-200);
             padding-inline-start: calc(var(--spacing) * 6);
-        }
-
-        .dark .dtr-form-names {
-            border-inline-start-color: color-mix(in oklab, var(--color-white) 10%, transparent);
         }
     }
 
@@ -621,17 +517,9 @@
         color: var(--gray-950);
     }
 
-    .dark .dtr-profile-identity-name {
-        color: var(--color-white);
-    }
-
     .dtr-profile-identity-hint {
         font-size: var(--text-xs);
         color: var(--gray-500);
-    }
-
-    .dark .dtr-profile-identity-hint {
-        color: var(--gray-400);
     }
 
     /* A figure that needs a look, as a DTR's blanks to fill. */
@@ -662,20 +550,9 @@
         color: var(--gray-500);
     }
 
-    .dark .dtr-record-sub,
-    .dark .dtr-record-desc,
-    .dark .dtr-record-notes {
-        color: var(--gray-400);
-    }
-
     .dtr-record-warning,
     .dtr-record-notes .is-warning {
         color: var(--warning-700);
-    }
-
-    .dark .dtr-record-warning,
-    .dark .dtr-record-notes .is-warning {
-        color: var(--warning-400);
     }
 
     .dtr-record-warning {
@@ -701,12 +578,6 @@
         box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-500) 25%, transparent);
         font-size: var(--text-sm);
         color: var(--gray-950);
-    }
-
-    .dark .dtr-record-callout {
-        background-color: color-mix(in oklab, var(--primary-400) 10%, var(--gray-900));
-        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-400) 25%, transparent);
-        color: var(--color-white);
     }
 
     .dtr-record-heading {
@@ -978,15 +849,6 @@
         color: var(--primary-600);
     }
 
-    .dark .dtr-deductions-note {
-        background-color: color-mix(in oklab, var(--primary-400) 12%, transparent);
-        color: var(--gray-200);
-    }
-
-    .dark .dtr-deductions-note-icon {
-        color: var(--primary-400);
-    }
-
     .dtr-deductions-total {
         margin-top: calc(var(--spacing) * 1);
         border-top: 1px solid color-mix(in oklab, var(--gray-950) 10%, transparent);
@@ -999,26 +861,6 @@
         color: var(--gray-500);
     }
 
-    .dark .dtr-deduction + .dtr-deduction {
-        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
-    }
-
-    .dark .dtr-deductions-total {
-        border-color: color-mix(in oklab, var(--color-white) 15%, transparent);
-    }
-
-    .dark :is(.dtr-deduction-title, .dtr-deductions-total) {
-        color: var(--color-white);
-    }
-
-    .dark :is(.dtr-deduction-detail, .dtr-deductions-empty) {
-        color: var(--gray-400);
-    }
-
-    .dark .dtr-deduction-days {
-        color: var(--danger-300);
-    }
-
     /* What needs a look, after the reference's "due a review" card: an amber tint, an icon, a sentence, one button. */
     .dtr-callout {
         display: flex;
@@ -1029,11 +871,6 @@
         border-radius: var(--radius-xl);
         background-color: color-mix(in oklab, var(--primary-400) 16%, var(--color-white));
         box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-500) 25%, transparent);
-    }
-
-    .dark .dtr-callout {
-        background-color: color-mix(in oklab, var(--primary-400) 12%, var(--gray-900));
-        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-400) 25%, transparent);
     }
 
     .dtr-callout-icon {
@@ -1053,10 +890,6 @@
         color: var(--primary-800);
     }
 
-    .dark .dtr-callout-eyebrow {
-        color: var(--primary-300);
-    }
-
     .dtr-callout-heading {
         font-size: var(--text-base);
         line-height: var(--text-base--line-height);
@@ -1064,19 +897,11 @@
         color: var(--gray-950);
     }
 
-    .dark .dtr-callout-heading {
-        color: var(--color-white);
-    }
-
     .dtr-callout-text {
         margin-bottom: calc(var(--spacing) * 3);
         font-size: var(--text-sm);
         color: var(--gray-700);
         text-wrap: pretty;
-    }
-
-    .dark .dtr-callout-text {
-        color: var(--gray-300);
     }
 
     /* The Leave types guide: a card per type, as many across as fit at 20rem. */

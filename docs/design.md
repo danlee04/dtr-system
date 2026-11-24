@@ -31,7 +31,7 @@ few Blade partials in `resources/views/filament/` (see **Where the styles live**
   so its `h1` stays for screen readers; an employee's page heading is their photo
   and name.
 - **Light only** (HR, 2026-11-23): dark mode is off (`darkMode(false)`) and its
-  switch is gone. The `.dark` rules left in the partials no longer apply.
+  switch is gone, and the partials hold no `.dark` rules (removed 2026-11-24).
 
 ## 2. Tokens
 

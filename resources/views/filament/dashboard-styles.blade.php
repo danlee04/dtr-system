@@ -13,14 +13,6 @@
         grid-template-areas: "top" "k1" "k2" "k3" "k4" "a" "c" "d" "e" "g" "h" "o" "f" "i";
     }
 
-    .dark .dtr-dash {
-        --dash-card: var(--gray-900);
-        --dash-line: color-mix(in oklab, var(--color-white) 10%, transparent);
-        --dash-track: color-mix(in oklab, var(--color-white) 6%, transparent);
-        --dash-text: var(--color-white);
-        --dash-muted: var(--gray-400);
-    }
-
     @media (min-width: 48rem) {
         .dtr-dash {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -117,10 +109,6 @@
         font-size: var(--text-sm);
         font-weight: var(--font-weight-medium);
         color: var(--primary-700);
-    }
-
-    .dark .dtr-dash-link {
-        color: var(--primary-400);
     }
 
     .dtr-dash-link:hover,
@@ -418,10 +406,6 @@
         color: var(--gray-700);
     }
 
-    .dark .dtr-dash-action {
-        color: var(--gray-300);
-    }
-
     .dtr-dash-action-icon {
         display: grid;
         place-items: center;
@@ -468,10 +452,6 @@
         height: auto;
         box-shadow: none;
         color: var(--primary-600);
-    }
-
-    .dark .dtr-dash-actions.is-tiles .dtr-dash-action-icon {
-        color: var(--primary-400);
     }
 
     .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
@@ -533,11 +513,6 @@
         font-weight: var(--font-weight-semibold);
     }
 
-    .dark .dtr-dash-avatar {
-        background-color: color-mix(in oklab, var(--primary-400) 20%, transparent);
-        color: var(--primary-300);
-    }
-
     /* D and H: progress bars. */
     .dtr-dash-progress {
         height: 0.75rem;
@@ -574,10 +549,6 @@
         border-radius: 9999px;
         background-color: color-mix(in oklab, var(--warning-400) 20%, transparent);
         color: var(--warning-700);
-    }
-
-    .dark .dtr-dash-bulb {
-        color: var(--warning-300);
     }
 
     .dtr-dash-bulb > svg {
@@ -706,7 +677,7 @@
         }
     }
 
-    /* The view's one main action: amber, with dark text on it. */
+    /* The view's one main action: the primary colour, with dark text on it. */
     .dtr-dash-action.is-main .dtr-dash-action-icon {
         background-color: var(--primary-400);
         box-shadow: none;

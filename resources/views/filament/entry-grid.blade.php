@@ -18,17 +18,6 @@
         --grid-muted: var(--gray-500);
     }
 
-    .dark .dtr-grid {
-        --grid-bg: var(--gray-900);
-        --grid-head: color-mix(in oklab, var(--color-white) 5%, var(--gray-900));
-        --grid-line: color-mix(in oklab, var(--color-white) 10%, transparent);
-        --grid-hover: color-mix(in oklab, var(--color-white) 4%, var(--gray-900));
-        --grid-weekend: color-mix(in oklab, var(--color-white) 6%, var(--gray-900));
-        --grid-current: color-mix(in oklab, var(--primary-400) 12%, var(--gray-900));
-        --grid-absent: color-mix(in oklab, var(--danger-400) 12%, var(--gray-900));
-        --grid-muted: var(--gray-400);
-    }
-
     /* A focused cell near the bottom must not hide behind the save bar. */
     html {
         scroll-padding-bottom: 6rem;
@@ -55,10 +44,6 @@
         gap: calc(var(--spacing) * 1);
         margin-bottom: calc(var(--spacing) * 4);
         color: var(--danger-600);
-    }
-
-    .dark .dtr-grid-errors {
-        color: var(--danger-400);
     }
 
     /* What follows the grid: its pagination, a closing hint. */
@@ -216,10 +201,6 @@
         color: var(--danger-600);
     }
 
-    .dark .dtr-grid-taken {
-        color: var(--danger-400);
-    }
-
     /* On Balances, a sum where the month took something: the balance before it, small and grey; the red; then the month's end under a rule. */
     .dtr-grid-sum {
         display: inline-flex;
@@ -329,10 +310,6 @@
         color: var(--gray-950);
     }
 
-    .dark .dtr-grid-legend strong {
-        color: var(--color-white);
-    }
-
     /* A DTR's dates: grey when not a work date; tinted red when absent, which its badge also says. */
     .dtr-grid-table tbody tr.is-off > * {
         background-color: var(--grid-weekend);
@@ -356,11 +333,6 @@
         color: inherit;
     }
 
-    .dark .dtr-grid-add {
-        border-color: var(--warning-400);
-        color: var(--warning-300);
-    }
-
     /*
      * "+ OB/TO" beside a day's badge: the same dashed box as "+ Add", in the blue of
      * the OB and travel order badges, with dark text on its tint (about 6:1).
@@ -376,11 +348,6 @@
 
     .dtr-grid-ob > .fi-icon {
         color: inherit;
-    }
-
-    .dark .dtr-grid-ob {
-        border-color: var(--info-400);
-        color: var(--info-300);
     }
 
     /* A time HR copied in reads like a printed one, then a blue "HR" tag: the word, not only the colour. */
@@ -411,9 +378,5 @@
         font-size: var(--text-xs);
         font-weight: 600;
         line-height: 1.25rem;
-    }
-
-    .dark .dtr-grid-hr-tag {
-        color: var(--info-300);
     }
 </style>
