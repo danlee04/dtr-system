@@ -111,13 +111,27 @@
         top, white cards with 16px corners and a soft blue shadow, 20px inside them, and 16px
         between them.
     */
-    .fi-main-ctn {
-        background:
+    /*
+        One background for the whole screen, fixed to it: the topbar paints the same one, so
+        it runs on into the main area with no seam (HR, 2026-11-24), and still hides what
+        scrolls under it.
+    */
+    :root {
+        --dtr-page-bg:
             radial-gradient(130% 70% at 100% -12%, transparent 46%, color-mix(in oklab, var(--primary-100) 75%, transparent) 47%, transparent 58%),
             radial-gradient(110% 60% at 85% -18%, transparent 50%, color-mix(in oklab, var(--primary-200) 45%, transparent) 51%, transparent 60%),
             radial-gradient(60% 40% at 90% 0%, color-mix(in oklab, var(--primary-200) 55%, transparent), transparent 70%),
             linear-gradient(180deg, color-mix(in oklab, var(--primary-50) 80%, var(--color-white)) 0%, color-mix(in oklab, var(--primary-50) 35%, var(--gray-50)) 45%, var(--gray-50) 100%);
+    }
+
+    .fi-body,
+    .fi-topbar {
+        background: var(--dtr-page-bg);
         background-attachment: fixed;
+    }
+
+    .fi-topbar {
+        box-shadow: none;
     }
 
     .fi-page-main .fi-section:not(.fi-section-not-contained),
@@ -221,12 +235,8 @@
             display: none;
         }
 
-        /* No white strip: the page's blue shows through, frosted, so what scrolls under it stays soft. */
         .fi-topbar {
             padding-inline: calc(var(--spacing) * 8);
-            background-color: color-mix(in oklab, var(--primary-50) 55%, transparent);
-            backdrop-filter: blur(10px);
-            box-shadow: none;
         }
 
         /* The search on the left and everything after it pushed to the right. */

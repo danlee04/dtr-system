@@ -25,7 +25,7 @@ few Blade partials in `resources/views/filament/` (see **Where the styles live**
   gives each card room. Both use the same tokens.
 - **Every page after the dashboard** (HR, 2026-11-23): its title on screen (28px
   bold, `.fi-header-heading`; hidden until then), the soft blue page with pale arcs
-  at its top (`.fi-main-ctn`, behind a frosted topbar), and every section and table
+  at its top (`--dtr-page-bg` on `.fi-body` and the topbar, fixed, so the two run on with no seam), and every section and table
   a white card with 16px corners and a soft blue shadow, 20px inside, 16px between
   (`filament.sidebar`). The dashboard draws its own heading beside the month picker,
   so its `h1` stays for screen readers; an employee's page heading is their photo
@@ -50,7 +50,7 @@ registered for the Sick card on an employee's page.
 | Secondary | none on pages: every button and link is blue (HR, 2026-11-24) | — | Filament's own Close and Cancel in modals stay grey |
 | Accent | none | none | There is no separate accent hue: colour beyond blue is status or data only |
 | Sidebar | navy gradient, `--primary-900` to `--primary-950` | `--primary-950` into `--gray-950` | The sidebar, with white words and icons, headings in white at 65%, and a `--primary-500` at 55% pill for the open page |
-| Page background | `--primary-50` into `--gray-50`, with pale `--primary-100`/`--primary-200` arcs at the top | — | Behind cards; the topbar shows it frosted |
+| Page background | `--primary-50` into `--gray-50`, with pale `--primary-100`/`--primary-200` arcs at the top | — | Behind cards; the topbar paints the same fixed background, so it runs on into the page |
 | Card, sidebar | `--color-white` | `--gray-900` | Sections, tables, grids, dashboard cards, the sidebar |
 | Text | `--gray-950` | `--color-white` | Values, names, titles |
 | Body text in lists | `--gray-700` | `--gray-200` | Sidebar items, tile labels |
@@ -426,7 +426,7 @@ Filament notifications:
 
 - **The staff dashboard's look** (HR's second reference, 2026-11-23; `.dtr-dash.is-staff`,
   so an employee's own dashboard keeps the plainer look): a soft blue page with pale
-  arcs at its top (on `.fi-main-ctn`, the topbar frosted over it), the heading 28px
+  arcs at its top (every page's, with the topbar), the heading 28px
   bold, the month select with a calendar icon, white cards with 16px corners and a
   soft blue shadow; the four figures with the icon solid in a tinted circle (blue
   calendar, green people, amber document, violet check) and a faint wave in the same
