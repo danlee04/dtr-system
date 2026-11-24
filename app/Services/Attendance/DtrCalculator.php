@@ -180,8 +180,8 @@ final class DtrCalculator
         if (self::isFlexiDay($employee, $resolved->schedule) && ! $date->isMonday()) {
             $arrived = isset($covered[0]) || $taps[0][0] === null ? 480 : self::minute($taps[0][0]);
 
-            // A morning-only day, the afternoon on leave, an OB, a TO or a gate pass: late after 8:00, as on 8–5 (HR, 2026-11-23).
-            if (! isset($covered[1])) {
+            // A morning-only day, the afternoon on leave, an OB, a TO or a gate pass (HR, 2026-11-23), or suspended from 1:00 (HR, 2026-11-24): late after 8:00, as on 8–5.
+            if (! isset($covered[1]) && ($suspendedAt === null || $suspendedAt > $halves[1]['in'])) {
                 $halves[0]['lateAfter'] = 540;
             }
 

@@ -35,8 +35,9 @@ which HR does not count.
 - **No time in** (blank, or the morning on an OB or leave): the time in is
   taken as 8:00, so the time out due is 5:00.
 - **A morning-only day** (the afternoon on leave, an OB, a TO or a gate
-  pass): late after 8:00, as on 8–5; in at 9:00 and out at 12:00 is 60
-  minutes late (HR, 2026-11-23).
+  pass, or suspended from 1:00 PM or earlier, 2026-11-24): late after 8:00,
+  as on 8–5; in at 9:00 and out at 12:00 is 60 minutes late (HR, 2026-11-23).
+  A later suspension (3:00 PM) keeps the 9:00 cutoff and caps the time out due.
 - **Never on a Monday** (the office's policy): a Monday is 8–5, so in at
   8:20 is 20 minutes late and 5:00 is due (2026-11-23).
 - **A half with no tap** is still 4 hours undertime, and **an absent day**

@@ -486,6 +486,18 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([AttendanceStatus::Present, 10, 1, 0, 0], $this->figures($days['2026-10-08']));
     }
 
+    public function test_flexi_with_the_afternoon_suspended_is_late_after_eight(): void
+    {
+        Holiday::factory()->create(['date' => '2026-10-15', 'type' => HolidayType::Suspension, 'suspension_starts_at' => '13:00:00']);
+
+        // Work ends at 1:00, so the day is the morning only: in at 9:00 is 60 minutes late (HR, 2026-11-24).
+        $day = $this->compute($this->regular(['flexitime' => true]), [
+            '2026-10-15' => ['am_arrival' => '09:00', 'am_departure' => '12:00'],
+        ])->days['2026-10-15'];
+
+        $this->assertSame([60, 0], [$day->late, $day->undertime]);
+    }
+
     public function test_flexi_does_not_apply_on_a_monday(): void
     {
         // Not granted on Mondays (the office's policy, 2026-11-23): in at 8:20 is 20 minutes late, and 5:00 is due.
