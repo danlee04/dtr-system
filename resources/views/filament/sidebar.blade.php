@@ -154,6 +154,11 @@
         row-gap: calc(var(--spacing) * 4);
     }
 
+    /* An employee's pages have no topbar (2026-11-23): 32px above the title, not 16px, so it does not sit on the screen's edge. */
+    .fi-body:not(.fi-body-has-topbar) .fi-page-header-main-ctn {
+        padding-top: calc(var(--spacing) * 8);
+    }
+
     /* The brand (filament.brand): the seal, the app's name and, under it, whose it is. */
     .dtr-brand {
         display: flex;

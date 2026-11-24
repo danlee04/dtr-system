@@ -661,20 +661,31 @@
      * then their latest DTR beside the leave waiting for approval.
      */
     .dtr-dash.is-mine {
-        grid-template-areas: "a" "b" "c" "d";
+        grid-template-areas: "top" "a" "b" "c" "d";
     }
 
     @media (min-width: 48rem) {
         .dtr-dash.is-mine {
-            grid-template-areas: "a a" "c c" "b d";
+            grid-template-areas: "top top" "a a" "c c" "b d";
         }
     }
 
     @media (min-width: 80rem) {
         .dtr-dash.is-mine {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            grid-template-areas: "a a b" "c c d";
+            grid-template-areas: "top top top" "a a b" "c c d";
         }
+
+        /* The four balances across their card, as the employee page's five. */
+        .dtr-dash.is-mine .dtr-emp-cards {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    /* An employee's quick actions fill their card, as the staff's do. */
+    .dtr-dash-b .dtr-dash-actions.is-tiles {
+        flex: 1;
+        grid-auto-rows: minmax(5.5rem, 1fr);
     }
 
     /* The view's one main action: the primary colour, with dark text on it. */
@@ -694,28 +705,28 @@
      * pale waves at its top, white cards with rounder corners and a soft blue shadow,
      * figures in solid tinted circles with a faint wave each, icons on the card titles,
      * links with an arrow, and the next step as a wide blue button. An employee's own
-     * dashboard (.is-mine) keeps the plainer look.
+     * dashboard (.is-mine) has the same look since 2026-11-24.
      */
     /* The page's blue and the frosted topbar are every page's now (filament.sidebar). */
 
-    .dtr-dash.is-staff .dtr-dash-card {
+    .dtr-dash .dtr-dash-card {
         border-radius: 1rem;
         box-shadow:
             0 0 0 1px color-mix(in oklab, var(--gray-950) 4%, transparent),
             0 12px 32px -20px color-mix(in oklab, var(--primary-800) 45%, transparent);
     }
 
-    .dtr-dash.is-staff .dtr-dash-heading {
+    .dtr-dash .dtr-dash-heading {
         font-size: 1.75rem;
         font-weight: var(--font-weight-bold);
         letter-spacing: -0.01em;
     }
 
-    .dtr-dash.is-staff .dtr-dash-month {
+    .dtr-dash .dtr-dash-month {
         inline-size: 13rem;
     }
 
-    .dtr-dash.is-staff .dtr-dash-month .fi-input-wrp {
+    .dtr-dash .dtr-dash-month .fi-input-wrp {
         border-radius: 0.75rem;
         box-shadow:
             0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent),
@@ -723,17 +734,17 @@
     }
 
     /* K: the figure over a faint wave in the card's colour; the icon solid in a tinted circle. */
-    .dtr-dash.is-staff .dtr-dash-kpi {
+    .dtr-dash .dtr-dash-kpi {
         position: relative;
         overflow: hidden;
     }
 
-    .dtr-dash.is-staff .dtr-dash-kpi.is-primary { --tone: var(--primary-500); }
-    .dtr-dash.is-staff .dtr-dash-kpi.is-success { --tone: var(--success-500); }
-    .dtr-dash.is-staff .dtr-dash-kpi.is-warning { --tone: var(--warning-500); }
-    .dtr-dash.is-staff .dtr-dash-kpi.is-violet { --tone: var(--violet-500); }
+    .dtr-dash .dtr-dash-kpi.is-primary { --tone: var(--primary-500); }
+    .dtr-dash .dtr-dash-kpi.is-success { --tone: var(--success-500); }
+    .dtr-dash .dtr-dash-kpi.is-warning { --tone: var(--warning-500); }
+    .dtr-dash .dtr-dash-kpi.is-violet { --tone: var(--violet-500); }
 
-    .dtr-dash.is-staff .dtr-dash-kpi-icon {
+    .dtr-dash .dtr-dash-kpi-icon {
         position: relative;
         z-index: 1;
         width: calc(var(--spacing) * 14);
@@ -742,17 +753,17 @@
         color: var(--tone);
     }
 
-    .dtr-dash.is-staff .dtr-dash-kpi-icon > svg {
+    .dtr-dash .dtr-dash-kpi-icon > svg {
         width: calc(var(--spacing) * 7);
         height: calc(var(--spacing) * 7);
     }
 
-    .dtr-dash.is-staff .dtr-dash-kpi-text {
+    .dtr-dash .dtr-dash-kpi-text {
         position: relative;
         z-index: 1;
     }
 
-    .dtr-dash.is-staff .dtr-dash-num {
+    .dtr-dash .dtr-dash-num {
         font-weight: var(--font-weight-bold);
     }
 
@@ -770,18 +781,18 @@
 
     /* D: View all at the title's right, as in the reference, once the card is wide enough (1536px). */
     @media (min-width: 96rem) {
-        .dtr-dash.is-staff .dtr-dash-d .dtr-dash-head {
+        .dtr-dash .dtr-dash-d .dtr-dash-head {
             flex-wrap: nowrap;
         }
     }
 
-    .dtr-dash.is-staff .dtr-dash-head > .dtr-dash-link {
+    .dtr-dash .dtr-dash-head > .dtr-dash-link {
         flex: none;
         white-space: nowrap;
     }
 
     /* Links end in an arrow. */
-    .dtr-dash.is-staff .dtr-dash-link {
+    .dtr-dash .dtr-dash-link {
         display: inline-flex;
         align-items: center;
         gap: calc(var(--spacing) * 1);
@@ -794,30 +805,30 @@
     }
 
     /* Card titles: a navy icon before each, the quick actions' bolt in blue. */
-    .dtr-dash.is-staff .dtr-dash-title-icon {
+    .dtr-dash .dtr-dash-title-icon {
         color: var(--primary-800);
     }
 
-    .dtr-dash.is-staff .dtr-dash-title-icon.is-accent {
+    .dtr-dash .dtr-dash-title-icon.is-accent {
         color: var(--primary-600);
     }
 
-    .dtr-dash.is-staff .dtr-dash-key {
+    .dtr-dash .dtr-dash-key {
         border-radius: 9999px;
     }
 
-    .dtr-dash.is-staff .dtr-dash-track {
+    .dtr-dash .dtr-dash-track {
         border-radius: 0.375rem;
         background-color: var(--gray-100);
     }
 
     /* C: four tiles, two by two, the icon blue and large over a bold label. */
-    .dtr-dash.is-staff .dtr-dash-actions.is-tiles {
+    .dtr-dash .dtr-dash-actions.is-tiles {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: calc(var(--spacing) * 3);
     }
 
-    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action {
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action {
         gap: calc(var(--spacing) * 2.5);
         border-radius: 0.875rem;
         background-color: var(--color-white);
@@ -829,43 +840,43 @@
         color: var(--gray-800);
     }
 
-    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
-    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
         background-color: var(--primary-50);
     }
 
-    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
         outline-color: var(--primary-600);
     }
 
-    .dtr-dash.is-staff .dtr-dash-actions.is-tiles .dtr-dash-action-icon > svg {
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action-icon > svg {
         width: calc(var(--spacing) * 7);
         height: calc(var(--spacing) * 7);
     }
 
     /* D and H: the bars a little thicker. */
-    .dtr-dash.is-staff .dtr-dash-progress {
+    .dtr-dash .dtr-dash-progress {
         height: 0.625rem;
     }
 
-    .dtr-dash.is-staff .dtr-dash-progress.is-thin {
+    .dtr-dash .dtr-dash-progress.is-thin {
         height: 0.375rem;
     }
 
     /* E: the note in an amber box with a warning icon, its count in amber, then the wide button. */
-    .dtr-dash.is-staff .dtr-dash-note {
+    .dtr-dash .dtr-dash-note {
         align-items: flex-start;
         background-color: color-mix(in oklab, var(--warning-400) 14%, var(--color-white));
         box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--warning-400) 35%, transparent);
         color: var(--gray-800);
     }
 
-    .dtr-dash.is-staff .dtr-dash-note strong {
+    .dtr-dash .dtr-dash-note strong {
         font-weight: var(--font-weight-semibold);
         color: var(--warning-700);
     }
 
-    .dtr-dash.is-staff .dtr-dash-note.is-done {
+    .dtr-dash .dtr-dash-note.is-done {
         background-color: color-mix(in oklab, var(--success-400) 12%, var(--color-white));
         box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--success-400) 35%, transparent);
     }
@@ -886,7 +897,7 @@
         height: calc(var(--spacing) * 6);
     }
 
-    .dtr-dash.is-staff .dtr-dash-step {
+    .dtr-dash .dtr-dash-step {
         width: 100%;
         min-height: calc(var(--spacing) * 12);
         margin-top: auto;
@@ -894,7 +905,7 @@
     }
 
     /* G: a thicker gauge. */
-    .dtr-dash.is-staff .dtr-dash-gauge path {
+    .dtr-dash .dtr-dash-gauge path {
         stroke-width: 18;
     }
 </style>

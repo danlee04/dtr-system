@@ -72,6 +72,16 @@ class DashboardPageTest extends TestCase
             ->assertDontSee(['Leave to approve', 'Out today', 'Recent leave']);
     }
 
+    public function test_an_employees_dashboard_follows_the_staff_dashboards_look(): void
+    {
+        // Its own heading, balances on the employee page's cards, and four quick action tiles (HR, 2026-11-24).
+        $this->actingAs(User::factory()->employee()->create())
+            ->get('/')
+            ->assertSeeInOrder(['Dashboard', 'Leave balance', 'Vacation', 'Quick Actions', 'File Leave', 'My DTR', 'History', 'Leave Types'])
+            ->assertSeeHtml('class="dtr-emp-cards"')
+            ->assertSeeHtml('dtr-dash-actions is-tiles');
+    }
+
     public function test_the_dashboard_shows_how_many_dtrs_are_final_and_the_offices_not_done(): void
     {
         $nursing = Office::factory()->create(['name' => 'Nursing Service']);

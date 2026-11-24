@@ -424,8 +424,8 @@ Filament notifications:
 
 ### Dashboard pieces
 
-- **The staff dashboard's look** (HR's second reference, 2026-11-23; `.dtr-dash.is-staff`,
-  so an employee's own dashboard keeps the plainer look): a soft blue page with pale
+- **The dashboards' look** (HR's second reference, 2026-11-23; every `.dtr-dash`, an
+  employee's own too since 2026-11-24): a soft blue page with pale
   arcs at its top (every page's, with the topbar), the heading 28px
   bold, the month select with a calendar icon, white cards with 16px corners and a
   soft blue shadow; the four figures with the icon solid in a tinted circle (blue
@@ -463,12 +463,16 @@ Filament notifications:
   employee's dashboard).
 - **Series colours** come from `.is-late` and `.is-undertime`; a stack of lines
   inside a card is `.dtr-dash-stack`.
-- **An employee's dashboard** (`.dtr-dash.is-mine`) uses the same cards: Leave
-  balance (the employee page's tinted cards, VL first; SPL and Wellness "until Dec
-  31") wide beside Quick actions, then Your DTR for the latest month (grey figure
-  cards, Missing taps amber when any, a link to My DTR) beside Waiting for
-  approval (list rows, each with Print). Three columns from 1280px; balances and
-  the DTR full width from 768px; one column on phones.
+- **An employee's dashboard** (`.dtr-dash.is-mine`) has the staff dashboard's look
+  (2026-11-24): its own "Dashboard" heading with "Your leave and DTR, as of …"; Leave
+  balance on the employee page's cards (`.dtr-emp-card`: gradient, small icon,
+  large faint one; four across from 1280px; SPL and Wellness "until Dec 31") wide
+  beside Quick Actions, four tiles two by two (File Leave, My DTR, History, Leave
+  Types); then Your DTR for the latest month (grey figure cards, Missing taps
+  amber when any, "Check my DTR →") beside Waiting for approval (list rows, each
+  with Print); a navy icon before each card title. Three columns from 1280px;
+  balances and the DTR full width from 768px; one column on phones. An employee's
+  pages have no topbar, so their titles have 32px above them, not 16px.
 
 ### An employee's page
 
