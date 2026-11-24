@@ -9,6 +9,7 @@ use App\Models\DtrUpload;
 use App\Models\Employee;
 use App\Models\LeaveLedgerEntry;
 use App\Models\User;
+use App\Services\EmployeeNotices;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -99,6 +100,7 @@ final class DtrDeduction
         });
 
         $upload->refresh();
+        EmployeeNotices::dtrFinal($upload, $this->deductedByType($upload));
     }
 
     /** No reason is asked: HR reopens in one click (HR, 2026-11-20). */
@@ -121,6 +123,7 @@ final class DtrDeduction
         });
 
         $upload->refresh();
+        EmployeeNotices::dtrReopened($upload);
     }
 
     /** A computed DTR from the leave start on: one before it is in the opening balance. */

@@ -85,6 +85,21 @@ class DtrDeductionTest extends TestCase
         $this->assertSame(['2026-11-03 09:00:00', $this->hr->id], [$upload->finalized_at->toDateTimeString(), $upload->finalized_by_user_id]);
     }
 
+    public function test_the_employee_is_told_in_the_app_when_their_dtr_is_final_or_reopened(): void
+    {
+        $upload = $this->upload();
+        $account = User::factory()->employee($upload->employee)->create();
+
+        $this->deduction()->finalize($upload, $this->hr);
+        $this->travel(1)->minute();
+        $this->deduction()->reopen($upload, $this->hr);
+
+        $this->assertSame([
+            ['October 2026 DTR final', "Deducted: VL \u{2212}0.100."],
+            ['October 2026 DTR reopened', 'HR reopened it to check it again. What it took was given back until it is marked final again.'],
+        ], $account->notifications()->reorder('created_at')->get()->map(fn ($notice): array => [$notice->data['title'], $notice->data['body']])->all());
+    }
+
     public function test_vl_goes_negative_when_it_is_short(): void
     {
         $upload = $this->upload();

@@ -870,6 +870,30 @@ class DtrUploadResourceTest extends TestCase
         $this->assertSame(['-0.100', '0.100'], LeaveLedgerEntry::query()->orderBy('id')->pluck('days')->all());
     }
 
+    public function test_hr_marks_the_selected_dtrs_final_and_is_told_which_were_not_ready(): void
+    {
+        config(['leave.start_date' => '2026-10-01']);
+        $this->actingAs(User::factory()->create());
+        $ready = $this->checkedUpload();
+        $withBlank = $this->uploadWithoutTimeOut();
+        $noSchedule = DtrUpload::factory()->create();
+        $final = $this->final($this->checkedUpload());
+
+        $list = Livewire::test(ListDtrUploads::class)
+            // A final DTR cannot be checked, so it is not taken even when sent.
+            ->selectTableRecords([$ready->id, $withBlank->id, $noSchedule->id, $final->id])
+            ->callAction(TestAction::make('finalizeSelected')->table()->bulk());
+
+        // Only a DTR with nothing left for HR to check is marked final; the rest are named with why (2026-11-24).
+        $this->assertSame([true, false, false], [$ready->refresh()->isFinal(), $withBlank->refresh()->isFinal(), $noSchedule->refresh()->isFinal()]);
+        $body = $this->notificationBody();
+        $this->assertStringContainsString(e($withBlank->employee->full_name).': 1 blank to fill', $body);
+        $this->assertStringContainsString(e($noSchedule->employee->full_name).': a day without a schedule', $body);
+        $this->assertStringNotContainsString(e($final->employee->full_name), $body);
+        $list->assertNotified('1 of 3 DTRs marked final');
+        $this->assertSame(1, LeaveLedgerEntry::query()->whereBelongsTo($ready, 'dtrUpload')->count());
+    }
+
     public function test_final_is_not_offered_on_a_job_order_dtr(): void
     {
         $this->actingAs(User::factory()->create());

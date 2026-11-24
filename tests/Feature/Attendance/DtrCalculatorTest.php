@@ -363,6 +363,19 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([[], []], [$days['2026-10-06']->missing, $days['2026-10-07']->missing]);
     }
 
+    public function test_a_24_hour_duty_on_the_last_day_ends_on_the_next_months_dtr(): void
+    {
+        $employee = $this->doctor(['2026-10-31' => '24H', '2026-11-01' => null]);
+        // November's DTR, uploaded on its own, holds the time out of October 31's duty.
+        DtrUpload::factory()->for($employee)->create(['period_start' => '2026-11-01', 'period_end' => '2026-11-30'])
+            ->days()->create(['date' => '2026-11-01', 'am_departure' => '07:40']);
+
+        $day = $this->compute($employee, ['2026-10-31' => ['am_arrival' => '07:55']])->days['2026-10-31'];
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 20, 1], $this->figures($day));
+        $this->assertSame([], $day->missing);
+    }
+
     public function test_a_24_hour_duty_with_no_tap_is_three_days_absent(): void
     {
         // All 24 hours (HR, 2026-11-24).

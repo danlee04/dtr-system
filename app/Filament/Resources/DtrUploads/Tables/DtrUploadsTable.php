@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\DtrUploads\Tables;
 
 use App\Filament\Resources\DtrUploads\Actions\FinalizeDtrAction;
+use App\Filament\Resources\DtrUploads\Actions\FinalizeDtrsBulkAction;
 use App\Filament\Resources\DtrUploads\Actions\ReopenDtrAction;
 use App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist;
 use App\Models\DtrUpload;
@@ -159,6 +160,9 @@ class DtrUploadsTable
                         }
                     }),
                 DeleteAction::make(),
-            ]);
+            ])
+            // Only an open, computed DTR can be checked for Mark final.
+            ->checkIfRecordIsSelectableUsing(fn (DtrUpload $record): bool => ! $record->isFinal() && $record->isComputed())
+            ->toolbarActions([FinalizeDtrsBulkAction::make()]);
     }
 }

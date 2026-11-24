@@ -9,6 +9,7 @@ use App\Enums\LeaveType;
 use App\Enums\LedgerKind;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
+use App\Services\EmployeeNotices;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -144,6 +145,8 @@ final class LeaveApplications
                 'approved_by_user_id' => auth()->id(),
             ]);
         });
+
+        EmployeeNotices::leaveApproved($application);
     }
 
     /**
@@ -178,6 +181,8 @@ final class LeaveApplications
 
             $this->posting->correctCredits($application);
         });
+
+        EmployeeNotices::leaveCancelled($application);
     }
 
     /**
@@ -213,6 +218,8 @@ final class LeaveApplications
 
             $this->posting->correctCredits($application);
         });
+
+        EmployeeNotices::leaveDisapproved($application);
     }
 
     /** @throws ValidationException keyed status, when the application already gave its days back */

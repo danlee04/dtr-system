@@ -40,7 +40,11 @@ every month.
 6. **Reopen posts a reversing row** (approach A below), the way cancelling a
    leave application does.
 7. **Final is one DTR at a time**, on the DTR, once HR has checked it. No
-   bulk Final on the list.
+   bulk Final on the list. Changed 2026-11-24, with 93 DTRs waiting: HR checks
+   rows on the list and marks them final at once, but only those with no
+   blank to fill, no day not computed and no day without a schedule; the
+   rest are named and stay open. The employee is now told in the app when
+   their DTR is marked final or reopened.
 8. **Only DTRs from LEAVE_START_DATE on are deducted.** Everything before
    the start is in the opening balance; deducting October or November again
    would deduct those months twice. Those DTRs can still be marked Final.

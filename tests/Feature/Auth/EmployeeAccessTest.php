@@ -102,6 +102,19 @@ class EmployeeAccessTest extends TestCase
             ->assertSeeHtml('fi-topbar');
     }
 
+    public function test_employees_have_a_notifications_bell_in_the_sidebar_and_staff_do_not(): void
+    {
+        // Staff have "Waiting for you" in the topbar; a second bell would say a different thing in the same place (2026-11-24).
+        $this->actingAs(User::factory()->employee()->create())
+            ->get('/')
+            ->assertSeeHtml('class="fi-sidebar-footer"');
+
+        $this->actingAs(User::factory()->create())
+            ->get('/')
+            ->assertDontSeeHtml('class="fi-sidebar-footer"')
+            ->assertDontSeeHtml('fi-topbar-database-notifications');
+    }
+
     public function test_who_may_use_the_panel(): void
     {
         $panel = Filament::getPanel('admin');

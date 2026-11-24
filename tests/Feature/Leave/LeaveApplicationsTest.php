@@ -248,6 +248,34 @@ class LeaveApplicationsTest extends TestCase
         $this->assertSame('3.000', $this->balances()['VL']);
     }
 
+    public function test_the_employee_is_told_in_the_app_when_hr_approves_disapproves_or_cancels(): void
+    {
+        $account = User::factory()->employee($this->employee)->create();
+        $leave = app(LeaveApplications::class);
+
+        $leave->approve($this->fileLeave());
+        $leave->disapprove($this->fileLeave(['date_from' => '2026-11-05', 'date_to' => '2026-11-05']), 'Short of staff <b>that</b> week');
+        $leave->cancel($this->fileLeave(['date_from' => '2026-11-06', 'date_to' => '2026-11-06']), 'Filed twice');
+
+        // HR's reason is shown as typed, never as markup.
+        $this->assertSame([
+            'Leave approved' => 'Your Vacation Leave, Nov 3–4, 2026, was approved.',
+            'Leave cancelled' => 'HR cancelled your Vacation Leave, Nov 6, 2026: Filed twice. What it took from your balance was given back.',
+            'Leave disapproved' => 'Your Vacation Leave, Nov 5, 2026, was disapproved: Short of staff &lt;b&gt;that&lt;/b&gt; week. What it took from your balance was given back.',
+        ], $account->notifications->mapWithKeys(fn ($notice): array => [$notice->data['title'] => $notice->data['body']])->sortKeys()->all());
+    }
+
+    public function test_an_employee_who_cancels_their_own_leave_is_not_told(): void
+    {
+        $account = User::factory()->employee($this->employee)->create();
+        $application = $this->fileLeave();
+        $this->actingAs($account);
+
+        app(LeaveApplications::class)->cancel($application, 'Plans changed');
+
+        $this->assertSame(0, $account->notifications()->count());
+    }
+
     /** @param  array<string, mixed>  $overrides */
     private function fileLeave(array $overrides = []): LeaveApplication
     {

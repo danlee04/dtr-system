@@ -17,6 +17,7 @@ use App\Models\LeaveApplication;
 use App\Models\ManualTap;
 use App\Models\Schedule;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection as SupportCollection;
 
 /**
@@ -76,6 +77,12 @@ final class DtrCalculator
         $from = $upload->period_start->toImmutable();
         $to = $upload->period_end->toImmutable();
         $rows = $upload->days->keyBy(fn (DtrDay $day): string => $day->date->toDateString());
+        $after = $to->addDay();
+        // A 24-hour duty on the last day ends on the next month's DTR, once that is uploaded.
+        $rows->put($after->toDateString(), DtrDay::query()
+            ->whereDate('date', $after)
+            ->whereHas('dtrUpload', fn (Builder $query): Builder => $query->whereBelongsTo($employee))
+            ->first());
 
         // Leave, OBs and travel orders, each with what it makes of the days it covers.
         $covers = LeaveApplication::query()
@@ -103,7 +110,7 @@ final class DtrCalculator
         $filled = ManualTap::query()
             ->whereBelongsTo($employee)
             ->whereDate('date', '>=', $from)
-            ->whereDate('date', '<=', $to)
+            ->whereDate('date', '<=', $after)
             ->get()
             ->groupBy(fn (ManualTap $tap): string => $tap->date->toDateString());
 
@@ -118,7 +125,6 @@ final class DtrCalculator
 
             $previous = CarbonImmutable::parse($date)->subDay()->toDateString();
             $next = CarbonImmutable::parse($date)->addDay()->toDateString();
-            // shortcut: the last day's 24-hour duty ends on the next month's DTR, which is not read; its time out counts as missing.
             $days[$date] = $this->day(
                 $employee,
                 CarbonImmutable::parse($date),

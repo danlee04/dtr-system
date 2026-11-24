@@ -146,7 +146,12 @@ decoration.
     an employee's My DTR), so no item stands outside a group; and at its foot,
     in a pale pill, the signed-in user with no menu to open: their photo and name
     lead to the Profile, and a Sign out icon button sits beside them
-    (`filament.sidebar-user`).
+    (`filament.sidebar-user`). Above that pill, for employees only, Filament's
+    **Notifications** bell, styled as a sidebar link (solid bell, white words)
+    over a faint rule, with a badge of the unread count (2026-11-24). It opens
+    Filament's slide-over with what HR did with their leave and DTR
+    (`EmployeeNotices`). Staff have no such bell; theirs is "Waiting for you"
+    in the topbar.
   - **Topbar** (staff only; an employee's pages have none since 2026-11-23, and on a
     phone Filament's own button opens their sidebar): it blends into the page. Search sits on its left (Ctrl+K). On its
     right, staff see the "Waiting for you" bell and **New** (2026-11-23; Upload
@@ -233,6 +238,11 @@ decoration.
   badge, "Final" (green, a closed lock) or "Not final" (grey, an open lock), "—"
   for a DTR not computed; it took the place of Month (HR, 2026-11-20), which
   the Month filter already shows.
+  Each open, computed DTR has a checkbox; checked rows bring a blue **Mark
+  final** button before the search (2026-11-24). It marks final only the DTRs
+  with no blank to fill, no day not computed and no day without a schedule,
+  and a warning that stays until closed names the rest with why (ten, then
+  "and N more"). A final or uncomputed DTR has no checkbox.
   Columns: Employee (the printed name under "Needs an employee"; the search
   covers it, with no column of its own), the figures right-aligned (Late +
   undertime, Absent, Days with entries), Uploaded, then Status last, beside
