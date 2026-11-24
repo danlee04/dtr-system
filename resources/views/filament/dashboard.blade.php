@@ -41,8 +41,6 @@
     ];
 @endphp
 
-@include('filament.dashboard-styles')
-
 <div class="dtr-dash is-staff">
     {{-- The heading HR sees; the page's own h1 stays for screen readers, so this one is not read twice. --}}
     <div class="dtr-dash-top">

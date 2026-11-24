@@ -6,7 +6,6 @@
     $addException = $getAction('addDayException');
     $editException = $getAction('editDayException');
 @endphp
-@include('filament.entry-grid')
 
 {{-- One DTR: whose it is, the month in cards, then every date as on the paper form. Everything printed here is escaped. --}}
 <div class="dtr-grid dtr-record">

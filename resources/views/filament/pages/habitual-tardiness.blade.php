@@ -3,8 +3,6 @@
     use Filament\Support\Icons\Heroicon;
 @endphp
 <x-filament-panels::page>
-    @include('filament.entry-grid')
-
     <x-filament::section
         class="dtr-grid"
         :heading="$label"

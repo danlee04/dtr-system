@@ -277,7 +277,7 @@ decoration.
   `srcdoc` and `sandbox`: the form's page styles stay in it, no script runs,
   and the app's `frame-ancestors 'none'` needs no exception. The day-by-day
   breakdown left the view; the form's 6.C and 7.C carry the totals.
-- **Data entry and reports** use the grid partial, `entry-grid.blade.php`:
+- **Data entry and reports** use the grid styles (`.dtr-grid-*`, in `public/css/dtr.css`):
 
 | Class | Use |
 |---|---|
@@ -567,7 +567,7 @@ Laid out after a reference HR chose, and the only page with a heading on screen.
   DTR's rows since it was last reopened, a leave's net charge (none once
   cancelled), and forced leave, lapses and adjustments that took days.
 
-All in `entries.blade.php`.
+All in `public/css/dtr.css`, the read views part.
 
 ### The Profile
 
@@ -655,20 +655,19 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 
 | File | Holds |
 |---|---|
-| `resources/views/filament/sidebar.blade.php` | The frame: sidebar, topbar, page header spacing, hidden headings, the tables' search on the left |
-| `resources/views/filament/entry-grid.blade.php` | The grids (`.dtr-grid-*`) |
-| `resources/views/filament/entries.blade.php` | Read views: grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`); the "(optional)" mark beside a form field's label (`.dtr-field-optional`) |
-| `resources/views/filament/dashboard-styles.blade.php` | Both dashboards' styles (`.dtr-dash-*`, the employee layout `.dtr-dash.is-mine`) |
+| `public/css/dtr.css` | Every rule of ours, in four parts in this order: **the frame** (sidebar, topbar, page header spacing, hidden headings, the tables' search on the left, the topbar and notifications bells); **the read views** (grey labels, near-black values; an employee's page: its heading and chips (`.dtr-person`, `.dtr-person-chips`), tabs, cards (`.dtr-profile-*`) and Needs a look card (`.dtr-callout`); the Leave types cards (`.dtr-cards`, `.dtr-card-figure`); a DTR's view (`.dtr-record-*`); the "(optional)" mark beside a form field's label (`.dtr-field-optional`)); **the grids** (`.dtr-grid-*`); **the dashboards** (`.dtr-dash-*`, the employee layout `.dtr-dash.is-mine`) |
+| `resources/views/filament/sidebar.blade.php` | Loads `public/css/dtr.css` in every page's head, with the file's time as its version, and holds the sidebar's one script |
 | `resources/views/filament/dashboard.blade.php` | The staff dashboard's cards |
 | `resources/views/filament/employee/dashboard.blade.php` | An employee's dashboard's cards |
-| `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `sidebar.blade.php`) |
+| `resources/views/filament/topbar-actions.blade.php` | The topbar's right side (its styles are in `public/css/dtr.css`) |
 | `resources/views/filament/brand.blade.php` | The brand |
-| `resources/views/filament/sidebar-user.blade.php` | The signed-in user and Sign out at the sidebar's foot (its styles are in `sidebar.blade.php`) |
+| `resources/views/filament/sidebar-user.blade.php` | The signed-in user and Sign out at the sidebar's foot (its styles are in `public/css/dtr.css`) |
 
 ### Writing styles
 
-- **Where the CSS goes:** in these partials, loaded by render hooks or
-  `@include`, until the panel gets a theme. This is a known shortcut.
+- **Where the CSS goes:** in `public/css/dtr.css`, in the part it belongs to (2026-11-24;
+  inline in four partials before, sent again with every page). Plain CSS, no build step:
+  a change shows on the next page load, as its version is the file's time.
 - **No `!important`.** Our CSS sits outside Filament's cascade layers, so it wins
   without it.
 - **Class names:** our own classes start with `dtr-`. Target Filament's `fi-`
@@ -678,7 +677,7 @@ Everyone's own page, from the user menu (`App\Filament\Pages\Auth\ChangePassword
 - **Inline `style=""`** only for values that come from data, such as bar widths
   and heights, or a series colour picked by the row's label (`--key`). Layout
   and fixed colours go in classes.
-- **Reuse before writing new:** a grid page includes `filament.entry-grid`; a new
+- **Reuse before writing new:** a grid page puts `.dtr-grid` on its section; a new
   page follows the section-with-filters pattern of the Monthly Summary.
 
 ### Before shipping a screen

@@ -20,7 +20,7 @@ class EmployeeForm
         return $schema
             ->components([
                 // Headings, not cards: a card inside the modal is a box in a box. Each heading is marked
-                // in amber and a rule parts the sections (dtr-form-section, in filament.entries).
+                // in amber and a rule parts the sections (dtr-form-section, in public/css/dtr.css).
                 // Who they are first: the photo beside the name, so the photo leaves no empty row.
                 Section::make('Name')
                     ->contained(false)

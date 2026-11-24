@@ -1,6 +1,5 @@
 @use('App\Filament\Resources\ActivityLogs\Tables\ActivityLogsTable')
 {{-- One activity's changes: each field, before and after. Every value is someone's data, so it is escaped. --}}
-@include('filament.entry-grid')
 
 <div class="dtr-grid">
     @if ($changes === [])

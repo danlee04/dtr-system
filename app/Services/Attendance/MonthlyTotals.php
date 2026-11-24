@@ -28,6 +28,8 @@ final class MonthlyTotals
     /** Lates in a month worth a look: ten a month, two months running, is habitual tardiness under CSC rules. */
     public const int FREQUENT_LATES = 10;
 
+    public function __construct(private DtrCalculator $calculator) {}
+
     /**
      * The staff who earn leave credits and are active, or were separated in
      * or after the month, of one office or of all, surname first, each with
@@ -36,7 +38,7 @@ final class MonthlyTotals
      * the 31st and was set inactive since keeps the row payroll needs for the
      * final pay (2026-11-20).
      *
-     * shortcut: computes every DTR of the month on each call; keep the results if all offices at once gets slow.
+     * shortcut: computes every DTR of the month on each call, all at once (about 0.3 s for 92 DTRs, 2026-11-24); keep the results if a month of several hundred gets slow.
      *
      * @return list<array{employee: Employee, dtr: ComputedDtr|null, notes: list<string>, withoutPay: array{dtr: string, leave: string, total: string}}>
      */
@@ -135,13 +137,17 @@ final class MonthlyTotals
      */
     private function uploads(array $employeeIds, CarbonImmutable $month): Collection
     {
-        return DtrUpload::query()
+        $uploads = DtrUpload::query()
             ->whereIn('employee_id', $employeeIds)
             ->whereDate('period_start', '<=', $month->endOfMonth()->toDateString())
             ->whereDate('period_end', '>=', $month->startOfMonth()->toDateString())
             ->with(['employee', 'days'])
-            ->get()
-            ->groupBy('employee_id');
+            ->get();
+
+        // All at once: one read of each input for the month, not one per DTR.
+        $this->calculator->computeMany($uploads);
+
+        return $uploads->groupBy('employee_id');
     }
 
     /**

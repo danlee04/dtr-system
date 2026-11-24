@@ -1,7 +1,5 @@
 @use('App\Filament\Resources\DtrUploads\Schemas\DtrUploadInfolist')
 <x-filament-panels::page>
-    @include('filament.entry-grid')
-
     <x-filament::section class="dtr-grid" :heading="$monthName ?? 'Monthly summary'"
         description="Late, undertime and absences of permanent and co-terminous staff, from their uploaded DTRs.">
         <x-slot name="afterHeader">

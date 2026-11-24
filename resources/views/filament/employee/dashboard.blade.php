@@ -32,8 +32,6 @@
     ];
 @endphp
 
-@include('filament.dashboard-styles')
-
 @if ($employee === null)
     <x-filament::section>
         <x-filament::empty-state

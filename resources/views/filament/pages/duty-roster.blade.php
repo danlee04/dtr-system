@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    @include('filament.entry-grid')
-
     <x-filament::section
         class="dtr-grid"
         :heading="$days !== [] ? $days[0]->format('F Y') : 'Duty roster'"

@@ -15,9 +15,12 @@ use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\ManualTap;
+use App\Models\RosterEntry;
 use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 
 /**
@@ -63,78 +66,161 @@ final class DtrCalculator
         1 => [[DtrSlot::AmArrival, DtrSlot::PmDeparture]],
     ];
 
+    /** @var array<int, list<string>> schedule id => its times; see timesOf() */
+    private array $timesOf = [];
+
     public function __construct(private ScheduleResolver $resolver) {}
 
     public function compute(DtrUpload $upload): ComputedDtr
     {
-        $employee = $upload->employee;
-
         // Late and undertime come off VL, so only staff who earn leave credits are computed (HR, 2026-11-03).
         if (! $upload->isComputed()) {
             return new ComputedDtr([]);
         }
 
+        return $this->computeWith($upload, $this->inputs(new Collection([$upload])));
+    }
+
+    /**
+     * Computes many DTRs with one read of each kind of input for them all,
+     * not one per DTR, and keeps each result on its DTR for computed(): the
+     * Monthly Summary and the dashboard compute a whole month at once
+     * (2026-11-24). The DTRs need their employee and days loaded.
+     *
+     * @param  Collection<int, DtrUpload>  $uploads
+     */
+    public function computeMany(Collection $uploads): void
+    {
+        $computed = $uploads->filter(fn (DtrUpload $upload): bool => $upload->isComputed());
+
+        if ($computed->isEmpty()) {
+            return;
+        }
+
+        $inputs = $this->inputs($computed);
+
+        foreach ($computed as $upload) {
+            $upload->useComputed($this->computeWith($upload, $inputs));
+        }
+    }
+
+    /**
+     * What the DTRs are judged with, read once for them all, from the day
+     * before the first DTR to the day after the last; per employee where it is
+     * theirs.
+     *
+     * @param  Collection<int, DtrUpload>  $uploads  computed ones, with their employee
+     * @return array{roster: SupportCollection<int, SupportCollection<int, RosterEntry>>, assignments: SupportCollection<int, SupportCollection<int, ScheduleAssignment>>, holidays: Collection<int, Holiday>, covers: SupportCollection<int, SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>>, taps: SupportCollection<int, SupportCollection<int, ManualTap>>, nextRows: SupportCollection<string, DtrDay>}
+     */
+    private function inputs(Collection $uploads): array
+    {
+        $employeeIds = $uploads->pluck('employee_id')->unique()->values()->all();
+        $from = $uploads->min(fn (DtrUpload $upload): string => $upload->period_start->toDateString());
+        $to = $uploads->max(fn (DtrUpload $upload): string => $upload->period_end->toDateString());
+        $before = CarbonImmutable::parse($from)->subDay();
+        $after = CarbonImmutable::parse($to)->addDay();
+        $nextDates = $uploads->map(fn (DtrUpload $upload): string => $upload->period_end->toImmutable()->addDay()->toDateString())->unique();
+
+        return [
+            'roster' => RosterEntry::query()
+                ->whereIn('employee_id', $employeeIds)
+                ->whereDate('date', '>=', $before)
+                ->whereDate('date', '<=', $after)
+                ->with('schedule')
+                ->get()
+                ->groupBy('employee_id'),
+            'assignments' => ScheduleAssignment::query()
+                ->whereIn('employee_id', $employeeIds)
+                ->whereDate('effective_from', '<=', $after)
+                ->where(fn (Builder $query): Builder => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $before))
+                ->with('schedule')
+                ->get()
+                ->groupBy('employee_id'),
+            'holidays' => Holiday::query()
+                ->whereDate('date', '>=', $before)
+                ->whereDate('date', '<=', $after)
+                ->get(),
+            // Leave, OBs and travel orders, each with what it makes of the days it covers.
+            'covers' => LeaveApplication::query()
+                ->whereIn('employee_id', $employeeIds)
+                ->whereIn('status', LeaveApplicationStatus::standing())
+                ->whereDate('date_from', '<=', $to)
+                ->whereDate('date_to', '>=', $from)
+                ->get()
+                ->map(fn (LeaveApplication $application): array => [$application, AttendanceStatus::Leave])
+                ->concat(DayException::query()
+                    ->whereIn('employee_id', $employeeIds)
+                    ->whereDate('date_from', '<=', $to)
+                    ->whereDate('date_to', '>=', $from)
+                    ->get()
+                    ->map(fn (DayException $exception): array => [$exception, AttendanceStatus::from($exception->type->value)]))
+                ->groupBy(fn (array $cover): int => $cover[0]->employee_id),
+            'taps' => ManualTap::query()
+                ->whereIn('employee_id', $employeeIds)
+                ->whereDate('date', '>=', $from)
+                ->whereDate('date', '<=', $after)
+                ->get()
+                ->groupBy('employee_id'),
+            // A 24-hour duty on a DTR's last day ends on the next month's DTR, once that is uploaded.
+            'nextRows' => DtrDay::query()
+                ->where(fn (Builder $query): Builder => $nextDates->reduce(fn (Builder $query, string $date): Builder => $query->orWhereDate('date', $date), $query))
+                ->whereHas('dtrUpload', fn (Builder $query): Builder => $query->whereIn('employee_id', $employeeIds))
+                ->with('dtrUpload:id,employee_id')
+                ->get()
+                ->keyBy(fn (DtrDay $row): string => "{$row->dtrUpload->employee_id} {$row->date->toDateString()}"),
+        ];
+    }
+
+    /** @param  array{roster: SupportCollection<int, SupportCollection<int, RosterEntry>>, assignments: SupportCollection<int, SupportCollection<int, ScheduleAssignment>>, holidays: Collection<int, Holiday>, covers: SupportCollection<int, SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>>, taps: SupportCollection<int, SupportCollection<int, ManualTap>>, nextRows: SupportCollection<string, DtrDay>}  $inputs */
+    private function computeWith(DtrUpload $upload, array $inputs): ComputedDtr
+    {
+        $employee = $upload->employee;
         $from = $upload->period_start->toImmutable();
         $to = $upload->period_end->toImmutable();
         $rows = $upload->days->keyBy(fn (DtrDay $day): string => $day->date->toDateString());
         $after = $to->addDay();
-        // A 24-hour duty on the last day ends on the next month's DTR, once that is uploaded.
-        $rows->put($after->toDateString(), DtrDay::query()
-            ->whereDate('date', $after)
-            ->whereHas('dtrUpload', fn (Builder $query): Builder => $query->whereBelongsTo($employee))
-            ->first());
+        $rows->put($after->toDateString(), $inputs['nextRows']->get("{$employee->id} {$after->toDateString()}"));
 
-        // Leave, OBs and travel orders, each with what it makes of the days it covers.
-        $covers = LeaveApplication::query()
-            ->whereBelongsTo($employee)
-            ->whereIn('status', LeaveApplicationStatus::standing())
-            ->whereDate('date_from', '<=', $to)
-            ->whereDate('date_to', '>=', $from)
-            ->get()
-            ->map(fn (LeaveApplication $application): array => [$application, AttendanceStatus::Leave])
-            ->concat(DayException::query()
-                ->whereBelongsTo($employee)
-                ->whereDate('date_from', '<=', $to)
-                ->whereDate('date_to', '>=', $from)
-                ->get()
-                ->map(fn (DayException $exception): array => [$exception, AttendanceStatus::from($exception->type->value)]));
+        $covers = $inputs['covers']->get($employee->id) ?? new SupportCollection;
 
-        $suspensions = Holiday::query()
-            ->where('type', HolidayType::Suspension)
-            ->whereNotNull('suspension_starts_at')
-            ->whereDate('date', '>=', $from)
-            ->whereDate('date', '<=', $to)
-            ->get()
+        $suspensions = $inputs['holidays']
+            ->filter(fn (Holiday $holiday): bool => $holiday->type === HolidayType::Suspension && $holiday->suspension_starts_at !== null)
             ->mapWithKeys(fn (Holiday $holiday): array => [$holiday->date->toDateString() => self::minute($holiday->suspension_starts_at)]);
 
-        $filled = ManualTap::query()
-            ->whereBelongsTo($employee)
-            ->whereDate('date', '>=', $from)
-            ->whereDate('date', '<=', $after)
-            ->get()
+        $filled = ($inputs['taps']->get($employee->id) ?? new SupportCollection)
             ->groupBy(fn (ManualTap $tap): string => $tap->date->toDateString());
 
         $days = [];
         // The day before and after too: a 24-hour duty ends the next morning, and a duty after it runs on from it.
-        $resolvedDays = $this->resolver->days($employee, $from->subDay(), $to->addDay());
+        $resolvedDays = $this->resolver->daysFrom(
+            $employee,
+            $from->subDay(),
+            $to->addDay(),
+            $inputs['roster']->get($employee->id) ?? new SupportCollection,
+            $inputs['assignments']->get($employee->id) ?? new SupportCollection,
+            $inputs['holidays'],
+        );
+
+        [$first, $last] = [$from->toDateString(), $to->toDateString()];
 
         foreach ($resolvedDays as $date => $resolved) {
-            if ($date < $from->toDateString() || $date > $to->toDateString()) {
+            if ($date < $first || $date > $last) {
                 continue;
             }
 
-            $previous = CarbonImmutable::parse($date)->subDay()->toDateString();
-            $next = CarbonImmutable::parse($date)->addDay()->toDateString();
+            $day = CarbonImmutable::parse($date);
+            $previous = $day->subDay()->toDateString();
+            $next = $day->addDay()->toDateString();
             $days[$date] = $this->day(
                 $employee,
-                CarbonImmutable::parse($date),
+                $day,
                 $resolved,
                 self::columns($rows->get($date), $filled->get($date)),
                 $covers,
                 $suspensions->get($date),
                 self::columns($rows->get($next), $filled->get($next)),
-                continuesFrom: self::runsOn($resolvedDays[$previous] ?? null, $resolved),
-                continuesInto: self::runsOn($resolved, $resolvedDays[$next] ?? null),
+                continuesFrom: $this->runsOn($resolvedDays[$previous] ?? null, $resolved),
+                continuesInto: $this->runsOn($resolved, $resolvedDays[$next] ?? null),
             );
         }
 
@@ -178,7 +264,7 @@ final class DtrCalculator
             return new ComputedDay(AttendanceStatus::Upcoming);
         }
 
-        $times = $resolved->schedule->times();
+        $times = $this->timesOf($resolved->schedule);
         $start = self::minute($times[0]);
         $offsets = ScheduleTimes::offsets($times);
 
@@ -222,7 +308,7 @@ final class DtrCalculator
 
         // Flexitime: late only after 9:00, and out 9 hours after a time in counted from 7:00 to 9:00;
         // 8:00 when there is none, or the morning is on an OB or leave (HR, 2026-11-19). Never on a Monday (the office's policy, 2026-11-23).
-        if (self::isFlexiDay($employee, $resolved->schedule) && ! $date->isMonday()) {
+        if (self::isFlexi($employee->flexitime, $times) && ! $date->isMonday()) {
             $arrived = isset($covered[0]) || $taps[0][0] === null ? 480 : self::minute($taps[0][0]);
 
             // A morning-only day, the afternoon on leave, an OB, a TO or a gate pass (HR, 2026-11-23), or suspended from 1:00 (HR, 2026-11-24): late after 8:00, as on 8–5.
@@ -356,17 +442,34 @@ final class DtrCalculator
      * Whether $duty is an overnight shift with no break that ends when $after's
      * work begins, as a 24-hour duty from 8:00 before an 8:00 to 4:00 duty.
      */
-    private static function runsOn(?ResolvedDay $duty, ?ResolvedDay $after): bool
+    private function runsOn(?ResolvedDay $duty, ?ResolvedDay $after): bool
     {
         if ($duty?->kind !== DayKind::WorkDay || $after?->kind !== DayKind::WorkDay) {
             return false;
         }
 
-        $times = $duty->schedule->times();
+        $times = $this->timesOf($duty->schedule);
         $offsets = ScheduleTimes::offsets($times);
         $end = self::minute($times[0]) + end($offsets);
 
-        return count($offsets) === 2 && $end >= ScheduleTimes::DAY && $end - ScheduleTimes::DAY === self::minute($after->schedule->times()[0]);
+        return count($offsets) === 2 && $end >= ScheduleTimes::DAY && $end - ScheduleTimes::DAY === self::minute($this->timesOf($after->schedule)[0]);
+    }
+
+    /**
+     * A schedule's times, read once per schedule: reading a model's
+     * attributes is slow next to the rest, and a month of a hundred DTRs asks
+     * about six times a date (2026-11-24). By id, as schedules do not change
+     * while a month is computed.
+     *
+     * @return list<string>
+     */
+    private function timesOf(Schedule $schedule): array
+    {
+        if ($schedule->getKey() === null) {
+            return $schedule->times();
+        }
+
+        return $this->timesOf[$schedule->getKey()] ??= $schedule->times();
     }
 
     /**
@@ -435,9 +538,13 @@ final class DtrCalculator
      */
     public static function isFlexiDay(Employee $employee, Schedule $schedule): bool
     {
-        $times = $schedule->times();
+        return self::isFlexi($employee->flexitime, $schedule->times());
+    }
 
-        return $employee->flexitime && self::minute($times[0]) === 480 && ScheduleTimes::offsets($times) === [0, 240, 300, 540];
+    /** @param  list<string>  $times */
+    private static function isFlexi(bool $flexitime, array $times): bool
+    {
+        return $flexitime && self::minute($times[0]) === 480 && ScheduleTimes::offsets($times) === [0, 240, 300, 540];
     }
 
     /** "08:14" or "08:14:00" as minutes since midnight. */

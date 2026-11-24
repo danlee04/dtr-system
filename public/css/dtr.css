@@ -1,0 +1,2782 @@
+/*
+    The app's own styles, on every page of the panel, loaded after Filament's by
+    resources/views/filament/sidebar.blade.php with the file's time as its version, so a
+    change reaches the browser at once and an unchanged file comes from its cache (2026-11-24;
+    inline in four Blade partials before, sent again with every page).
+    Filament's own styles sit in a cascade layer; these do not, so they win without !important.
+*/
+
+/* ==== The panel frame: the sidebar, the topbar and every page's heading (was filament.sidebar) ====
+    The panel's frame: the sidebar, the topbar and every page's heading.
+    The sidebar and topbar follow HR's references. The sidebar (HR's reference,
+    2026-11-23): a navy gradient down the screen's left edge, with the brand at its top in
+    white, the menu in white with a lighter blue pill for the page that is open, small
+    pale headings in sentence case, and the signed-in user at its foot in a pale pill. The topbar: on desktop it blends into the
+    page, with the search on the left and, on the right, white cards for what is
+    waiting for HR and the upload (filament.topbar-actions). Phones keep Filament's
+    topbar and slide-out sidebar. The width is set in AdminPanelProvider (sidebarWidth).
+    Filament's own styles sit in a cascade layer; these do not, so they win without
+    !important.
+    On the navy: white labels and icons, and headings in white at 65%, pass 4.5:1.
+*/
+
+    :root {
+        --dtr-sidebar: linear-gradient(180deg, var(--primary-900) 0%, color-mix(in oklab, var(--primary-900) 50%, var(--primary-950)) 50%, var(--primary-950) 100%);
+        --dtr-line: color-mix(in oklab, var(--gray-950) 8%, transparent);
+        --dtr-hover: var(--gray-50);
+        --dtr-current: var(--gray-100);
+        --dtr-side-line: color-mix(in oklab, var(--color-white) 12%, transparent);
+        --dtr-side-hover: color-mix(in oklab, var(--color-white) 8%, transparent);
+        --dtr-side-current: linear-gradient(90deg, var(--primary-600), var(--primary-500));
+        --dtr-side-text: color-mix(in oklab, var(--color-white) 90%, transparent);
+        --dtr-side-muted: color-mix(in oklab, var(--color-white) 65%, transparent);
+    }
+
+    /*
+        Every page shows its title, as the dashboard does (HR, 2026-11-23; hidden before). The
+        dashboard draws its own heading beside the month picker, so its h1 stays for screen
+        readers only.
+    */
+    .fi-page:has(.dtr-dash) .fi-header-heading {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Filament's 2rem above the page and under its header, half that with the titles gone. */
+    .fi-page-header-main-ctn {
+        row-gap: calc(var(--spacing) * 4);
+        padding-block: calc(var(--spacing) * 4);
+    }
+
+    /* The dashboard's header, left with nothing to show, gives back the gap after it. */
+    .fi-page:has(.dtr-dash) .fi-header:not(.fi-header-has-breadcrumbs, .fi-header-has-subheading):not(:has(.fi-header-actions-ctn)) {
+        margin-bottom: calc(var(--spacing) * -4);
+    }
+
+    /*
+        Every table's search at its left (HR, 2026-11-10), where the eye starts; the
+        filter and column buttons stay at its right. Filament pushes the whole group right.
+    */
+    .fi-ta-header-toolbar> :nth-child(2) {
+        flex: 1;
+        margin-inline-start: 0;
+    }
+
+    .fi-ta-header-toolbar .fi-ta-search-field {
+        margin-inline-end: auto;
+    }
+
+    /* A list's own filters in its toolbar, right of the search (filament.dtr-uploads.toolbar-filters). */
+    .dtr-toolbar-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(var(--spacing) * 4);
+    }
+
+    .dtr-toolbar-filter {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2);
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        white-space: nowrap;
+    }
+
+    /*
+        No toolbar action showing (none, or bulk actions hidden until rows are picked):
+        no empty slot, and no gap, before the search, so it lines up with the table.
+    */
+    .fi-ta-header-toolbar>.fi-ta-actions:not(:has(> :not([style*="display: none"]))) {
+        display: none;
+    }
+
+    /* Every page's title as the dashboard's: 28px bold from 640px, 24px on a phone. */
+    .fi-header-heading {
+        font-size: var(--text-2xl);
+        line-height: 1.2;
+        font-weight: var(--font-weight-bold);
+        letter-spacing: -0.01em;
+        color: var(--gray-950);
+    }
+
+    @media (min-width: 40rem) {
+        .fi-header-heading {
+            font-size: 1.75rem;
+        }
+    }
+
+    /*
+        Every page after the dashboard (HR, 2026-11-23): a soft blue page with pale arcs at its
+        top, white cards with 16px corners and a soft blue shadow, 20px inside them, and 16px
+        between them.
+    */
+    /*
+        One background for the whole screen, fixed to it: the topbar paints the same one, so
+        it runs on into the main area with no seam (HR, 2026-11-24), and still hides what
+        scrolls under it.
+    */
+    :root {
+        --dtr-page-bg:
+            radial-gradient(130% 70% at 100% -12%, transparent 46%, color-mix(in oklab, var(--primary-100) 75%, transparent) 47%, transparent 58%),
+            radial-gradient(110% 60% at 85% -18%, transparent 50%, color-mix(in oklab, var(--primary-200) 45%, transparent) 51%, transparent 60%),
+            radial-gradient(60% 40% at 90% 0%, color-mix(in oklab, var(--primary-200) 55%, transparent), transparent 70%),
+            linear-gradient(180deg, color-mix(in oklab, var(--primary-50) 80%, var(--color-white)) 0%, color-mix(in oklab, var(--primary-50) 35%, var(--gray-50)) 45%, var(--gray-50) 100%);
+    }
+
+    .fi-body,
+    .fi-topbar {
+        background: var(--dtr-page-bg);
+        background-attachment: fixed;
+    }
+
+    .fi-topbar {
+        box-shadow: none;
+    }
+
+    .fi-page-main .fi-section:not(.fi-section-not-contained),
+    .fi-page-main .fi-ta-ctn {
+        border-radius: 1rem;
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 4%, transparent),
+            0 12px 32px -20px color-mix(in oklab, var(--primary-800) 45%, transparent);
+    }
+
+    .fi-page-main .fi-section:not(.fi-section-not-contained, .fi-compact) > .fi-section-header {
+        padding-inline: calc(var(--spacing) * 5);
+    }
+
+    .fi-page-main .fi-section:not(.fi-section-not-contained, .fi-compact) > .fi-section-content-ctn > .fi-section-content {
+        padding: calc(var(--spacing) * 5);
+    }
+
+    .fi-page-content {
+        row-gap: calc(var(--spacing) * 4);
+    }
+
+    /* An employee's pages have no topbar (2026-11-23): 32px above the title, not 16px, so it does not sit on the screen's edge. */
+    .fi-body:not(.fi-body-has-topbar) .fi-page-header-main-ctn {
+        padding-top: calc(var(--spacing) * 8);
+    }
+
+    /* The brand (filament.brand): the seal, the app's name and, under it, whose it is. */
+    .dtr-brand {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2.5);
+        height: 100%;
+    }
+
+    .dtr-brand-mark {
+        flex: none;
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        border-radius: 9999px;
+    }
+
+    /* Filament sets the logo bold and tight for a one-line name; the two lines set their own. */
+    .dtr-brand-text {
+        display: grid;
+        text-align: start;
+        letter-spacing: normal;
+    }
+
+    .dtr-brand-name {
+        font-size: var(--text-sm);
+        line-height: var(--text-sm--line-height);
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-950);
+    }
+
+    .dtr-brand-sub {
+        font-size: var(--text-xs);
+        line-height: var(--text-xs--line-height);
+        font-weight: 400;
+        color: var(--gray-500);
+    }
+
+    /* On the navy sidebar (HR's reference, 2026-11-23): a 48px seal on a white disc, the name bold and white (the sign-in page keeps the dark brand). */
+    .fi-sidebar .dtr-brand {
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .fi-sidebar .dtr-brand-mark {
+        width: calc(var(--spacing) * 12);
+        height: calc(var(--spacing) * 12);
+        background-color: var(--color-white);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-white) 35%, transparent);
+    }
+
+    .fi-sidebar .dtr-brand-name {
+        font-size: var(--text-base);
+        line-height: var(--text-base--line-height);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-white);
+    }
+
+    .fi-sidebar .dtr-brand-sub {
+        font-size: var(--text-sm);
+        line-height: var(--text-sm--line-height);
+        color: var(--dtr-side-muted);
+    }
+
+    .fi-sidebar {
+        background: var(--dtr-sidebar);
+    }
+
+    .fi-sidebar-header {
+        background-color: transparent;
+        box-shadow: none;
+    }
+
+    @media (min-width: 64rem) {
+
+        /* The topbar starts where the sidebar ends, as the content does; the brand stays in the sidebar. */
+        .fi-body-has-topbar .fi-topbar-ctn {
+            margin-inline-start: var(--sidebar-width);
+        }
+
+        .fi-body-has-topbar .fi-topbar-start {
+            display: none;
+        }
+
+        .fi-topbar {
+            padding-inline: calc(var(--spacing) * 8);
+        }
+
+        /* The search on the left and everything after it pushed to the right. */
+        .fi-topbar-end {
+            flex: 1;
+            margin-inline-start: 0;
+        }
+
+        .fi-topbar-end>.fi-global-search-ctn {
+            margin-inline-end: auto;
+        }
+
+        .fi-topbar .fi-global-search-field {
+            width: min(28rem, 40vw);
+        }
+
+        /* Down the screen's whole left edge (HR's reference, 2026-11-23). */
+        .fi-body-has-topbar .fi-main-sidebar {
+            position: fixed;
+            top: 0;
+            inset-inline-start: 0;
+            height: 100dvh;
+            border: 0;
+            border-radius: 0;
+        }
+
+        .fi-body-has-topbar .fi-main-ctn {
+            margin-inline-start: var(--sidebar-width);
+        }
+
+        .fi-body-has-topbar .fi-sidebar-header {
+            display: flex;
+        }
+    }
+
+    /* The topbar's search: a white field, rounder, its shortcut in a small key cap. */
+    .fi-topbar .fi-global-search-field .fi-input-wrp {
+        border-radius: 0.75rem;
+    }
+
+    .fi-topbar .fi-global-search-field .fi-input-wrp-suffix .fi-input-wrp-label {
+        padding-inline: calc(var(--spacing) * 1.5);
+        border-radius: 0.375rem;
+        background-color: var(--dtr-hover);
+        box-shadow: inset 0 0 0 1px var(--dtr-line);
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    /* The topbar's right side (filament.topbar-actions): white cards 2.5rem high. */
+    .dtr-topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2);
+    }
+
+    .dtr-topbar-btn {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: calc(var(--spacing) * 10);
+        height: calc(var(--spacing) * 10);
+        border-radius: 0.75rem;
+        background-color: var(--color-white);
+        box-shadow: 0 0 0 1px var(--dtr-line);
+        color: var(--gray-600);
+    }
+
+    .dtr-topbar-btn:hover {
+        background-color: var(--gray-50);
+    }
+
+    .dtr-topbar-btn:focus-visible {
+        outline: 2px solid var(--gray-500);
+        outline-offset: 2px;
+    }
+
+    .dtr-topbar-btn-icon {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+    }
+
+    /* How many things wait, on the bell's corner; the button's label says it for screen readers. */
+    .dtr-topbar-count {
+        position: absolute;
+        top: calc(var(--spacing) * -1.5);
+        inset-inline-end: calc(var(--spacing) * -1.5);
+        min-width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+        padding-inline: calc(var(--spacing) * 1);
+        border-radius: 9999px;
+        background-color: var(--primary-500);
+        color: var(--gray-950);
+        font-size: var(--text-xs);
+        line-height: calc(var(--spacing) * 5);
+        font-weight: var(--font-weight-semibold);
+        text-align: center;
+    }
+
+    /*
+        An employee's notifications bell, right of each page's title (filament.employee.notifications-bell):
+        Filament's button and badge, made the staff bell's twin above.
+    */
+    .dtr-notifications-bell {
+        flex-shrink: 0;
+        /* Level with the title on the dashboard too, whose heading row lines up at its foot. */
+        align-self: flex-start;
+    }
+
+    .dtr-notifications-bell .fi-topbar-database-notifications-btn.fi-icon-btn {
+        width: calc(var(--spacing) * 10);
+        height: calc(var(--spacing) * 10);
+        margin: 0;
+        border-radius: 0.75rem;
+        background-color: var(--color-white);
+        box-shadow: 0 0 0 1px var(--dtr-line);
+        color: var(--gray-600);
+    }
+
+    .dtr-notifications-bell .fi-topbar-database-notifications-btn.fi-icon-btn:hover {
+        background-color: var(--gray-50);
+    }
+
+    .dtr-notifications-bell .fi-topbar-database-notifications-btn .fi-icon {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+        color: inherit;
+    }
+
+    .dtr-notifications-bell .fi-icon-btn-badge-ctn {
+        top: calc(var(--spacing) * -1.5);
+        inset-inline-end: calc(var(--spacing) * -1.5);
+        inset-inline-start: auto;
+        transform: none;
+    }
+
+    .dtr-notifications-bell .fi-icon-btn-badge-ctn .fi-badge {
+        min-width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+        padding-inline: calc(var(--spacing) * 1);
+        justify-content: center;
+        border-radius: 9999px;
+        background-color: var(--primary-500);
+        box-shadow: none;
+        color: var(--gray-950);
+        font-size: var(--text-xs);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .dtr-topbar-actions .fi-btn {
+        min-height: calc(var(--spacing) * 10);
+        border-radius: 0.75rem;
+    }
+
+    /*
+        The brand, lined up with the menu below it, leads home; the header holds the link.
+    */
+    .fi-sidebar-header {
+        height: auto;
+        margin: calc(var(--spacing) * 4) calc(var(--spacing) * 3) 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0.625rem;
+    }
+
+    .fi-sidebar-header-logo-ctn {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* The brand centred in the sidebar (HR, 2026-11-23). */
+    .fi-sidebar-header-logo-ctn>a {
+        display: flex;
+        justify-content: center;
+        padding: calc(var(--spacing) * 2);
+        border-radius: calc(0.625rem - 1px);
+    }
+
+    .fi-sidebar-header-logo-ctn>a:hover {
+        background-color: var(--dtr-side-hover);
+    }
+
+    .fi-sidebar-header .fi-logo {
+        margin-inline-start: 0;
+    }
+
+    /*
+        Filament's own insets (a negative margin round the menu, a margin round the footer,
+        room kept for a scrollbar) put each part at a different edge. Without them the
+        brand, the menu fills and the user line up as in the reference.
+    */
+    /* 20px under the brand card before the first group, as between the groups. */
+    .fi-sidebar-nav {
+        padding: calc(var(--spacing) * 5) calc(var(--spacing) * 3) calc(var(--spacing) * 3);
+        scrollbar-gutter: auto;
+        scrollbar-width: thin;
+    }
+
+    .fi-sidebar-nav-groups {
+        row-gap: calc(var(--spacing) * 5);
+        margin-inline: 0;
+    }
+
+    .fi-sidebar-group-items {
+        row-gap: calc(var(--spacing) * 0.5);
+    }
+
+    .fi-sidebar-item-btn {
+        column-gap: calc(var(--spacing) * 2.5);
+        padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2.5);
+        border-radius: 0.5rem;
+    }
+
+    /* 20px icons beside 14px text, white on the navy. */
+    .fi-sidebar .fi-sidebar-item-icon {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+        color: var(--dtr-side-text);
+    }
+
+    .fi-sidebar .fi-sidebar-item-label {
+        color: var(--dtr-side-text);
+    }
+
+    /* A heading, not a link: small and grey, in sentence case. */
+    .fi-sidebar-group-btn {
+        padding: 0 calc(var(--spacing) * 2.5) calc(var(--spacing) * 1);
+    }
+
+    .fi-sidebar .fi-sidebar-group-label {
+        color: var(--dtr-side-muted);
+        font-size: var(--text-sm);
+        line-height: var(--text-sm--line-height);
+        font-weight: var(--font-weight-normal);
+    }
+
+    .fi-sidebar .fi-sidebar-item-btn:hover,
+    .fi-sidebar .fi-sidebar-item-btn:focus-visible {
+        background-color: var(--dtr-side-hover);
+    }
+
+    /* Filament marks keyboard focus with a fill alone, the same as hover here; a white ring tells them apart. */
+    .fi-sidebar .fi-sidebar-item-btn:focus-visible,
+    .fi-sidebar-header-logo-ctn>a:focus-visible,
+    .dtr-sidebar-user-link:focus-visible {
+        outline: 2px solid var(--color-white);
+        outline-offset: -2px;
+    }
+
+    /* The page that is open: a bright blue pill, white words, a shadow under it. */
+    .fi-sidebar .fi-sidebar-item.fi-active>.fi-sidebar-item-btn {
+        background: var(--dtr-side-current);
+        box-shadow: 0 2px 8px color-mix(in oklab, var(--primary-950) 45%, transparent);
+    }
+
+    .fi-sidebar .fi-sidebar-item.fi-active>.fi-sidebar-item-btn>.fi-sidebar-item-label {
+        color: var(--color-white);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+        color: var(--color-white);
+    }
+
+    /* Sign out, white on the navy; round, so its hover fits the pill's round end. */
+    .fi-sidebar .dtr-sidebar-user .fi-icon-btn {
+        margin: 0;
+        border-radius: 9999px;
+        color: var(--dtr-side-text);
+    }
+
+    .fi-sidebar .dtr-sidebar-user .fi-icon-btn:hover {
+        background-color: var(--dtr-side-hover);
+        color: var(--color-white);
+    }
+
+    /*
+        The signed-in user at the foot, under a rule, with no menu to open (filament.sidebar-user):
+        their photo and name lead to their profile, and sign out sits beside them.
+    */
+    .dtr-sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1);
+        margin: calc(var(--spacing) * 3);
+        padding: calc(var(--spacing) * 1);
+        border-radius: 9999px;
+        background-color: var(--dtr-side-hover);
+    }
+
+    .dtr-sidebar-user-link {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: calc(var(--spacing) * 2.5);
+        min-width: 0;
+        padding: calc(var(--spacing) * 1);
+        border-radius: 9999px;
+    }
+
+    .dtr-sidebar-user-link:hover {
+        background-color: var(--dtr-side-hover);
+    }
+
+    /* A table cell that may wrap on a laptop or tablet keeps to one line from 1280px. */
+    @media (min-width: 80rem) {
+        .fi-ta-text.dtr-nowrap-from-xl {
+            white-space: nowrap;
+        }
+    }
+
+    /* One line: a long name ends in "…" rather than pushing sign out off the sidebar. */
+    .dtr-sidebar-user-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-white);
+    }
+
+/* ==== The read views (was filament.entries) ====
+    The read views. Every one of them (the employee's Details tab, the leave application
+    modal and the rest) shows its labels in grey and its values in near-black, so the eye
+    lands on the values, as on the balance cards. Filament draws both near-black.
+    Grey 500 on white passes 4.5:1, so a placeholder such as
+    "Not set" stays readable. Filament's own grey 400 placeholder does not.
+    Also here: an employee's page heading and chips, and the employee's Leave types cards.
+*/
+
+    .fi-in-entry-label,
+    .fi-in-placeholder {
+        color: var(--gray-500);
+    }
+
+    /*
+     * An employee's page, after HR's reference (2026-11-23): one white panel under the
+     * breadcrumbs with a soft blue wash at its top right; a large round photo (or the
+     * initials) with a pencil for Edit, the name, chips, and the tabs beside it; then
+     * the cards and the sections. Below 768px the photo shrinks back beside the name.
+     */
+    .fi-resource-employees.fi-resource-view-record-page {
+        --dtr-emp-pad: calc(var(--spacing) * 4);
+        --dtr-emp-photo: calc(var(--spacing) * 14);
+        --dtr-emp-indent: 0px;
+    }
+
+    @media (min-width: 48rem) {
+        .fi-resource-employees.fi-resource-view-record-page {
+            --dtr-emp-pad: calc(var(--spacing) * 6);
+            --dtr-emp-photo: 8rem;
+            --dtr-emp-indent: calc(8rem + var(--spacing) * 7);
+        }
+    }
+
+    /* 16px above the breadcrumbs, as on every page; the breadcrumbs at the page's edge, not the panel's. */
+    .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
+        position: relative;
+        isolation: isolate;
+        padding: calc(var(--spacing) * 4) var(--dtr-emp-pad) var(--dtr-emp-pad);
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .fi-breadcrumbs {
+        margin-inline-start: calc(var(--dtr-emp-pad) * -1);
+    }
+
+    /* The panel starts under the breadcrumbs: their line, then 16px. */
+    .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: calc(var(--spacing) * 4 + 1.25rem + var(--spacing) * 4) 0 0;
+        border-radius: 1rem;
+        background:
+            radial-gradient(45% 60% at 100% 0%, color-mix(in oklab, var(--primary-200) 75%, transparent), transparent 75%),
+            radial-gradient(35% 45% at 72% 0%, color-mix(in oklab, var(--primary-100) 80%, transparent), transparent 75%),
+            var(--color-white);
+        box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--gray-950) 5%, transparent);
+    }
+
+    /* A phone shows no breadcrumbs: the panel starts at the top, 16px above the name. */
+    @media (max-width: 39.99rem) {
+        .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
+            padding-top: var(--dtr-emp-pad);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn::before {
+            inset: 0;
+        }
+    }
+
+    /* The breadcrumbs above the panel, then the panel's 24px before the name. */
+    .fi-resource-employees.fi-resource-view-record-page .fi-breadcrumbs {
+        margin-bottom: calc(var(--spacing) * 4 + var(--dtr-emp-pad));
+    }
+
+    .dtr-person {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-person-photo {
+        position: relative;
+        flex: none;
+    }
+
+    .dtr-person-avatar {
+        width: var(--dtr-emp-photo, calc(var(--spacing) * 14));
+        height: var(--dtr-emp-photo, calc(var(--spacing) * 14));
+        object-fit: cover;
+        box-shadow: 0 0 0 4px var(--color-white), 0 8px 24px color-mix(in oklab, var(--primary-600) 22%, transparent);
+    }
+
+    /* The pencil on the photo: a blue round button, 32px, with a white ring. */
+    .dtr-person-edit {
+        position: absolute;
+        inset-inline-end: 0;
+        bottom: 0;
+        display: grid;
+        place-items: center;
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        border-radius: 9999px;
+        background-color: var(--primary-600);
+        box-shadow: 0 0 0 3px var(--color-white);
+        color: var(--color-white);
+    }
+
+    .dtr-person-edit:hover {
+        background-color: var(--primary-700);
+    }
+
+    .dtr-person-edit:focus-visible {
+        outline: 2px solid var(--primary-600);
+        outline-offset: 3px;
+    }
+
+    .dtr-person-edit-icon {
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .dtr-person-name {
+        font-size: var(--text-2xl);
+        line-height: 1.2;
+        font-weight: var(--font-weight-bold);
+        color: var(--gray-950);
+    }
+
+    /*
+     * From 768px the photo stands at the panel's top left, as tall as the name, the chips
+     * and the tabs together, and they line up to its right.
+     */
+    @media (min-width: 48rem) {
+        .fi-resource-employees.fi-resource-view-record-page .dtr-person-name {
+            font-size: 2rem;
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .dtr-person-photo {
+            position: absolute;
+            top: calc(var(--spacing) * 4 + 1.25rem + var(--spacing) * 4 + var(--dtr-emp-pad));
+            inset-inline-start: var(--dtr-emp-pad);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-heading,
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-subheading,
+        .fi-resource-employees.fi-resource-view-record-page .fi-page-content .fi-sc-tabs > .fi-tabs {
+            margin-inline-start: var(--dtr-emp-indent);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-subheading {
+            margin-top: calc(var(--spacing) * 2);
+        }
+
+        /* Edit and Delete stay at the panel's top right, level with the name, never under the photo. */
+        .fi-resource-employees.fi-resource-view-record-page .fi-header {
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: calc(var(--spacing) * 4);
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header > div:first-child {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .fi-resource-employees.fi-resource-view-record-page .fi-header-actions-ctn {
+            flex: none;
+            align-self: flex-start;
+            margin-top: calc(1.25rem + var(--spacing) * 4 + var(--dtr-emp-pad));
+        }
+    }
+
+    .dtr-person-chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(var(--spacing) * 2);
+    }
+
+    .dtr-person-role {
+        font-size: var(--text-sm);
+        color: var(--gray-600);
+    }
+
+    /* A chip under the name: a soft fill, an icon or a dot, the words on one line. */
+    .dtr-chip {
+        --chip: var(--gray-500);
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+        min-height: calc(var(--spacing) * 8);
+        padding-inline: calc(var(--spacing) * 3);
+        border-radius: 9999px;
+        background-color: color-mix(in oklab, var(--chip) 12%, var(--color-white));
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: color-mix(in oklab, var(--chip) 55%, var(--gray-950));
+        white-space: nowrap;
+    }
+
+    .dtr-chip.is-office { --chip: var(--primary-600); }
+    .dtr-chip.is-success { --chip: var(--success-600); }
+    .dtr-chip.is-danger { --chip: var(--danger-600); }
+    .dtr-chip.is-gray { --chip: var(--gray-500); }
+
+    .dtr-chip-icon {
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+    }
+
+    .dtr-chip-dot {
+        width: calc(var(--spacing) * 2);
+        height: calc(var(--spacing) * 2);
+        border-radius: 9999px;
+        background-color: var(--chip);
+    }
+
+    /* The tabs as a white pill track, the open one navy with white words. */
+    .fi-resource-employees.fi-resource-view-record-page .fi-tabs:not(.fi-contained) {
+        width: fit-content;
+        padding: calc(var(--spacing) * 1);
+        border-radius: 9999px;
+        background-color: var(--color-white);
+        box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent);
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item {
+        padding-inline: calc(var(--spacing) * 4);
+        border-radius: 9999px;
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item:focus-visible {
+        outline: 2px solid var(--primary-600);
+        outline-offset: 2px;
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active {
+        background-color: var(--primary-800);
+    }
+
+    .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active .fi-tabs-item-label,
+    .fi-resource-employees.fi-resource-view-record-page .fi-tabs-item.fi-active > .fi-icon {
+        color: var(--color-white);
+    }
+
+    /* Job Details' rows tighter, as in HR's reference: 10px above and below each fact. */
+    .fi-resource-employees.fi-resource-view-record-page .fi-section.fi-divided > .fi-section-content-ctn > .fi-section-content > .fi-grid-col {
+        padding-block: calc(var(--spacing) * 2.5);
+    }
+
+    /*
+     * The Overview's five cards: a soft gradient in each one's colour, a small icon, the
+     * label, the figure, and a large faint icon in the top right corner. Five across from
+     * 1280px; below that, as many as fit at 10rem.
+     */
+    .dtr-emp-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+        gap: calc(var(--spacing) * 4);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-emp-cards {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+    }
+
+    .dtr-emp-card {
+        --tone: var(--primary-500);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) * 0.5);
+        overflow: hidden;
+        padding: calc(var(--spacing) * 5);
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, color-mix(in oklab, var(--tone) 18%, var(--color-white)), color-mix(in oklab, var(--tone) 6%, var(--color-white)));
+        box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in oklab, var(--tone) 18%, transparent);
+    }
+
+    .dtr-emp-card.is-tardiness { --tone: var(--primary-500); }
+    .dtr-emp-card.is-vacation { --tone: var(--success-500); }
+    .dtr-emp-card.is-sick { --tone: var(--violet-500); }
+    .dtr-emp-card.is-special { --tone: var(--warning-400); }
+    .dtr-emp-card.is-wellness { --tone: var(--danger-400); }
+
+    .dtr-emp-card-icon {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+        margin-bottom: calc(var(--spacing) * 3);
+        color: color-mix(in oklab, var(--tone) 70%, var(--gray-950));
+    }
+
+    .dtr-emp-card-art {
+        position: absolute;
+        top: calc(var(--spacing) * 4);
+        inset-inline-end: calc(var(--spacing) * 4);
+        width: 3.5rem;
+        height: 3.5rem;
+        color: var(--tone);
+        opacity: 0.3;
+    }
+
+    .dtr-emp-card-label {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--gray-700);
+    }
+
+    .dtr-emp-card-value {
+        font-size: 1.375rem;
+        line-height: 1.15;
+        font-weight: var(--font-weight-bold);
+        font-variant-numeric: tabular-nums;
+        color: var(--gray-950);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-emp-card-value {
+            font-size: 1.75rem;
+        }
+    }
+
+    .dtr-emp-card-detail {
+        font-size: var(--text-xs);
+        color: var(--gray-600);
+    }
+
+    /*
+     * The Overview's cards: last month in solid amber, then each balance tinted in
+     * its colour on the dashboard's leave chart, then the schedule in grey.
+     * As many across as fit at 9rem; six on a wide screen.
+     */
+    .dtr-profile-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+        gap: calc(var(--spacing) * 3);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-profile-cards {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
+    }
+
+    .dtr-profile-card {
+        --tone: var(--gray-400);
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) * 0.5);
+        padding: calc(var(--spacing) * 4);
+        border-radius: var(--radius-xl);
+        background-color: color-mix(in oklab, var(--tone) 14%, var(--color-white));
+        color: var(--gray-950);
+    }
+
+    .dtr-profile-card.is-vacation {
+        --tone: var(--success-500);
+    }
+
+    .dtr-profile-card.is-sick {
+        --tone: var(--info-500);
+    }
+
+    .dtr-profile-card.is-special {
+        --tone: var(--warning-400);
+    }
+
+    .dtr-profile-card.is-wellness {
+        --tone: var(--danger-400);
+    }
+
+    .dtr-profile-card.is-main {
+        --tone: var(--gray-950);
+        background-color: var(--primary-400);
+        color: var(--gray-950);
+    }
+
+    .dtr-profile-card-icon {
+        display: grid;
+        place-items: center;
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        margin-bottom: calc(var(--spacing) * 3);
+        border-radius: var(--radius-lg);
+        background-color: color-mix(in oklab, var(--color-white) 75%, transparent);
+        color: color-mix(in oklab, var(--tone) 50%, var(--gray-950));
+    }
+
+    /* The label in a dark shade of the card's colour: 5:1 or better on its tint. Short, so the values line up. */
+    .dtr-profile-card-label {
+        font-size: var(--text-xs);
+        font-weight: var(--font-weight-medium);
+        color: color-mix(in oklab, var(--tone) 50%, var(--gray-950));
+    }
+
+    /* The dashboard's figure size. */
+    /* A size smaller below 1280px, so "12 hrs 27 min" stays on one line in a card on a laptop or a tablet. */
+    .dtr-profile-card-value {
+        font-size: 1.375rem;
+        line-height: 1.15;
+        font-weight: var(--font-weight-semibold);
+        font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-profile-card-value {
+            font-size: 1.75rem;
+        }
+    }
+
+    .dtr-profile-card-detail {
+        font-size: var(--text-xs);
+        color: var(--gray-600);
+    }
+
+    .dtr-profile-card.is-main .dtr-profile-card-label {
+        color: var(--gray-950);
+    }
+
+    .dtr-profile-card.is-main .dtr-profile-card-detail {
+        color: var(--gray-800);
+    }
+
+    /*
+     * "(optional)" beside a form field's label, read with its name, instead of
+     * at the far end of the row where Filament puts what follows a label.
+     */
+    .fi-fo-field-label-ctn:has(.dtr-field-optional) {
+        column-gap: calc(var(--spacing) * 1);
+    }
+
+    .fi-fo-field-label-ctn > .fi-sc:has(.dtr-field-optional) {
+        flex-grow: 0;
+    }
+
+    /*
+     * A chosen value stays on one line, so a long office name leaves the select
+     * as tall as the inputs beside it; the open list still shows every name whole.
+     */
+    .fi-select-input .fi-select-input-value-ctn > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* The employee form: each section's heading marked in amber, a rule between sections. */
+    .dtr-form-section .fi-section-header-heading {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2.5);
+    }
+
+    .dtr-form-section .fi-section-header-heading::before {
+        content: '';
+        inline-size: calc(var(--spacing) * 1);
+        block-size: 1.125rem;
+        border-radius: 9999px;
+        background-color: var(--primary-500);
+    }
+
+    .dtr-form-section-divided {
+        border-block-start: 1px solid var(--gray-200);
+        padding-block-start: calc(var(--spacing) * 6);
+    }
+
+    /* The photo: a wide rounded box with a camera, the full width of its column, a rule between it and the name fields. */
+    .dtr-photo-drop.fi-fo-file-upload-avatar .fi-fo-file-upload-input-ctn {
+        inline-size: 100%;
+    }
+
+    .dtr-photo-drop .filepond--drop-label {
+        min-block-size: 7.5rem;
+    }
+
+    .dtr-photo-drop .filepond--panel-root {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-xl);
+        background-color: var(--gray-50);
+    }
+
+    .dtr-photo-drop .filepond--drop-label svg {
+        display: block;
+        inline-size: 1.5rem;
+        block-size: 1.5rem;
+        margin: 0 auto calc(var(--spacing) * 1.5);
+        color: var(--gray-500);
+    }
+
+    @media (min-width: 48rem) {
+        .dtr-form-names {
+            border-inline-start: 1px solid var(--gray-200);
+            padding-inline-start: calc(var(--spacing) * 6);
+        }
+    }
+
+    /* The switches stacked in Attendance's last column, level with the inputs, not their labels. */
+    @media (min-width: 40rem) {
+        .dtr-form-switches {
+            padding-block-start: calc(var(--spacing) * 7);
+        }
+    }
+
+    /* Beside the photo on someone's own profile: their name, their post, and how to change the photo. */
+    .dtr-profile-identity {
+        display: grid;
+        gap: calc(var(--spacing) * 1);
+    }
+
+    .dtr-profile-identity-name {
+        font-size: var(--text-xl);
+        line-height: 1.3;
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-950);
+    }
+
+    .dtr-profile-identity-hint {
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    /* A figure that needs a look, as a DTR's blanks to fill. */
+    .dtr-profile-card.is-warning {
+        --tone: var(--warning-400);
+    }
+
+    /*
+     * A DTR's view: whose it is beside their photo or initials, the month in
+     * cards that fill the row, then its days (grid classes in entry-grid).
+     */
+    .dtr-record-head {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 3);
+        margin-bottom: calc(var(--spacing) * 4);
+    }
+
+    .dtr-record-line {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record-sub,
+    .dtr-record-desc,
+    .dtr-record-notes {
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    .dtr-record-warning,
+    .dtr-record-notes .is-warning {
+        color: var(--warning-700);
+    }
+
+    .dtr-record-warning {
+        font-size: var(--text-sm);
+    }
+
+    .dtr-record-notes .is-warning {
+        font-weight: var(--font-weight-medium);
+    }
+
+    /* At least 11rem a card: three to a row on a tablet rather than four squeezed. */
+    .dtr-record .dtr-profile-cards,
+    .dtr-dash .dtr-profile-cards {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    }
+
+    /* A line that says what to do, above what it is about: "Something wrong? Bring your signed DTR to HR." */
+    .dtr-record-callout {
+        margin-bottom: calc(var(--spacing) * 4);
+        padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3.5);
+        border-radius: var(--radius-lg);
+        background-color: color-mix(in oklab, var(--primary-400) 12%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-500) 25%, transparent);
+        font-size: var(--text-sm);
+        color: var(--gray-950);
+    }
+
+    .dtr-record-heading {
+        margin-top: calc(var(--spacing) * 6);
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .dtr-record-desc {
+        margin-block: calc(var(--spacing) * 1) calc(var(--spacing) * 3);
+    }
+
+    .dtr-record-desc strong {
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record-days th,
+    .dtr-record-days td {
+        white-space: nowrap;
+    }
+
+    .dtr-record-days tbody th {
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-record-time {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Room between a day's status badge and its "+ OB/Leave" or "Edit" button; on a portrait tablet they may wrap. */
+    .dtr-record-days .dtr-grid-badges {
+        gap: calc(var(--spacing) * 2);
+    }
+
+    /* A time HR may click reads at the grid's size, not the link's own, so its column is no wider than a printed one. */
+    .dtr-record-days .fi-link {
+        font-size: inherit;
+    }
+
+    /* In a narrow column the "HR" tag drops under its time; the time itself never breaks. */
+    .dtr-record-days .dtr-grid-hr {
+        white-space: normal;
+    }
+
+    .dtr-record-days .dtr-grid-time {
+        white-space: nowrap;
+    }
+
+    /* Below 1280px the dashed "+ Add" and "+ OB/Leave" boxes hug their text, so the columns stay narrow. */
+    .dtr-record-days .dtr-grid-add,
+    .dtr-record-days .dtr-grid-ob {
+        gap: calc(var(--spacing) * 0.5);
+        padding-inline: 0.25rem;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-record-days .dtr-grid-add,
+        .dtr-record-days .dtr-grid-ob {
+            gap: calc(var(--spacing) * 1);
+            padding-inline: 0.5rem;
+        }
+    }
+
+    /* "+ Add", "+ OB/Leave" and "Edit" read a size under the grid's text, as tall as a badge (HR, 2026-11-23). */
+    .dtr-record-days .dtr-grid-add,
+    .dtr-record-days .dtr-grid-ob,
+    .dtr-record-legend .dtr-grid-add,
+    .dtr-record-legend .dtr-grid-ob {
+        font-size: var(--text-xs);
+        line-height: var(--text-xs--line-height);
+    }
+
+    .dtr-record-days .dtr-grid-add > .fi-icon,
+    .dtr-record-days .dtr-grid-ob > .fi-icon,
+    .dtr-record-legend .dtr-grid-ob > .fi-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    /* "Edit" on a day an entry covers: the box of "+ OB/Leave" with less room around the word. */
+    .dtr-grid-edit,
+    .dtr-record-days .dtr-grid-edit {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 0.5);
+        padding: 0.125rem 0.375rem;
+    }
+
+    /* A narrow column wraps the badges onto lines; it never cuts "Official business" short. */
+    .dtr-record-days .dtr-grid-badges > * {
+        flex: none;
+    }
+
+    /* Where the grid still scrolls sideways, as in the DTR modal on a portrait tablet, the dates stay in view. */
+    .dtr-record-days tr > :first-child {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 1;
+        box-shadow: inset -1px 0 0 var(--grid-line);
+    }
+
+    /* So the grid fits a laptop or a tablet: headings, notes, and the hours after a day's minutes may take a second line. */
+    .dtr-record-days thead th,
+    .dtr-record-days td.dtr-grid-value {
+        white-space: normal;
+    }
+
+    /* Below 1280px the cells tighten, the text is a size smaller, and a date may take two lines, "Thu," over "Oct 1". */
+    .dtr-grid-table.dtr-record-days {
+        font-size: 0.8125rem;
+    }
+
+    .dtr-record-days th,
+    .dtr-record-days td {
+        padding-inline: 0.375rem;
+    }
+
+    .dtr-record-days tbody th.dtr-record-date {
+        min-width: 4rem;
+        white-space: normal;
+    }
+
+    .dtr-record-days td.dtr-record-notes {
+        min-width: 5rem;
+        white-space: normal;
+    }
+
+    /*
+     * One line a day from a laptop's width (HR, 2026-11-23): a time keeps its OB, TO or HR tag
+     * beside it, a date and the hours do not break, and a long note ends in "…", its whole
+     * text in the cell's title.
+     */
+    @media (min-width: 64rem) {
+        .dtr-record-days .dtr-grid-hr,
+        .dtr-record-days td.dtr-grid-value,
+        .dtr-record-days tbody th.dtr-record-date {
+            white-space: nowrap;
+        }
+
+        /* The badge and its button as words on one line, not flex items: a squeezed flex row let "Edit" spill over the note. */
+        .dtr-record-days .dtr-grid-badges {
+            display: block;
+        }
+
+        .dtr-record-days .dtr-grid-badges > * {
+            display: inline-flex;
+            vertical-align: middle;
+        }
+
+        .dtr-record-days .dtr-grid-badges > * + * {
+            margin-inline-start: calc(var(--spacing) * 1);
+        }
+
+        /* Filament truncates a badge, so a squeezed column would cut it to "Official b…"; here it is shown whole. */
+        .dtr-record-days .fi-badge,
+        .dtr-record-days .fi-badge .fi-badge-label {
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .dtr-record-days td.dtr-record-notes {
+            width: 100%;
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-grid-table.dtr-record-days {
+            font-size: 0.875rem;
+        }
+
+        .dtr-record-days th,
+        .dtr-record-days td {
+            padding-inline: 0.75rem;
+        }
+
+        .dtr-record-days tbody th.dtr-record-date {
+            white-space: nowrap;
+        }
+
+        .dtr-record-days td.dtr-record-notes {
+            min-width: 10rem;
+        }
+    }
+
+    .dtr-record-legend {
+        margin-top: calc(var(--spacing) * 3);
+        margin-bottom: 0;
+        font-size: var(--text-xs);
+    }
+
+    .dtr-record-legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+    }
+
+    .dtr-record-swatch {
+        width: 0.875rem;
+        height: 0.875rem;
+        border-radius: 0.25rem;
+        background-color: var(--grid-weekend);
+        box-shadow: inset 0 0 0 1px var(--grid-line);
+    }
+
+    /* An employee's deductions this year (HR, 2026-11-23): a line each, what on the left, the leave and days on the right in red, a total under them. */
+    .dtr-deductions {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dtr-deduction,
+    .dtr-deductions-total {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: calc(var(--spacing) * 3);
+        padding-block: calc(var(--spacing) * 2.5);
+        font-size: var(--text-sm);
+    }
+
+    .dtr-deduction + .dtr-deduction {
+        border-top: 1px solid color-mix(in oklab, var(--gray-950) 5%, transparent);
+    }
+
+    .dtr-deduction-what {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .dtr-deduction-title {
+        color: var(--gray-950);
+    }
+
+    .dtr-deduction-detail {
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+    }
+
+    .dtr-deduction-days {
+        flex: none;
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-bold);
+        font-variant-numeric: tabular-nums;
+        color: var(--danger-600);
+    }
+
+    /* What the list is, in a soft blue box with an info icon (HR's reference, 2026-11-23). */
+    .dtr-deductions-note {
+        display: flex;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 2);
+        margin-bottom: calc(var(--spacing) * 2);
+        padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
+        border-radius: var(--radius-lg);
+        background-color: var(--primary-50);
+        font-size: var(--text-xs);
+        color: var(--gray-700);
+    }
+
+    .dtr-deductions-note-icon {
+        flex: none;
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+        color: var(--primary-600);
+    }
+
+    .dtr-deductions-total {
+        margin-top: calc(var(--spacing) * 1);
+        border-top: 1px solid color-mix(in oklab, var(--gray-950) 10%, transparent);
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-950);
+    }
+
+    .dtr-deductions-empty {
+        font-size: var(--text-sm);
+        color: var(--gray-500);
+    }
+
+    /* What needs a look, after the reference's "due a review" card: an amber tint, an icon, a sentence, one button. */
+    .dtr-callout {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 1);
+        padding: calc(var(--spacing) * 6);
+        border-radius: var(--radius-xl);
+        background-color: color-mix(in oklab, var(--primary-400) 16%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary-500) 25%, transparent);
+    }
+
+    .dtr-callout-icon {
+        display: grid;
+        place-items: center;
+        width: calc(var(--spacing) * 10);
+        height: calc(var(--spacing) * 10);
+        margin-bottom: calc(var(--spacing) * 3);
+        border-radius: var(--radius-lg);
+        background-color: var(--primary-400);
+        color: var(--gray-950);
+    }
+
+    .dtr-callout-eyebrow {
+        font-size: var(--text-xs);
+        font-weight: var(--font-weight-medium);
+        color: var(--primary-800);
+    }
+
+    .dtr-callout-heading {
+        font-size: var(--text-base);
+        line-height: var(--text-base--line-height);
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-950);
+    }
+
+    .dtr-callout-text {
+        margin-bottom: calc(var(--spacing) * 3);
+        font-size: var(--text-sm);
+        color: var(--gray-700);
+        text-wrap: pretty;
+    }
+
+    /* The Leave types guide: a card per type, as many across as fit at 20rem. */
+    .dtr-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+        gap: calc(var(--spacing) * 4);
+    }
+
+    .dtr-card-figure {
+        margin-top: calc(var(--spacing) * 3);
+        font-weight: var(--font-weight-semibold);
+    }
+
+/* ==== The grids HR types into (was filament.entry-grid) ====
+    The look of the grids HR types into for an hour at a time, one office at a time
+    (opening balances, the duty roster). They are built for keeping one's place: the
+    row being typed in is lit, the employee's name stays on screen while the table
+    scrolls sideways, a changed cell is tinted until it is saved, and the save bar
+    follows the page down. Put .dtr-grid on the section that holds the grid.
+*/
+
+    .dtr-grid {
+        --grid-bg: var(--color-white);
+        --grid-head: var(--gray-50);
+        --grid-line: color-mix(in oklab, var(--gray-950) 10%, transparent);
+        --grid-hover: color-mix(in oklab, var(--gray-950) 3%, var(--color-white));
+        --grid-weekend: color-mix(in oklab, var(--gray-950) 5%, var(--color-white));
+        --grid-current: color-mix(in oklab, var(--primary-500) 9%, var(--color-white));
+        --grid-absent: color-mix(in oklab, var(--danger-500) 7%, var(--color-white));
+        --grid-muted: var(--gray-500);
+    }
+
+    /* A focused cell near the bottom must not hide behind the save bar. */
+    html {
+        scroll-padding-bottom: 6rem;
+    }
+
+    /* A section header's filters side by side, each with its label. */
+    .dtr-grid-pickers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-grid-picker {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* What is wrong with what was typed, in words, above the grid. */
+    .dtr-grid-errors {
+        display: grid;
+        gap: calc(var(--spacing) * 1);
+        margin-bottom: calc(var(--spacing) * 4);
+        color: var(--danger-600);
+    }
+
+    /* What follows the grid: its pagination, a closing hint. */
+    .dtr-grid-after {
+        margin-top: calc(var(--spacing) * 3);
+    }
+
+    /* Badges side by side in a cell, and a button beside them on the same line. */
+    .dtr-grid-badges {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(var(--spacing) * 1);
+    }
+
+    /* A typed cell held to the end of its column, under its right-aligned heading. */
+    .dtr-grid-cell-end {
+        width: fit-content;
+        margin-inline-start: auto;
+    }
+
+    .dtr-grid-count {
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        color: var(--grid-muted);
+    }
+
+    /* As wide as the cells need, so each one sits close to its name. */
+    .dtr-grid-wrap {
+        width: fit-content;
+        max-width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--grid-line);
+        border-radius: 0.75rem;
+    }
+
+    /* As wide as the page, so a grid uses the room it has. */
+    .dtr-grid-wrap.is-full {
+        width: auto;
+    }
+
+    .dtr-grid-wrap.is-full > .dtr-grid-table {
+        width: 100%;
+    }
+
+    .dtr-grid-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.875rem;
+    }
+
+    /* Small screens first: tighter cells so a grid fits a laptop or a tablet (HR, 2026-11-18); roomier from 1280px. */
+    .dtr-grid-table th,
+    .dtr-grid-table td {
+        padding: 0.375rem 0.5rem;
+        background-color: var(--grid-bg);
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-grid-table th,
+        .dtr-grid-table td {
+            padding-inline: 0.75rem;
+        }
+    }
+
+    /* Many narrow columns, as a month of days, with 8px between neighbouring inputs so a click lands on the right day. */
+    .dtr-grid-table.is-dense th,
+    .dtr-grid-table.is-dense td {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .dtr-grid-table thead th {
+        background-color: var(--grid-head);
+        font-weight: 600;
+        text-align: end;
+        vertical-align: bottom;
+    }
+
+    .dtr-grid-table.is-centered thead th:not(.dtr-grid-name) {
+        text-align: center;
+    }
+
+    /* A heading over text, read from the start. */
+    .dtr-grid-table thead th.dtr-grid-start {
+        text-align: start;
+    }
+
+    .dtr-grid-table .dtr-grid-group th {
+        padding-bottom: 0;
+        text-align: center;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-table .dtr-grid-weekend {
+        background-color: var(--grid-weekend);
+    }
+
+    .dtr-grid-table tbody tr > * {
+        border-top: 1px solid var(--grid-line);
+    }
+
+    /* A row with nothing to count, as an employee with no DTR in a report. */
+    .dtr-grid-table tbody tr.is-muted {
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-table tbody tr:hover > * {
+        background-color: var(--grid-hover);
+    }
+
+    .dtr-grid-table tbody tr:focus-within > * {
+        background-color: var(--grid-current);
+    }
+
+    /* The name stays put while the cells scroll sideways. */
+    .dtr-grid-table .dtr-grid-name {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        min-width: 9rem;
+        padding-inline: 0.75rem;
+        text-align: start;
+        box-shadow: inset -1px 0 0 var(--grid-line);
+    }
+
+    /* A long name may take two lines on a small screen; from 1280px it keeps to one. */
+    @media (min-width: 80rem) {
+        .dtr-grid-table .dtr-grid-name {
+            min-width: 12rem;
+            white-space: nowrap;
+        }
+    }
+
+    /* A long office under the name wraps, so it does not widen the grid past a laptop's screen. */
+    .dtr-grid-table .dtr-grid-name .dtr-grid-sub {
+        white-space: normal;
+    }
+
+    /* Small grey text under a name or a heading: an employee number, a limit, a weekday. */
+    .dtr-grid-sub {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--grid-muted);
+    }
+
+    /* Under a balance, in red: what the month took from it (Balances). */
+    .dtr-grid-taken {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--danger-600);
+    }
+
+    /* On Balances, a sum where the month took something: the balance before it, small and grey; the red; then the month's end under a rule. */
+    .dtr-grid-sum {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .dtr-grid-before {
+        font-size: 0.75rem;
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-total {
+        align-self: stretch;
+        margin-top: 0.125rem;
+        padding-top: 0.125rem;
+        border-top: 1px solid var(--grid-line);
+        text-align: end;
+    }
+
+    .dtr-grid-lock {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.25rem;
+        max-width: 15rem;
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--grid-muted);
+        white-space: normal;
+    }
+
+    /* A flex item shrinks to make room for the text; the icon must not. */
+    .dtr-grid-lock > svg {
+        flex: none;
+        width: 0.875rem;
+        height: 0.875rem;
+        margin-top: 0.0625rem;
+    }
+
+    /* A rule that sets a column apart from the ones before it. */
+    .dtr-grid-table .dtr-grid-divider {
+        border-inline-start: 1px solid var(--grid-line);
+    }
+
+    /* Room for "123.456"; a little more from 1280px. */
+    .dtr-grid-input {
+        width: 4.5rem;
+        text-align: end;
+        font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-grid-input {
+            width: 5.5rem;
+        }
+    }
+
+    /* Fills its day's column, so a wide screen gives bigger boxes; never narrower than a code. */
+    .dtr-grid-input.is-code {
+        width: 100%;
+        min-width: 2.75rem;
+        padding-inline: 0.25rem;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    .dtr-grid-value {
+        text-align: end;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dtr-grid-changed {
+        background-color: color-mix(in oklab, var(--warning-400) 25%, transparent);
+    }
+
+    .dtr-grid-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+        margin-top: 1rem;
+        padding-block: 0.75rem;
+        border-top: 1px solid var(--grid-line);
+        background-color: var(--grid-bg);
+    }
+
+    .dtr-grid-hint {
+        font-size: 0.875rem;
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem 1rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-legend strong {
+        margin-inline-end: 0.25rem;
+        font-weight: 600;
+        color: var(--gray-950);
+    }
+
+    /* A DTR's dates: grey when not a work date; tinted red when absent, which its badge also says. */
+    .dtr-grid-table tbody tr.is-off > * {
+        background-color: var(--grid-weekend);
+        color: var(--grid-muted);
+    }
+
+    .dtr-grid-table tbody tr.is-absent > * {
+        background-color: var(--grid-absent);
+    }
+
+    /* A blank HR may fill from the signed DTR: a dashed amber box, with dark text on its tint (about 7:1). */
+    .dtr-grid-add {
+        padding: 0.125rem 0.5rem;
+        border: 1px dashed var(--warning-600);
+        border-radius: var(--radius-md);
+        background-color: color-mix(in oklab, var(--warning-400) 14%, transparent);
+        color: var(--warning-800);
+    }
+
+    .dtr-grid-add > .fi-icon {
+        color: inherit;
+    }
+
+    /*
+     * "+ OB/TO" beside a day's badge: the same dashed box as "+ Add", in the blue of
+     * the OB and travel order badges, with dark text on its tint (about 6:1).
+     */
+    .dtr-grid-ob {
+        padding: 0.125rem 0.5rem;
+        border: 1px dashed var(--info-600);
+        border-radius: var(--radius-md);
+        background-color: color-mix(in oklab, var(--info-500) 10%, transparent);
+        color: var(--info-700);
+        white-space: nowrap;
+    }
+
+    .dtr-grid-ob > .fi-icon {
+        color: inherit;
+    }
+
+    /* A time HR copied in reads like a printed one, then a blue "HR" tag: the word, not only the colour. */
+    .dtr-grid-hr {
+        padding-block: 0.125rem;
+        color: inherit;
+    }
+
+    /* A printed time HR may correct reads as printed; a dotted underline on hover or focus says it opens. */
+    .dtr-grid-printed {
+        padding-block: 0.125rem;
+        color: inherit;
+        font-weight: inherit;
+    }
+
+    .dtr-grid-printed:hover,
+    .dtr-grid-printed:focus-visible {
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+    }
+
+    .dtr-grid-hr-tag {
+        display: inline-block;
+        padding-inline: 0.375rem;
+        border-radius: var(--radius-md);
+        background-color: color-mix(in oklab, var(--info-500) 14%, transparent);
+        color: var(--info-700);
+        font-size: var(--text-xs);
+        font-weight: 600;
+        line-height: 1.25rem;
+    }
+
+/* ==== The dashboards (was filament.dashboard-styles) ==== */
+
+    .dtr-dash {
+        --dash-card: var(--color-white);
+        --dash-line: color-mix(in oklab, var(--gray-950) 6%, transparent);
+        --dash-track: var(--gray-100);
+        --dash-text: var(--gray-950);
+        --dash-muted: var(--gray-500);
+
+        display: grid;
+        gap: calc(var(--spacing) * 4);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "top" "k1" "k2" "k3" "k4" "a" "c" "d" "e" "g" "h" "o" "f" "i";
+    }
+
+    @media (min-width: 48rem) {
+        .dtr-dash {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-areas: "top top" "k1 k2" "k3 k4" "a a" "c c" "d e" "g h" "o f" "i i";
+        }
+    }
+
+    /*
+     * HR's reference (2026-11-20): the heading and month, four figures, the chart wide beside
+     * the quick actions, the month's progress along the next row; today's leave at the foot.
+     */
+    @media (min-width: 80rem) {
+        .dtr-dash {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-areas: "top top top top" "k1 k2 k3 k4" "a a a c" "d e g h" "o f i i";
+        }
+    }
+
+    .dtr-dash-top { grid-area: top; }
+    .dtr-dash-k1 { grid-area: k1; }
+    .dtr-dash-k2 { grid-area: k2; }
+    .dtr-dash-k3 { grid-area: k3; }
+    .dtr-dash-k4 { grid-area: k4; }
+    .dtr-dash-o { grid-area: o; }
+    .dtr-dash-a { grid-area: a; }
+    .dtr-dash-b { grid-area: b; }
+    .dtr-dash-c { grid-area: c; }
+    .dtr-dash-d { grid-area: d; }
+    .dtr-dash-e { grid-area: e; }
+    .dtr-dash-f { grid-area: f; }
+    .dtr-dash-g { grid-area: g; }
+    .dtr-dash-h { grid-area: h; }
+    .dtr-dash-i { grid-area: i; }
+
+    .dtr-dash-card {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) * 3);
+        min-width: 0;
+        padding: calc(var(--spacing) * 5);
+        border-radius: var(--radius-xl);
+        background-color: var(--dash-card);
+        box-shadow: 0 0 0 1px var(--dash-line);
+        color: var(--dash-text);
+    }
+
+    .dtr-dash-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-dash-title {
+        font-size: var(--text-base);
+        line-height: var(--text-base--line-height);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .dtr-dash-sub,
+    .dtr-dash-muted {
+        font-size: var(--text-xs);
+        line-height: var(--text-xs--line-height);
+        color: var(--dash-muted);
+    }
+
+    .dtr-dash-big,
+    .dtr-dash-num {
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dtr-dash-big {
+        font-size: 2.25rem;
+        line-height: 1.1;
+    }
+
+    .dtr-dash-num {
+        font-size: 1.75rem;
+        line-height: 1.15;
+    }
+
+    .dtr-dash-big small,
+    .dtr-dash-num small {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        letter-spacing: normal;
+        color: var(--dash-muted);
+    }
+
+    .dtr-dash-link {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--primary-700);
+    }
+
+    .dtr-dash-link:hover,
+    .dtr-dash-link:focus-visible {
+        text-decoration: underline;
+    }
+
+    .dtr-dash-key {
+        display: inline-block;
+        flex: none;
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 0.1875rem;
+        background-color: var(--key);
+    }
+
+    .dtr-dash-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) * 3);
+        font-size: var(--text-xs);
+        color: var(--dash-muted);
+    }
+
+    .dtr-dash-legend li {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+    }
+
+    /* A: a column per weekday, the day's late and undertime minutes stacked on a grey track. */
+    .dtr-dash-chart {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: calc(var(--spacing) * 3);
+        height: 12rem;
+        margin-top: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash-col {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) * 2);
+        border-radius: 0.5rem;
+    }
+
+    .dtr-dash-col:focus-visible {
+        outline: 2px solid var(--gray-500);
+        outline-offset: 2px;
+    }
+
+    .dtr-dash-track {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: flex-end;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        background-color: var(--dash-track);
+    }
+
+    .dtr-dash-track > span {
+        display: block;
+        flex: none;
+        background-color: var(--key);
+    }
+
+    /* The two series, in the legend and in the bars. */
+    .dtr-dash .is-late {
+        --key: var(--warning-400);
+    }
+
+    .dtr-dash .is-undertime {
+        --key: var(--info-400);
+    }
+
+    /* A few lines one under the other, 8px apart. */
+    .dtr-dash-stack {
+        display: grid;
+        gap: calc(var(--spacing) * 2);
+    }
+
+    .dtr-dash-day {
+        font-size: var(--text-xs);
+        text-align: center;
+        color: var(--dash-muted);
+    }
+
+    /* The day's figures over its column, on hover or keyboard focus. */
+    .dtr-dash-tip {
+        position: absolute;
+        bottom: calc(100% + 0.375rem);
+        left: 50%;
+        z-index: 1;
+        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
+        border-radius: 0.5rem;
+        background-color: var(--gray-950);
+        color: var(--color-white);
+        font-size: var(--text-xs);
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-50%);
+        transition: opacity 120ms;
+    }
+
+    .dtr-dash-col:hover .dtr-dash-tip,
+    .dtr-dash-col:focus-visible .dtr-dash-tip {
+        opacity: 1;
+    }
+
+    /* The heading, the month picker at the right. */
+    .dtr-dash-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: calc(var(--spacing) * 4);
+    }
+
+    .dtr-dash-heading {
+        font-size: 1.5rem;
+        line-height: 1.2;
+        font-weight: var(--font-weight-semibold);
+        color: var(--dash-text);
+    }
+
+    .dtr-dash-month {
+        inline-size: 12rem;
+    }
+
+    /* K: a figure beside a round, tinted icon. */
+    .dtr-dash-kpi {
+        flex-direction: row;
+        align-items: center;
+        gap: calc(var(--spacing) * 4);
+    }
+
+    .dtr-dash-kpi-icon {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: calc(var(--spacing) * 12);
+        height: calc(var(--spacing) * 12);
+        border-radius: 9999px;
+        background-color: color-mix(in oklab, var(--tone) 14%, var(--dash-card));
+        color: var(--tone);
+    }
+
+    .dtr-dash-kpi-icon > svg {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash-kpi-icon.is-info { --tone: var(--info-500); }
+    .dtr-dash-kpi-icon.is-success { --tone: var(--success-500); }
+    .dtr-dash-kpi-icon.is-warning { --tone: var(--warning-500); }
+    .dtr-dash-kpi-icon.is-primary { --tone: var(--primary-500); }
+
+    .dtr-dash-kpi-text {
+        display: grid;
+        gap: calc(var(--spacing) * 1);
+        min-width: 0;
+    }
+
+    /* A card title with a small icon before it. */
+    .dtr-dash-titled {
+        display: flex;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 2.5);
+    }
+
+    .dtr-dash-title-icon {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+        color: var(--dash-muted);
+    }
+
+    .dtr-dash-title-icon > svg {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+    }
+
+    /* A: the scale at the left of the bars, level with their tracks. */
+    .dtr-dash-plot {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: calc(var(--spacing) * 3);
+        margin-top: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash-plot .dtr-dash-chart {
+        margin-top: 0;
+    }
+
+    .dtr-dash-axis {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 12rem;
+        padding-bottom: 1.5rem;
+        font-size: var(--text-xs);
+        text-align: end;
+        color: var(--dash-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /*
+     * The month's row and the foot row hold cards of the same height: what ends a card
+     * (a link, the "more" line) sits at its foot, the gauge in the middle, and an empty
+     * card shows its icon and words in the middle rather than a blank.
+     */
+    .dtr-dash-foot,
+    .dtr-dash-e > .dtr-dash-link {
+        margin-top: auto;
+    }
+
+    .dtr-dash-g .dtr-dash-gauge {
+        margin-block: auto;
+    }
+
+    /* The quick actions fill their card, as tall as the chart beside it. */
+    .dtr-dash-c .dtr-dash-actions.is-tiles {
+        flex: 1;
+        grid-auto-rows: minmax(5.5rem, 1fr);
+    }
+
+    .dtr-dash-meters {
+        display: grid;
+        gap: calc(var(--spacing) * 5);
+        margin-block: auto;
+    }
+
+    .dtr-dash-count {
+        font-weight: var(--font-weight-semibold);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dtr-dash-empty {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: calc(var(--spacing) * 2);
+        padding-block: calc(var(--spacing) * 4);
+        font-size: var(--text-sm);
+        text-align: center;
+        color: var(--dash-muted);
+    }
+
+    .dtr-dash-empty > svg {
+        width: calc(var(--spacing) * 8);
+        height: calc(var(--spacing) * 8);
+        opacity: 0.6;
+    }
+
+    /* H: an office's name over its figures. */
+    .dtr-dash-office {
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+    }
+
+    /* E: the note in a tinted box, the bulb beside it. */
+    .dtr-dash-note {
+        display: flex;
+        align-items: flex-start;
+        gap: calc(var(--spacing) * 3);
+        padding: calc(var(--spacing) * 3);
+        border-radius: var(--radius-lg);
+        background-color: color-mix(in oklab, var(--warning-400) 10%, var(--dash-card));
+        font-size: var(--text-sm);
+    }
+
+    /* C: the quick actions as tiles, then who is out today. */
+    /* As many tiles across as fit at 64px each; the rest wrap to a second row rather than crowd. */
+    .dtr-dash-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
+        gap: calc(var(--spacing) * 2);
+    }
+
+    .dtr-dash-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+        font-size: var(--text-xs);
+        line-height: 1.25;
+        text-align: center;
+        color: var(--gray-700);
+    }
+
+    .dtr-dash-action-icon {
+        display: grid;
+        place-items: center;
+        width: calc(var(--spacing) * 11);
+        height: calc(var(--spacing) * 11);
+        border-radius: 0.75rem;
+        box-shadow: 0 0 0 1px var(--dash-line);
+    }
+
+    .dtr-dash-action:hover .dtr-dash-action-icon,
+    .dtr-dash-action:focus-visible .dtr-dash-action-icon {
+        background-color: var(--dash-track);
+    }
+
+    .dtr-dash-action:focus-visible {
+        outline: none;
+    }
+
+    .dtr-dash-action:focus-visible .dtr-dash-action-icon {
+        outline: 2px solid var(--gray-500);
+        outline-offset: 2px;
+    }
+
+    .dtr-dash-action-icon > svg {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+    }
+
+    /* The staff dashboard's quick actions: framed tiles, three across, the icon over the label. */
+    .dtr-dash-actions.is-tiles {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action {
+        justify-content: center;
+        min-height: 5.5rem;
+        padding: calc(var(--spacing) * 3) calc(var(--spacing) * 2);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 0 0 1px var(--dash-line);
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action-icon {
+        width: auto;
+        height: auto;
+        box-shadow: none;
+        color: var(--primary-600);
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        background-color: var(--dash-track);
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:hover .dtr-dash-action-icon,
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible .dtr-dash-action-icon {
+        background-color: transparent;
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        outline: 2px solid var(--gray-500);
+        outline-offset: 2px;
+    }
+
+    .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible .dtr-dash-action-icon {
+        outline: none;
+    }
+
+    .dtr-dash-divider {
+        border-top: 1px solid var(--dash-line);
+    }
+
+    .dtr-dash-people {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-dash-person {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: calc(var(--spacing) * 1);
+        width: calc(var(--spacing) * 14);
+        font-size: var(--text-xs);
+        text-align: center;
+    }
+
+    .dtr-dash-person > span:last-child {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dtr-dash-avatar {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: calc(var(--spacing) * 10);
+        height: calc(var(--spacing) * 10);
+        border-radius: 9999px;
+        background-color: var(--primary-100);
+        color: var(--primary-800);
+        font-size: var(--text-xs);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    /* D and H: progress bars. */
+    .dtr-dash-progress {
+        height: 0.75rem;
+        overflow: hidden;
+        border-radius: 9999px;
+        background-color: var(--dash-track);
+    }
+
+    .dtr-dash-progress.is-thin {
+        height: 0.5rem;
+    }
+
+    .dtr-dash-progress > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background-color: var(--success-500);
+    }
+
+    .dtr-dash-between {
+        display: flex;
+        justify-content: space-between;
+        gap: calc(var(--spacing) * 2);
+        font-size: var(--text-sm);
+    }
+
+    /* E: the next step's bulb. */
+    .dtr-dash-bulb {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: calc(var(--spacing) * 11);
+        height: calc(var(--spacing) * 11);
+        border-radius: 9999px;
+        background-color: color-mix(in oklab, var(--warning-400) 20%, transparent);
+        color: var(--warning-700);
+    }
+
+    .dtr-dash-bulb > svg {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+    }
+
+    /* F: one bar cut into the types, then the types with their shares. */
+    .dtr-dash-segments {
+        display: flex;
+        gap: 0.1875rem;
+        height: 0.75rem;
+    }
+
+    .dtr-dash-segments > span {
+        border-radius: 0.25rem;
+        background-color: var(--key);
+    }
+
+    .dtr-dash-breakdown {
+        display: grid;
+        gap: calc(var(--spacing) * 1.5);
+        font-size: var(--text-sm);
+    }
+
+    .dtr-dash-breakdown li {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 2);
+    }
+
+    .dtr-dash-breakdown li > span:last-child {
+        margin-inline-start: auto;
+        color: var(--dash-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* G: a half-circle gauge, the share written under it. */
+    .dtr-dash-gauge {
+        position: relative;
+        width: 100%;
+        max-width: 15rem;
+        margin-inline: auto;
+    }
+
+    .dtr-dash-gauge svg {
+        display: block;
+        width: 100%;
+    }
+
+    .dtr-dash-gauge path {
+        fill: none;
+        stroke-width: 16;
+        stroke-linecap: round;
+    }
+
+    .dtr-dash-gauge .is-track {
+        stroke: var(--dash-track);
+    }
+
+    .dtr-dash-gauge .is-value {
+        stroke: var(--success-500);
+    }
+
+    .dtr-dash-gauge p {
+        position: absolute;
+        inset-inline: 0;
+        bottom: 0;
+        text-align: center;
+    }
+
+    /* I: the newest leave applications. */
+    .dtr-dash-rows {
+        display: grid;
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-dash-row {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 3);
+        min-width: 0;
+    }
+
+    .dtr-dash-row-text {
+        display: grid;
+        flex: 1;
+        min-width: 0;
+        font-size: var(--text-sm);
+    }
+
+    .dtr-dash-row-text > span:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: var(--font-weight-medium);
+    }
+
+    .dtr-dash-row-end {
+        display: grid;
+        justify-items: end;
+        gap: calc(var(--spacing) * 1);
+        font-size: var(--text-sm);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    /*
+     * An employee's own dashboard: their balances wide beside the quick actions,
+     * then their latest DTR beside the leave waiting for approval.
+     */
+    .dtr-dash.is-mine {
+        grid-template-areas: "top" "a" "b" "c" "d";
+    }
+
+    @media (min-width: 48rem) {
+        .dtr-dash.is-mine {
+            grid-template-areas: "top top" "a a" "c c" "b d";
+        }
+    }
+
+    @media (min-width: 80rem) {
+        .dtr-dash.is-mine {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-areas: "top top top" "a a b" "c c d";
+        }
+
+        /* The four balances across their card, as the employee page's five. */
+        .dtr-dash.is-mine .dtr-emp-cards {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    /* An employee's quick actions fill their card, as the staff's do. */
+    .dtr-dash-b .dtr-dash-actions.is-tiles {
+        flex: 1;
+        grid-auto-rows: minmax(5.5rem, 1fr);
+    }
+
+    /* The view's one main action: the primary colour, with dark text on it. */
+    .dtr-dash-action.is-main .dtr-dash-action-icon {
+        background-color: var(--primary-400);
+        box-shadow: none;
+        color: var(--gray-950);
+    }
+
+    .dtr-dash-action.is-main:hover .dtr-dash-action-icon,
+    .dtr-dash-action.is-main:focus-visible .dtr-dash-action-icon {
+        background-color: var(--primary-500);
+    }
+
+    /*
+     * The staff dashboard after HR's second reference (2026-11-23): a soft blue page with
+     * pale waves at its top, white cards with rounder corners and a soft blue shadow,
+     * figures in solid tinted circles with a faint wave each, icons on the card titles,
+     * links with an arrow, and the next step as a wide blue button. An employee's own
+     * dashboard (.is-mine) has the same look since 2026-11-24.
+     */
+    /* The page's blue and the frosted topbar are every page's now (the frame, above). */
+
+    .dtr-dash .dtr-dash-card {
+        border-radius: 1rem;
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 4%, transparent),
+            0 12px 32px -20px color-mix(in oklab, var(--primary-800) 45%, transparent);
+    }
+
+    .dtr-dash .dtr-dash-heading {
+        font-size: 1.75rem;
+        font-weight: var(--font-weight-bold);
+        letter-spacing: -0.01em;
+    }
+
+    .dtr-dash .dtr-dash-month {
+        inline-size: 13rem;
+    }
+
+    .dtr-dash .dtr-dash-month .fi-input-wrp {
+        border-radius: 0.75rem;
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent),
+            0 6px 16px -10px color-mix(in oklab, var(--primary-800) 40%, transparent);
+    }
+
+    /* K: the figure over a faint wave in the card's colour; the icon solid in a tinted circle. */
+    .dtr-dash .dtr-dash-kpi {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dtr-dash .dtr-dash-kpi.is-primary { --tone: var(--primary-500); }
+    .dtr-dash .dtr-dash-kpi.is-success { --tone: var(--success-500); }
+    .dtr-dash .dtr-dash-kpi.is-warning { --tone: var(--warning-500); }
+    .dtr-dash .dtr-dash-kpi.is-violet { --tone: var(--violet-500); }
+
+    .dtr-dash .dtr-dash-kpi-icon {
+        position: relative;
+        z-index: 1;
+        width: calc(var(--spacing) * 14);
+        height: calc(var(--spacing) * 14);
+        background-color: color-mix(in oklab, var(--tone) 16%, var(--color-white));
+        color: var(--tone);
+    }
+
+    .dtr-dash .dtr-dash-kpi-icon > svg {
+        width: calc(var(--spacing) * 7);
+        height: calc(var(--spacing) * 7);
+    }
+
+    .dtr-dash .dtr-dash-kpi-text {
+        position: relative;
+        z-index: 1;
+    }
+
+    .dtr-dash .dtr-dash-num {
+        font-weight: var(--font-weight-bold);
+    }
+
+    .dtr-dash-wave {
+        position: absolute;
+        inset-inline-end: 0;
+        bottom: 0;
+        width: 55%;
+        height: 70%;
+        fill: color-mix(in oklab, var(--tone) 24%, transparent);
+        -webkit-mask-image: linear-gradient(to bottom, black 25%, transparent);
+        mask-image: linear-gradient(to bottom, black 25%, transparent);
+        pointer-events: none;
+    }
+
+    /* D: View all at the title's right, as in the reference, once the card is wide enough (1536px). */
+    @media (min-width: 96rem) {
+        .dtr-dash .dtr-dash-d .dtr-dash-head {
+            flex-wrap: nowrap;
+        }
+    }
+
+    .dtr-dash .dtr-dash-head > .dtr-dash-link {
+        flex: none;
+        white-space: nowrap;
+    }
+
+    /* Links end in an arrow. */
+    .dtr-dash .dtr-dash-link {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .dtr-dash-link-arrow {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    /* Card titles: a navy icon before each, the quick actions' bolt in blue. */
+    .dtr-dash .dtr-dash-title-icon {
+        color: var(--primary-800);
+    }
+
+    .dtr-dash .dtr-dash-title-icon.is-accent {
+        color: var(--primary-600);
+    }
+
+    .dtr-dash .dtr-dash-key {
+        border-radius: 9999px;
+    }
+
+    .dtr-dash .dtr-dash-track {
+        border-radius: 0.375rem;
+        background-color: var(--gray-100);
+    }
+
+    /* C: four tiles, two by two, the icon blue and large over a bold label. */
+    .dtr-dash .dtr-dash-actions.is-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: calc(var(--spacing) * 3);
+    }
+
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action {
+        gap: calc(var(--spacing) * 2.5);
+        border-radius: 0.875rem;
+        background-color: var(--color-white);
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, var(--gray-950) 6%, transparent),
+            0 8px 20px -16px color-mix(in oklab, var(--primary-800) 45%, transparent);
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-semibold);
+        color: var(--gray-800);
+    }
+
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action:hover,
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        background-color: var(--primary-50);
+    }
+
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action:focus-visible {
+        outline-color: var(--primary-600);
+    }
+
+    .dtr-dash .dtr-dash-actions.is-tiles .dtr-dash-action-icon > svg {
+        width: calc(var(--spacing) * 7);
+        height: calc(var(--spacing) * 7);
+    }
+
+    /* D and H: the bars a little thicker. */
+    .dtr-dash .dtr-dash-progress {
+        height: 0.625rem;
+    }
+
+    .dtr-dash .dtr-dash-progress.is-thin {
+        height: 0.375rem;
+    }
+
+    /* E: the note in an amber box with a warning icon, its count in amber, then the wide button. */
+    .dtr-dash .dtr-dash-note {
+        align-items: flex-start;
+        background-color: color-mix(in oklab, var(--warning-400) 14%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--warning-400) 35%, transparent);
+        color: var(--gray-800);
+    }
+
+    .dtr-dash .dtr-dash-note strong {
+        font-weight: var(--font-weight-semibold);
+        color: var(--warning-700);
+    }
+
+    .dtr-dash .dtr-dash-note.is-done {
+        background-color: color-mix(in oklab, var(--success-400) 12%, var(--color-white));
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--success-400) 35%, transparent);
+    }
+
+    .dtr-dash-warn {
+        display: grid;
+        flex: none;
+        place-items: center;
+        color: var(--warning-600);
+    }
+
+    .dtr-dash-note.is-done .dtr-dash-warn {
+        color: var(--success-600);
+    }
+
+    .dtr-dash-warn > svg {
+        width: calc(var(--spacing) * 6);
+        height: calc(var(--spacing) * 6);
+    }
+
+    .dtr-dash .dtr-dash-step {
+        width: 100%;
+        min-height: calc(var(--spacing) * 12);
+        margin-top: auto;
+        border-radius: 0.75rem;
+    }
+
+    /* G: a thicker gauge. */
+    .dtr-dash .dtr-dash-gauge path {
+        stroke-width: 18;
+    }

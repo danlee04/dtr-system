@@ -20,6 +20,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use DateInterval;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Reader\XLSX\Reader;
 use Tests\TestCase;
@@ -63,6 +64,28 @@ class MonthlyTotalsTest extends TestCase
                 $upload->days()->create(['date' => $date->toDateString(), 'am_arrival' => $arrival, 'am_departure' => '12:00', 'pm_arrival' => '13:00', 'pm_departure' => '17:00']);
             }
         }
+    }
+
+    public function test_the_months_queries_do_not_grow_with_its_dtrs(): void
+    {
+        // One query per kind of input for the whole month, not per DTR: the summary computes every DTR at once (2026-11-24).
+        $queries = function (): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            app(MonthlyTotals::class)->rows(null, CarbonImmutable::parse('2026-10-01'));
+
+            return count(DB::getQueryLog());
+        };
+
+        $this->upload($this->staff(), '2026-10-01', '2026-10-31');
+        $this->upload($this->staff(), '2026-10-01', '2026-10-31');
+        $two = $queries();
+
+        foreach (range(1, 4) as $more) {
+            $this->upload($this->staff(), '2026-10-01', '2026-10-31');
+        }
+
+        $this->assertSame($two, $queries());
     }
 
     /** @return array<int, array{employee: Employee, dtr: ComputedDtr|null, notes: list<string>}> employee id → row */

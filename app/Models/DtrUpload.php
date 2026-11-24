@@ -41,6 +41,12 @@ class DtrUpload extends Model
         return $this->computed ??= app(DtrCalculator::class)->compute($this);
     }
 
+    /** Keeps a result DtrCalculator::computeMany() worked out with others, so computed() does not work it out again. */
+    public function useComputed(ComputedDtr $computed): void
+    {
+        $this->computed = $computed;
+    }
+
     /**
      * The times HR copied in for this DTR's employee and dates, keyed "2026-10-02 pm_departure".
      *

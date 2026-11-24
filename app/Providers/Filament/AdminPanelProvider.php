@@ -63,8 +63,8 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('16rem')
             // Every page uses the screen's full width instead of a centred 80rem column.
             ->maxContentWidth(Width::Full)
+            // The app's stylesheet, public/css/dtr.css, and the sidebar's script.
             ->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): View => view('filament.sidebar'))
-            ->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): View => view('filament.entries'))
             ->login()
             ->profile(ChangePassword::class, isSimple: false)
             ->colors([

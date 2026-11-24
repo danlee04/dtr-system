@@ -1,7 +1,5 @@
 @use('App\Enums\LeaveType')
 <x-filament-panels::page>
-    @include('filament.entry-grid')
-
     <x-filament::section class="dtr-grid" :heading="$monthName"
         description="Each balance at the end of the month. Where the month took from it: in grey the balance before, in red what it took (DTR deductions, leave, forced leave, lapse and adjustments).">
         <x-slot name="afterHeader">

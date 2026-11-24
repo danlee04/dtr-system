@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    @include('filament.entry-grid')
-
     @if ($asOf === null)
         <p role="alert" class="dtr-grid-errors">
             Set LEAVE_START_DATE in .env to the 1st of the month the system takes over, then come back.
