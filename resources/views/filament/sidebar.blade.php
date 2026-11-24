@@ -341,6 +341,56 @@
         text-align: center;
     }
 
+    /*
+        An employee's notifications bell, right of each page's title (filament.employee.notifications-bell):
+        Filament's button and badge, made the staff bell's twin above.
+    */
+    .dtr-notifications-bell {
+        flex-shrink: 0;
+        /* Level with the title on the dashboard too, whose heading row lines up at its foot. */
+        align-self: flex-start;
+    }
+
+    .dtr-notifications-bell .fi-topbar-database-notifications-btn.fi-icon-btn {
+        width: calc(var(--spacing) * 10);
+        height: calc(var(--spacing) * 10);
+        margin: 0;
+        border-radius: 0.75rem;
+        background-color: var(--color-white);
+        box-shadow: 0 0 0 1px var(--dtr-line);
+        color: var(--gray-600);
+    }
+
+    .dtr-notifications-bell .fi-topbar-database-notifications-btn.fi-icon-btn:hover {
+        background-color: var(--gray-50);
+    }
+
+    .dtr-notifications-bell .fi-topbar-database-notifications-btn .fi-icon {
+        width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+        color: inherit;
+    }
+
+    .dtr-notifications-bell .fi-icon-btn-badge-ctn {
+        top: calc(var(--spacing) * -1.5);
+        inset-inline-end: calc(var(--spacing) * -1.5);
+        inset-inline-start: auto;
+        transform: none;
+    }
+
+    .dtr-notifications-bell .fi-icon-btn-badge-ctn .fi-badge {
+        min-width: calc(var(--spacing) * 5);
+        height: calc(var(--spacing) * 5);
+        padding-inline: calc(var(--spacing) * 1);
+        justify-content: center;
+        border-radius: 9999px;
+        background-color: var(--primary-500);
+        box-shadow: none;
+        color: var(--gray-950);
+        font-size: var(--text-xs);
+        font-weight: var(--font-weight-semibold);
+    }
+
     .dtr-topbar-actions .fi-btn {
         min-height: calc(var(--spacing) * 10);
         border-radius: 0.75rem;
@@ -454,38 +504,6 @@
 
     .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
         color: var(--color-white);
-    }
-
-    /* An employee's notifications (Filament's bell, employees only): a sidebar link like the others, over a rule. */
-    .fi-sidebar .fi-sidebar-footer {
-        margin: 0 calc(var(--spacing) * 3);
-        border-color: var(--dtr-side-line);
-    }
-
-    .fi-sidebar .fi-sidebar-database-notifications-btn {
-        column-gap: calc(var(--spacing) * 2.5);
-        padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2.5);
-        border-radius: 0.5rem;
-    }
-
-    .fi-sidebar .fi-sidebar-database-notifications-btn>.fi-icon {
-        width: calc(var(--spacing) * 5);
-        height: calc(var(--spacing) * 5);
-        color: var(--dtr-side-text);
-    }
-
-    .fi-sidebar .fi-sidebar-database-notifications-btn>.fi-sidebar-database-notifications-btn-label {
-        color: var(--dtr-side-text);
-    }
-
-    .fi-sidebar .fi-sidebar-database-notifications-btn:hover,
-    .fi-sidebar .fi-sidebar-database-notifications-btn:focus-visible {
-        background-color: var(--dtr-side-hover);
-    }
-
-    .fi-sidebar .fi-sidebar-database-notifications-btn:focus-visible {
-        outline: 2px solid var(--color-white);
-        outline-offset: -2px;
     }
 
     /* Sign out, white on the navy; round, so its hover fits the pill's round end. */

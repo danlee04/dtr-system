@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\LeaveApplicationStatus;
 use App\Enums\UserRole;
+use App\Filament\Employee\Pages\History;
 use App\Filament\Pages\DutyRoster;
 use App\Filament\Pages\HabitualTardiness;
 use App\Filament\Pages\LeaveOpeningBalances;
@@ -102,17 +103,21 @@ class EmployeeAccessTest extends TestCase
             ->assertSeeHtml('fi-topbar');
     }
 
-    public function test_employees_have_a_notifications_bell_in_the_sidebar_and_staff_do_not(): void
+    public function test_employees_have_one_notifications_bell_beside_each_page_title_and_staff_have_none(): void
     {
-        // Staff have "Waiting for you" in the topbar; a second bell would say a different thing in the same place (2026-11-24).
-        $this->actingAs(User::factory()->employee()->create())
-            ->get('/')
-            ->assertSeeHtml('class="fi-sidebar-footer"');
+        // Right of the title, once, on the dashboard (its own heading) and on the other pages (2026-11-24); not in the sidebar.
+        $this->actingAs(User::factory()->employee()->create());
 
+        foreach (['/', History::getUrl()] as $url) {
+            $page = $this->get($url)->assertOk()->getContent();
+            $this->assertSame(1, substr_count($page, 'class="dtr-notifications-bell"'), $url);
+            $this->assertStringNotContainsString('class="fi-sidebar-footer"', $page);
+        }
+
+        // Staff have "Waiting for you" in the topbar; a second bell would say a different thing in the same place.
         $this->actingAs(User::factory()->create())
             ->get('/')
-            ->assertDontSeeHtml('class="fi-sidebar-footer"')
-            ->assertDontSeeHtml('fi-topbar-database-notifications');
+            ->assertDontSeeHtml('class="dtr-notifications-bell"');
     }
 
     public function test_who_may_use_the_panel(): void

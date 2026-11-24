@@ -146,12 +146,16 @@ decoration.
     an employee's My DTR), so no item stands outside a group; and at its foot,
     in a pale pill, the signed-in user with no menu to open: their photo and name
     lead to the Profile, and a Sign out icon button sits beside them
-    (`filament.sidebar-user`). Above that pill, for employees only, Filament's
-    **Notifications** bell, styled as a sidebar link (solid bell, white words)
-    over a faint rule, with a badge of the unread count (2026-11-24). It opens
-    Filament's slide-over with what HR did with their leave and DTR
-    (`EmployeeNotices`). Staff have no such bell; theirs is "Waiting for you"
-    in the topbar.
+    (`filament.sidebar-user`).
+  - **An employee's notifications bell** (2026-11-24): at the right of each
+    page's title, after any header button (on the dashboard, beside its own
+    heading), the staff bell's twin: a 40px white square with 12px corners and
+    a hairline, an outline bell, the unread count in a blue pill on its corner
+    (`filament.employee.notifications-bell`, Filament's component with its
+    button restyled). It opens Filament's slide-over with what HR did with
+    their leave and DTR (`EmployeeNotices`). It sat in the sidebar's foot first
+    and looked out of place there. Staff have no such bell; theirs is "Waiting
+    for you" in the topbar.
   - **Topbar** (staff only; an employee's pages have none since 2026-11-23, and on a
     phone Filament's own button opens their sidebar): it blends into the page. Search sits on its left (Ctrl+K). On its
     right, staff see the "Waiting for you" bell and **New** (2026-11-23; Upload

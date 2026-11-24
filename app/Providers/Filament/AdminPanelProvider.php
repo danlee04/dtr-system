@@ -4,9 +4,11 @@ namespace App\Providers\Filament;
 
 use App\Enums\NavigationGroup;
 use App\Filament\Pages\Auth\ChangePassword;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\DtrUploads\Pages\ListDtrUploads;
 use App\Services\WaitingForHr;
 use Carbon\CarbonImmutable;
+use Filament\Enums\DatabaseNotificationsPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -15,9 +17,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\View\TablesRenderHook;
-use Filament\View\PanelsIconAlias;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -45,10 +45,11 @@ class AdminPanelProvider extends PanelProvider
             ->userMenu(false)
             // Staff only: an employee's pages have no topbar, and on a phone the sidebar's own button (HR, 2026-11-23).
             ->topbar(fn (): bool => auth()->user()?->isStaff() ?? true)
-            // Employees only, so in their sidebar: what HR did with their leave and DTR (2026-11-24). Staff have "Waiting for you" in the topbar.
-            ->databaseNotifications(fn (): bool => ! (auth()->user()?->isStaff() ?? true))
-            // Solid, as every other icon in the sidebar.
-            ->icons([PanelsIconAlias::SIDEBAR_OPEN_DATABASE_NOTIFICATIONS_BUTTON => Heroicon::Bell])
+            // Employees only: what HR did with their leave and DTR (2026-11-24). Staff have "Waiting for you" in the topbar.
+            // Placed by hand, at the right of each page's title (filament.employee.notifications-bell), not in the sidebar.
+            ->databaseNotifications(fn (): bool => ! (auth()->user()?->isStaff() ?? true), position: DatabaseNotificationsPosition::Topbar)
+            // The dashboard draws its own heading, and the bell beside it.
+            ->renderHook(PanelsRenderHook::PAGE_HEADER_ACTIONS_AFTER, fn (array $scopes): string => in_array(Dashboard::class, $scopes, true) ? '' : view('filament.employee.notifications-bell')->render())
             // Light only (HR, 2026-11-23).
             ->darkMode(false)
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): View => view('filament.sidebar-user'))

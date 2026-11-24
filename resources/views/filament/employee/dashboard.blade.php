@@ -51,6 +51,7 @@
                 <p class="dtr-dash-heading" aria-hidden="true">Dashboard</p>
                 <p class="dtr-dash-sub">Your leave and DTR, as of {{ today()->format('M j, Y') }}</p>
             </div>
+            @include('filament.employee.notifications-bell')
         </div>
 
         {{-- A: the leave they have left. --}}
