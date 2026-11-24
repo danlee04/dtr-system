@@ -28,7 +28,6 @@ class ReopenDtrAction extends Action
         $this
             ->label('Reopen')
             ->icon(Heroicon::OutlinedLockOpen)
-            ->color('gray')
             ->authorize('reopen')
             ->action(function (DtrUpload $record, DtrDeduction $deduction): void {
                 try {

@@ -80,11 +80,9 @@ class LeaveLedgerEntriesRelationManager extends RelationManager
             ->headerActions([
                 FileLeaveAction::make()
                     ->employee(fn (): Employee => $this->employee()),
-                // Gray, so File leave is the one that stands out.
                 Action::make('adjust')
                     ->label('Add adjustment')
                     ->icon(Heroicon::OutlinedPlusCircle)
-                    ->color('gray')
                     ->authorize('create', LeaveLedgerEntry::class)
                     ->modalHeading('Add Adjustment')
                     ->modalDescription('Dated today. Use a minus sign to deduct, e.g. -0.500.')

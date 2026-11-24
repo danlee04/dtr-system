@@ -127,6 +127,8 @@ class DtrUploadsTable
             ->recordActionsAlignment(Alignment::Start->value)
             ->recordActions([
                 ViewAction::make()
+                    // Blue, as every button and link (HR, 2026-11-24).
+                    ->color('primary')
                     ->modalHeading(fn (DtrUpload $record): string => DtrUploadInfolist::heading($record))
                     ->modalWidth(Width::SevenExtraLarge)
                     ->extraModalFooterActions([FinalizeDtrAction::make(), ReopenDtrAction::make()]),

@@ -49,6 +49,8 @@ class MyLeaveApplicationsTable
             // 1024px screen; those wait in the application's footer (2026-11-23).
             ->recordActions([
                 ViewAction::make()
+                    // Blue, as every button and link (HR, 2026-11-24).
+                    ->color('primary')
                     ->modalHeading('Leave Application')
                     // Wide enough for the A4 form inside it.
                     ->modalWidth(Width::FiveExtraLarge)

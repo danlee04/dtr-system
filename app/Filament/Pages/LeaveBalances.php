@@ -81,7 +81,6 @@ class LeaveBalances extends Page
             Action::make('openingBalances')
                 ->label('Opening balances')
                 ->icon(Heroicon::OutlinedPencilSquare)
-                ->color('gray')
                 ->url(LeaveOpeningBalances::getUrl())
                 ->visible(fn (): bool => LeaveOpeningBalances::canAccess()),
         ];

@@ -95,7 +95,7 @@
     @if ($new !== [])
         <x-filament::dropdown placement="bottom-end" teleport>
             <x-slot name="trigger">
-                <x-filament::button color="gray" :icon="Heroicon::OutlinedPlus" labeled-from="sm" aria-label="New">
+                <x-filament::button :icon="Heroicon::OutlinedPlus" labeled-from="sm" aria-label="New">
                     New
                 </x-filament::button>
             </x-slot>

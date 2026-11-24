@@ -47,7 +47,7 @@ registered for the Sick card on an employee's page.
 | Role | Light | Dark | Used for |
 |---|---|---|---|
 | Primary | `--primary-500` fill, `--primary-700` text | `--primary-400` text | The main button of a view; links; the count on the topbar bell; the initials avatars (`--primary-100` / `--primary-800`); on an employee's page, the open tab, the lead card and the Needs a look card |
-| Secondary | Filament `gray` buttons (white, thin ring) | same, dark | Every action that is not the main one |
+| Secondary | none on pages: every button and link is blue (HR, 2026-11-24) | — | Filament's own Close and Cancel in modals stay grey |
 | Accent | none | none | There is no separate accent hue: colour beyond blue is status or data only |
 | Sidebar | navy gradient, `--primary-900` to `--primary-950` | `--primary-950` into `--gray-950` | The sidebar, with white words and icons, headings in white at 65%, and a `--primary-500` at 55% pill for the open page |
 | Page background | `--primary-50` into `--gray-50`, with pale `--primary-100`/`--primary-200` arcs at the top | — | Behind cards; the topbar shows it frosted |
@@ -199,8 +199,8 @@ decoration.
 | Variant | Use for | Example |
 |---|---|---|
 | Primary (blue, filled, white text) | The one main action of a view | Save roster, New employee, Download Excel |
-| Gray | Secondary actions | Upload DTRs in the topbar, Import CSV |
-| Outlined | A secondary action beside the primary | Delete and Restore on an employee's page |
+| Blue, filled or as a link | Every other action too (HR, 2026-11-24: no grey buttons) | New, Opening balances, Print, Edit, Reopen, Add adjustment, a row's View |
+| Outlined | A secondary action beside the primary | Edit, Delete and Restore on an employee's page |
 | Danger | Confirming a destructive action | Filament's delete confirmation |
 
 - Use `x-filament::button` or Filament actions; never a hand-made button.

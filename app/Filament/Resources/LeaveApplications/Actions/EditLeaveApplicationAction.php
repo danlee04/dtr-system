@@ -31,7 +31,6 @@ class EditLeaveApplicationAction extends Action
         $this
             ->label('Edit')
             ->icon(Heroicon::OutlinedPencilSquare)
-            ->color('gray')
             ->visible(fn (LeaveApplication $record): bool => $record->status === LeaveApplicationStatus::Pending)
             ->authorize('update')
             ->modalHeading('Change Leave')

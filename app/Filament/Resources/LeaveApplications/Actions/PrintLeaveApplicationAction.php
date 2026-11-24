@@ -21,7 +21,6 @@ class PrintLeaveApplicationAction extends Action
         $this
             ->label('Print')
             ->icon(Heroicon::OutlinedPrinter)
-            ->color('gray')
             ->authorize('print')
             ->url(fn (LeaveApplication $record): string => route('leave-applications.print', $record))
             ->openUrlInNewTab();

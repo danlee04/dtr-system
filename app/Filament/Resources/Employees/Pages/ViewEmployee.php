@@ -90,7 +90,7 @@ class ViewEmployee extends ViewRecord
                 ->icon(Heroicon::Pencil)
                 ->modalWidth(Width::SixExtraLarge),
             DeleteAction::make()->outlined()->icon(Heroicon::Trash),
-            RestoreAction::make()->outlined(),
+            RestoreAction::make()->outlined()->color('primary'),
         ];
     }
 
