@@ -438,7 +438,7 @@ Filament notifications:
   blue button (`.dtr-dash-step`).
 - **The staff dashboard's layout** (HR's reference, 2026-11-20): a visible
   "Dashboard" heading (`.dtr-dash-heading`, no amber mark; the page's own h1
-  stays for screen readers) with a month select at the right (Livewire `month`: last month and the months with a DTR, as DTR Uploads lists them;
+  stays for screen readers) with a month select at the right (Livewire `month`: every month of this year, January to December (HR, 2026-11-24), and any earlier month with a DTR, newest first;
   last month by default); four figures (`.dtr-dash-kpi`: a round icon tinted info,
   success, warning or amber, the figure, its label, a link): late and undertime,
   absences, leave to approve, out today; the Attendance overview chart (three

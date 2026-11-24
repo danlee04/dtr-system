@@ -70,8 +70,9 @@ class Dashboard extends BaseDashboard
 
         return [
             'lastMonth' => $lastMonth,
-            // For the month select: last month, then every month with a DTR uploaded, newest first.
-            'months' => collect([self::lastMonth()->format('Y-m') => self::lastMonth()->format('F Y')])
+            // For the month select: every month of this year (HR, 2026-11-24), and any earlier month with a DTR, newest first.
+            'months' => collect(range(1, 12))
+                ->mapWithKeys(fn (int $number): array => [$today->setDate($today->year, $number, 1)->format('Y-m') => $today->setDate($today->year, $number, 1)->format('F Y')])
                 ->merge(DtrUploadsTable::months())
                 ->sortKeysDesc()
                 ->all(),
