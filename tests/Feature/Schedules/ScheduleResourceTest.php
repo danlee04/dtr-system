@@ -96,6 +96,52 @@ class ScheduleResourceTest extends TestCase
         $this->assertSame('10:00 PM – 2:00 AM, 3:00 AM – 7:00 AM', Schedule::sole()->hours);
     }
 
+    public function test_a_24_hour_duty_is_one_block_from_8_to_8(): void
+    {
+        // The doctors' 24-hour duty: 8:00 AM to 8:00 AM the next day, no break (HR, 2026-11-24).
+        Livewire::test(ListSchedules::class)->mountAction('create')
+            ->fillForm($this->regular([
+                'code' => '24H',
+                'name' => '24-Hour Duty',
+                'work_days' => [],
+                'block1_in' => '08:00',
+                'block1_out' => '08:00',
+                'block2_in' => null,
+                'block2_out' => null,
+            ]))
+            ->callMountedAction()
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('24H', Schedule::sole()->code);
+    }
+
+    public function test_a_first_in_and_a_second_out_alone_make_one_block(): void
+    {
+        // Typed as first in and last out, with no break between (HR, 2026-11-24): saved as one block.
+        Livewire::test(ListSchedules::class)->mountAction('create')
+            ->fillForm($this->regular([
+                'code' => '24H',
+                'work_days' => [],
+                'block1_in' => '08:00',
+                'block1_out' => null,
+                'block2_in' => null,
+                'block2_out' => '08:00',
+            ]))
+            ->callMountedAction()
+            ->assertHasNoFormErrors();
+
+        $schedule = Schedule::sole();
+        $this->assertSame([['08:00', '08:00'], null, null], [$schedule->times(), $schedule->block2_in, $schedule->block2_out]);
+    }
+
+    public function test_a_break_still_needs_both_of_its_ends(): void
+    {
+        Livewire::test(ListSchedules::class)->mountAction('create')
+            ->fillForm($this->regular(['block2_in' => null]))
+            ->callMountedAction()
+            ->assertHasFormErrors(['block2_in']);
+    }
+
     public function test_times_that_run_past_24_hours_are_refused(): void
     {
         // 07:00 typed for 13:00: read as the next morning, the day would end at

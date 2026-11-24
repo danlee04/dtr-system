@@ -15,6 +15,7 @@ use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\ManualTap;
+use App\Models\RosterEntry;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Services\Attendance\ComputedDay;
@@ -294,7 +295,7 @@ class DtrCalculatorTest extends TestCase
         $this->assertSame([AttendanceStatus::Upcoming, 0.0], [$day->status, $day->absent]);
     }
 
-    public function test_a_shift_past_midnight_is_not_computed_yet(): void
+    public function test_a_shift_past_midnight_with_a_break_is_not_computed_yet(): void
     {
         $employee = Employee::factory()->create();
         $night = Schedule::factory()->create(['block1_in' => '22:00', 'block1_out' => '02:00', 'block2_in' => '03:00', 'block2_out' => '07:00']);
@@ -303,6 +304,71 @@ class DtrCalculatorTest extends TestCase
         $day = $this->compute($employee, ['2026-10-01' => ['am_arrival' => '10:00']])->days['2026-10-01'];
 
         $this->assertSame([AttendanceStatus::NotComputed, 0], [$day->status, $day->late]);
+    }
+
+    /**
+     * A doctor on the duty roster: 24H (8:00 AM to 8:00 AM the next day, no break),
+     * the 8 AM to 4 PM duty some have after it, or a day off (HR, 2026-11-24).
+     *
+     * @param  array<string, ?string>  $roster  date => schedule code, or null for OFF
+     */
+    private function doctor(array $roster): Employee
+    {
+        $employee = Employee::factory()->create();
+        $schedules = [
+            '24H' => Schedule::factory()->rosterOnly()->create(['code' => '24H', 'block1_in' => '08:00', 'block1_out' => '08:00', 'block2_in' => null, 'block2_out' => null]),
+            '8-4' => Schedule::factory()->rosterOnly()->create(['code' => '8-4', 'block1_in' => '08:00', 'block1_out' => '16:00', 'block2_in' => null, 'block2_out' => null]),
+        ];
+
+        foreach ($roster as $date => $code) {
+            RosterEntry::factory()->for($employee)->create(['date' => $date, 'schedule_id' => $code === null ? null : $schedules[$code]->id]);
+        }
+
+        return $employee;
+    }
+
+    public function test_a_24_hour_duty_ends_on_the_next_days_morning_departure(): void
+    {
+        // As Ybiernas, Oct 3: in 8:19 AM, out the next day 8:35 AM, printed on Oct 4's row; Oct 4 off.
+        $days = $this->compute($this->doctor(['2026-10-03' => '24H', '2026-10-04' => null]), [
+            '2026-10-03' => ['am_arrival' => '08:19'],
+            '2026-10-04' => ['am_departure' => '08:35'],
+        ])->days;
+
+        $this->assertSame([AttendanceStatus::Present, 19, 1, 0, 0], $this->figures($days['2026-10-03']));
+        $this->assertSame([], $days['2026-10-03']->missing);
+        $this->assertSame(AttendanceStatus::RestDay, $days['2026-10-04']->status);
+    }
+
+    public function test_leaving_a_24_hour_duty_before_8_is_undertime(): void
+    {
+        $day = $this->compute($this->doctor(['2026-10-09' => '24H', '2026-10-10' => null]), [
+            '2026-10-09' => ['am_arrival' => '07:58'],
+            '2026-10-10' => ['am_departure' => '07:30'],
+        ])->days['2026-10-09'];
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 30, 1], $this->figures($day));
+    }
+
+    public function test_a_24_hour_duty_runs_on_into_the_next_mornings_duty_with_no_tap_at_8(): void
+    {
+        // As Ybiernas, Oct 6 to 7: in 7:54 AM, printed in the O.T. column; no tap at 8:00 AM; out 4:21 PM from the 8-4 duty.
+        $days = $this->compute($this->doctor(['2026-10-06' => '24H', '2026-10-07' => '8-4']), [
+            '2026-10-06' => ['ot_arrival' => '07:54'],
+            '2026-10-07' => ['pm_departure' => '16:21'],
+        ])->days;
+
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-06']));
+        $this->assertSame([AttendanceStatus::Present, 0, 0, 0, 0], $this->figures($days['2026-10-07']));
+        $this->assertSame([[], []], [$days['2026-10-06']->missing, $days['2026-10-07']->missing]);
+    }
+
+    public function test_a_24_hour_duty_with_no_tap_is_three_days_absent(): void
+    {
+        // All 24 hours (HR, 2026-11-24).
+        $day = $this->compute($this->doctor(['2026-10-12' => '24H', '2026-10-13' => null]))->days['2026-10-12'];
+
+        $this->assertSame([AttendanceStatus::Absent, 24 * 60, 3.0], [$day->status, $day->undertime, $day->absent]);
     }
 
     public function test_the_month_adds_up_and_converts_to_days_with_the_csc_table(): void

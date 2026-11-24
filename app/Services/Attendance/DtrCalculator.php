@@ -108,10 +108,28 @@ final class DtrCalculator
             ->groupBy(fn (ManualTap $tap): string => $tap->date->toDateString());
 
         $days = [];
+        // The day before and after too: a 24-hour duty ends the next morning, and a duty after it runs on from it.
+        $resolvedDays = $this->resolver->days($employee, $from->subDay(), $to->addDay());
 
-        foreach ($this->resolver->days($employee, $from, $to) as $date => $resolved) {
-            $columns = self::columns($rows->get($date), $filled->get($date));
-            $days[$date] = $this->day($employee, CarbonImmutable::parse($date), $resolved, $columns, $covers, $suspensions->get($date));
+        foreach ($resolvedDays as $date => $resolved) {
+            if ($date < $from->toDateString() || $date > $to->toDateString()) {
+                continue;
+            }
+
+            $previous = CarbonImmutable::parse($date)->subDay()->toDateString();
+            $next = CarbonImmutable::parse($date)->addDay()->toDateString();
+            // shortcut: the last day's 24-hour duty ends on the next month's DTR, which is not read; its time out counts as missing.
+            $days[$date] = $this->day(
+                $employee,
+                CarbonImmutable::parse($date),
+                $resolved,
+                self::columns($rows->get($date), $filled->get($date)),
+                $covers,
+                $suspensions->get($date),
+                self::columns($rows->get($next), $filled->get($next)),
+                continuesFrom: self::runsOn($resolvedDays[$previous] ?? null, $resolved),
+                continuesInto: self::runsOn($resolved, $resolvedDays[$next] ?? null),
+            );
         }
 
         return new ComputedDtr($days);
@@ -131,14 +149,20 @@ final class DtrCalculator
             $columns[$slot->value] = $filled?->firstWhere('slot', $slot)?->time ?? $row?->{$slot->value};
         }
 
+        // Read only for a 24-hour duty's time in, which came printed there once (HR, 2026-11-24).
+        $columns['ot_arrival'] = $row?->ot_arrival;
+
         return $columns;
     }
 
     /**
      * @param  array<string, ?string>  $columns  slot => time
      * @param  SupportCollection<int, array{0: LeaveApplication|DayException, 1: AttendanceStatus}>  $covers
+     * @param  array<string, ?string>  $nextColumns  the next date's, where an overnight shift's time out is printed
+     * @param  bool  $continuesFrom  the day before was a duty that ran on into this one's start, so its time in needs no tap
+     * @param  bool  $continuesInto  this duty runs on into the next day's, so its time out needs no tap
      */
-    private function day(Employee $employee, CarbonImmutable $date, ResolvedDay $resolved, array $columns, SupportCollection $covers, ?int $suspendedAt): ComputedDay
+    private function day(Employee $employee, CarbonImmutable $date, ResolvedDay $resolved, array $columns, SupportCollection $covers, ?int $suspendedAt, array $nextColumns = [], bool $continuesFrom = false, bool $continuesInto = false): ComputedDay
     {
         if ($resolved->kind !== DayKind::WorkDay) {
             return new ComputedDay(AttendanceStatus::from($resolved->kind->value));
@@ -152,8 +176,10 @@ final class DtrCalculator
         $start = self::minute($times[0]);
         $offsets = ScheduleTimes::offsets($times);
 
-        // shortcut: a shift past midnight ends on the next date's row; computed once a nurse's DTR shows how IT prints one.
-        if ($start + end($offsets) >= ScheduleTimes::DAY) {
+        $overnight = $start + end($offsets) >= ScheduleTimes::DAY;
+
+        // shortcut: an overnight shift with a break is not computed; which columns hold its taps is not known until a DTR shows one.
+        if ($overnight && count($offsets) !== 2) {
             return new ComputedDay(AttendanceStatus::NotComputed);
         }
 
@@ -164,9 +190,22 @@ final class DtrCalculator
             $halves[$index] = ['in' => $start + $in, 'out' => $start + $out];
         }
 
-        $taps = count($halves) === 2
-            ? [[$columns['am_arrival'], $columns['am_departure']], [$columns['pm_arrival'], $columns['pm_departure']]]
-            : [[$columns['am_arrival'] ?? $columns['pm_arrival'], $columns['pm_departure'] ?? $columns['am_departure']]];
+        $taps = match (true) {
+            // A 24-hour duty (HR, 2026-11-24): in on its date, in any arrival column (one came printed under O.T.);
+            // out the next morning, on the next date's row, or where HR filled the day's own time out.
+            $overnight => [[$columns['am_arrival'] ?? $columns['pm_arrival'] ?? $columns['ot_arrival'], $nextColumns['am_departure'] ?? $columns['pm_departure']]],
+            count($halves) === 2 => [[$columns['am_arrival'], $columns['am_departure']], [$columns['pm_arrival'], $columns['pm_departure']]],
+            default => [[$columns['am_arrival'] ?? $columns['pm_arrival'], $columns['pm_departure'] ?? $columns['am_departure']]],
+        };
+
+        // A duty run on into the next with no tap between them (HR, 2026-11-24): this one ends, and the next begins, on time.
+        if ($continuesInto && $taps[0][1] === null) {
+            $taps[0][1] = self::time(($start + end($offsets)) % ScheduleTimes::DAY);
+        }
+
+        if ($continuesFrom && $taps[0][0] === null) {
+            $taps[0][0] = self::time($halves[0]['in']);
+        }
 
         $covered = $this->covered(count($halves), $date, $covers);
         $away = $this->awayTimes($halves, $covered);
@@ -211,7 +250,10 @@ final class DtrCalculator
             // Undertime for all the hours not covered, 8 on 8–5, 10 on the four-day week (HR, 2026-11-18); that part of the CSC days comes off SL first, then VL (HR, 2026-11-19).
             $minutes = array_sum(array_map(fn (array $half): int => $half['out'] - $half['in'], $halves));
 
-            return new ComputedDay(AttendanceStatus::Absent, undertime: $minutes, undertimeCount: 1, absent: count($halves) / $scheduledHalves, note: $note, fillable: $fillable, awayTimes: $away, absentMinutes: $minutes, scheduleTimes: $scheduled);
+            // A 24-hour duty missed is three days, all its hours (HR, 2026-11-24), at a work day's eight.
+            $absent = $overnight ? $minutes / 480 : count($halves) / $scheduledHalves;
+
+            return new ComputedDay(AttendanceStatus::Absent, undertime: $minutes, undertimeCount: 1, absent: $absent, note: $note, fillable: $fillable, awayTimes: $away, absentMinutes: $minutes, scheduleTimes: $scheduled);
         }
 
         [$late, $lateCount, $undertime, $undertimeCount, $missing, $fillable] = [0, 0, 0, 0, [], []];
@@ -236,10 +278,11 @@ final class DtrCalculator
                 $lateCount++;
             }
 
+            // shortcut: an overnight shift's time out is always read as the next morning's, a same-day early leave HR types into the day's own time out too; ask HR if one happens.
             if ($left === null) {
                 $missing[] = $leftName;
                 $fillable[] = $leftSlot;
-            } elseif (($minutes = ($half['dueOut'] ?? $half['out']) - self::minute($left)) > 0) {
+            } elseif (($minutes = ($half['dueOut'] ?? $half['out']) - self::minute($left) - ($overnight ? ScheduleTimes::DAY : 0)) > 0) {
                 $undertime += $minutes;
                 $undertimeCount++;
             }
@@ -295,10 +338,29 @@ final class DtrCalculator
         return $away;
     }
 
-    /** Minutes since midnight as "08:00". */
+    /** Minutes since midnight as "08:00"; past midnight, the next day's. */
     private static function time(int $minutes): string
     {
+        $minutes %= ScheduleTimes::DAY;
+
         return sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
+    }
+
+    /**
+     * Whether $duty is an overnight shift with no break that ends when $after's
+     * work begins, as a 24-hour duty from 8:00 before an 8:00 to 4:00 duty.
+     */
+    private static function runsOn(?ResolvedDay $duty, ?ResolvedDay $after): bool
+    {
+        if ($duty?->kind !== DayKind::WorkDay || $after?->kind !== DayKind::WorkDay) {
+            return false;
+        }
+
+        $times = $duty->schedule->times();
+        $offsets = ScheduleTimes::offsets($times);
+        $end = self::minute($times[0]) + end($offsets);
+
+        return count($offsets) === 2 && $end >= ScheduleTimes::DAY && $end - ScheduleTimes::DAY === self::minute($after->schedule->times()[0]);
     }
 
     /**

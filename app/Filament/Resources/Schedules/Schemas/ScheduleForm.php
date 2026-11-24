@@ -74,17 +74,22 @@ class ScheduleForm
                                     ));
                                     $offsets = ScheduleTimes::offsets($times);
 
-                                    if (end($offsets) >= ScheduleTimes::DAY) {
-                                        $fail('From the first in to the last out must be under 24 hours. A time earlier than the one before it counts as the next day.');
+                                    // A 24-hour duty, 8:00 to 8:00, is the longest (HR, 2026-11-24).
+                                    if (end($offsets) > ScheduleTimes::DAY) {
+                                        $fail('From the first in to the last out can be 24 hours at most. A time earlier than the one before it counts as the next day.');
                                     }
                                 },
                             ]),
+                        // One block may be typed as first in and first out, or as first in and second out with no break (HR, 2026-11-24);
+                        // the second way is saved as the first.
                         self::time('block1_out', 'First out')
-                            ->required(),
+                            ->required(fn (Get $get): bool => blank($get('block2_out')) || filled($get('block2_in')))
+                            ->mutateDehydratedStateUsing(fn (?string $state, Get $get): ?string => $state ?? (blank($get('block2_in')) ? $get('block2_out') : null)),
                         self::time('block2_in', 'Second in')
-                            ->requiredWith('block2_out'),
+                            ->required(fn (Get $get): bool => filled($get('block2_out')) && filled($get('block1_out'))),
                         self::time('block2_out', 'Second out')
-                            ->requiredWith('block2_in'),
+                            ->requiredWith('block2_in')
+                            ->mutateDehydratedStateUsing(fn (?string $state, Get $get): ?string => blank($get('block1_out')) && blank($get('block2_in')) ? null : $state),
                     ]),
             ]);
     }
