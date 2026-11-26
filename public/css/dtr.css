@@ -606,10 +606,14 @@
         }
     }
 
-    /* 16px above the breadcrumbs, as on every page; the breadcrumbs at the page's edge, not the panel's. */
+    /*
+        16px above the breadcrumbs, as on every page; the breadcrumbs at the page's edge, not the panel's.
+        No isolation here: it trapped the tabs' modals (Assign schedule, Edit, Add adjustment) under the
+        sidebar and topbar (2026-11-26). The panel behind (::before, z-index -1) needs no ancestor with a
+        background between it and the page, which none has.
+    */
     .fi-resource-employees.fi-resource-view-record-page > .fi-page-header-main-ctn {
         position: relative;
-        isolation: isolate;
         padding: calc(var(--spacing) * 4) var(--dtr-emp-pad) var(--dtr-emp-pad);
     }
 
